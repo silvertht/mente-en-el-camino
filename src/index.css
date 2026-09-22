@@ -1,0 +1,170 @@
+@import "tailwindcss";
+
+@theme {
+  /* ============================================================
+     PALETA "NOCHE Y ALBA"
+     ============================================================ */
+
+  /* --- Noche (fondos) --- */
+  --color-noche-950: #060912;
+  --color-noche-900: #0b0f1a;
+  --color-noche-800: #131a2b;
+  --color-noche-700: #1e2842;
+  --color-noche-600: #2d3a5a;
+
+  /* --- Alba (dorado principal) --- */
+  --color-alba-400: #ffd166;
+  --color-alba-500: #f5b544;
+  --color-alba-600: #d18f1e;
+  --color-alba-700: #a36d12;
+
+  /* --- Reino (violeta) --- */
+  --color-reino-400: #a78bfa;
+  --color-reino-500: #7c3aed;
+  --color-reino-600: #5b21b6;
+
+  /* --- Fuego (racha) --- */
+  --color-fuego-400: #fb923c;
+  --color-fuego-500: #f97316;
+
+  /* --- Vida (correcto) --- */
+  --color-vida-400: #34d399;
+  --color-vida-500: #10b981;
+
+  /* --- Alerta (error) --- */
+  --color-alerta-400: #f87171;
+  --color-alerta-500: #ef4444;
+
+  /* ============================================================
+     ANIMACIONES PERSONALIZADAS
+     ============================================================ */
+  --animate-float: float 4s ease-in-out infinite;
+  --animate-shimmer: shimmer 3s linear infinite;
+  --animate-glow: glow 2s ease-in-out infinite alternate;
+  --animate-pulse-soft: pulseSoft 3s ease-in-out infinite;
+  --animate-rays: rays 8s linear infinite;
+
+  /* ============================================================
+     FUENTE
+     ============================================================ */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 8px rgba(245, 181, 68, 0.35);
+  }
+  to {
+    box-shadow: 0 0 24px rgba(245, 181, 68, 0.7);
+  }
+}
+
+@keyframes pulseSoft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes rays {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================
+   RESET Y ESTILOS BASE
+   ============================================================ */
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #0b0f1a;
+  color: #f1f5f9;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ============================================================
+   SCROLLBAR PERSONALIZADA
+   ============================================================ */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #131a2b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2d3a5a;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d18f1e;
+}
+
+/* ============================================================
+   SELECCIÓN DE TEXTO
+   ============================================================ */
+
+::selection {
+  background-color: #f5b544;
+  color: #0b0f1a;
+}
+
+/* ============================================================
+   UTILIDADES EXTRA
+   ============================================================ */
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
