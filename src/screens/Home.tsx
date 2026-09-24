@@ -86,12 +86,14 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
                 El camino comienza
               </p>
             </div>
-            <h1 className="mb-2 text-3xl font-black leading-[1.05] sm:text-4xl">
-              Mente en el{" "}
+            <h1 className="mb-1 text-3xl font-black leading-[1.05] sm:text-4xl">
               <GradientText shimmer className="inline-block">
-                Camino
+                Selah
               </GradientText>
             </h1>
+            <p className="mb-3 text-xs italic tracking-wide text-white/60">
+              Pausa. Reflexiona. Aprende.
+            </p>
             <p className="text-sm text-white/75">
               {profile.streak > 0 ? (
                 <>
@@ -383,7 +385,7 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
           variants={fadeInUp}
           className="mt-10 text-center text-[9px] uppercase tracking-[0.4em] text-white/20"
         >
-          Mente en el Camino · {new Date().getFullYear()}
+          Selah · {new Date().getFullYear()}
         </motion.p>
       </motion.header>
     </div>
