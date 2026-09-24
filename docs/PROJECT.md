@@ -7,10 +7,12 @@ reales y componente educativo. Cada respuesta acompaña con explicación,
 versículo, aplicación y reflexión.
 
 **Nombre técnico**: mente-en-el-camino
-**Nombre visible**: Mente en el Camino
+**Nombre público (marca)**: Selah
+**Significado de marca**: "Pausa, medita" (hebreo, aparece 74 veces en los Salmos).
+**Slogan**: "Pausa. Reflexiona. Aprende."
 **Repo**: github.com/silverth/mente-en-el-camino
 **URL producción**: https://mente-en-el-camino.vercel.app
-**Estado**: MVP funcional desplegado. Fase 2 en curso (medición, crecimiento).
+**Estado**: PWA instalable. Fase 2 en curso (medición, crecimiento).
 
 ## 2. Stack técnico
 
@@ -20,7 +22,7 @@ versículo, aplicación y reflexión.
 - Motion (motion/react, antes Framer Motion)
 - Zustand v5 (estado global)
 - Dexie.js (IndexedDB, persistencia offline)
-- vite-plugin-pwa (instalado, SIN CONFIGURAR)
+- vite-plugin-pwa (CONFIGURADO — manifest, SW, íconos)
 - Vitest 5 (tests unitarios, 66 pasando)
 - GitHub Desktop + Vercel para deploy
 
@@ -53,11 +55,18 @@ src/
 │ ├── ScoreFeedback, QuestionRenderer, AnimatedBackground, GradientText
 │ ├── StatPill, Skeleton, Modal, BadgeDetailModal, PromptDialog, ConfirmDialog
 │ └── questions/ → 7 tipos + SortableList + 2 wrappers
-└── screens/
-├── Home.tsx → rediseñado (identidad + reto + bitácora + sendas)
-├── Game.tsx → rediseñado (dots + timer flotante + racha)
-├── Results.tsx → rediseñado (podio de 5 niveles)
-└── Profile.tsx → rediseñado (bitácora + vitrina)
+├── screens/
+│ ├── Home.tsx → rediseñado (identidad + reto + bitácora + sendas)
+│ ├── Game.tsx → rediseñado (dots + timer flotante + racha)
+│ ├── Results.tsx → rediseñado (podio de 5 niveles)
+│ └── Profile.tsx → rediseñado (bitácora + vitrina)
+public/
+├── pwa-192x192.png
+├── pwa-512x512.png
+├── maskable-icon-512x512.png
+├── apple-touch-icon.png
+├── favicon.svg (pendiente rediseñar)
+└── icons.svg (pendiente revisar)
 
 ## 4. Sistema de juego
 
@@ -113,18 +122,20 @@ Configurada en @theme de src/index.css (Tailwind v4).
 
 ## 9. Estado de las áreas
 
-| Área      | Estado          | Pendientes                                   |
-| --------- | --------------- | -------------------------------------------- |
-| Funcional | ✅ Cerrado      | Ampliar banco 70 → 100+ (post Test #2)       |
-| Visual    | ✅ Cerrado      | Íconos PWA (bloqueado por Admin)             |
-| UX        | ⏳ 1 validación | Validar en móvil real                        |
-| Admin     | 🔴 Sin empezar  | PWA · Analytics · Core Web Vitals · Supabase |
+| Área      | Estado             | Pendientes                                    |
+| --------- | ------------------ | --------------------------------------------- |
+| Funcional | ✅ Fase 1 cerrada  | Ampliar banco 70 → 100+ (post Test #2)        |
+| Visual    | 🔄 Fase 2 activa   | Handoffs PWA (index.html, favicon, icons.svg) |
+| UX        | ⏳ 1 handoff       | Cambiar textos "Mente en el Camino" → "Selah" |
+| Admin     | ✅ Tarea 1 cerrada | Analytics + Core Web Vitals + Supabase        |
 
 ## 10. Roadmap Fase 2 (post-Test #2)
 
 ### Prioridad 1 — Producción real
 
-- [ ] Configurar PWA (manifest, íconos, service worker) [Admin + Visual]
+- [x] Configurar PWA (manifest, íconos, service worker) [Admin ✅]
+- [ ] Cerrar handoffs visuales PWA [Visual]
+- [ ] Cambiar textos "Mente en el Camino" → "Selah" [UX]
 - [ ] Instalar Vercel Analytics + Speed Insights [Admin]
 - [ ] Medir Core Web Vitals reales en móvil [Admin]
 
@@ -153,19 +164,24 @@ Configurada en @theme de src/index.css (Tailwind v4).
 
 ## 12. Métricas actuales
 
-| Métrica            | Valor    |
-| ------------------ | -------- |
-| Preguntas en banco | 70       |
-| Categorías activas | 5 (de 9) |
-| Tipos de pregunta  | 7/7      |
-| Insignias          | 19       |
-| Principios del día | 31       |
-| Tests unitarios    | 66/66    |
-| Build time         | 629 ms   |
-| Bundle gzip        | 181 kB   |
+| Métrica            | Valor               |
+| ------------------ | ------------------- |
+| Preguntas en banco | 70                  |
+| Categorías activas | 5 (de 9)            |
+| Tipos de pregunta  | 7/7                 |
+| Insignias          | 19                  |
+| Principios del día | 31                  |
+| Tests unitarios    | 66/66               |
+| Build time         | 629 ms              |
+| Bundle gzip        | 181.65 kB           |
+| Precache PWA       | 16 entries · 815 KB |
+| PWA installable    | ✅ Chrome           |
 
 ## 13. Historial de fases
 
 - **Fase 1** (sep 2026): construcción del MVP completo.
   Funcional (3 rondas) · Visual (4 rondas) · UX (4 sesiones).
 - **Fase 2** (en curso): producción, medición, crecimiento.
+  - Admin: PWA configurada + rebrand a Selah. ✅
+  - Visual: cerrando handoffs PWA. 🔄
+  - UX: pendiente cambiar textos. ⏳
