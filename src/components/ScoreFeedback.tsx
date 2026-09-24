@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import type { Question } from "../types";
 import { Button } from "./Button";
@@ -11,6 +12,23 @@ interface ScoreFeedbackProps {
   onNext: () => void;
 }
 
+const CORRECT_TITLES = ["¡Bien!", "¡Exacto!", "¡Así es!", "¡Vas bien!"];
+const INCORRECT_TITLES = [
+  "Casi.",
+  "No era esa.",
+  "Uy, pero aprendiste algo.",
+  "Sigue, esto enseña.",
+];
+
+function getFeedbackTitle(correct: boolean, questionId: string | number) {
+  const titles = correct ? CORRECT_TITLES : INCORRECT_TITLES;
+  const seed = Array.from(String(questionId)).reduce(
+    (acc, ch) => acc + ch.charCodeAt(0),
+    0,
+  );
+  return titles[seed % titles.length];
+}
+
 export function ScoreFeedback({
   correct,
   points,
@@ -18,6 +36,20 @@ export function ScoreFeedback({
   isLastQuestion,
   onNext,
 }: ScoreFeedbackProps) {
+  const title = getFeedbackTitle(correct, question.id);
+  const titleId = useRef(
+    `feedback-title-${Math.random().toString(36).slice(2, 9)}`,
+  ).current;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  /* ── Foco al feedback al aparecer ─────────────────────────────────────
+     UX spec punto 5: "el foco se mueve al ScoreFeedback al aparecer".
+     Se enfoca el contenedor (tabIndex=-1) para que el lector de pantalla
+     lea su contenido y el usuario de teclado pueda Tab al botón "Siguiente". */
+  useEffect(() => {
+    containerRef.current?.focus();
+  }, [question.id]);
+
   return (
     <AnimatePresence>
       <motion.div
@@ -25,28 +57,34 @@ export function ScoreFeedback({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
-        className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-noche-950/80 backdrop-blur-md p-4 sm:p-6 pointer-events-auto"
+        className="fixed inset-0 z-40 flex items-end justify-center bg-noche-950/80 p-4 pointer-events-auto sm:items-center sm:p-6"
       >
         <motion.div
+          ref={containerRef}
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          aria-live="polite"
+          aria-atomic="true"
           variants={popIn}
           initial="hidden"
           animate="visible"
-          className="w-full max-w-lg max-h-[90vh] overflow-y-auto"
+          className="w-full max-w-lg max-h-[90vh] overflow-y-auto focus:outline-none"
         >
-          <div className="relative rounded-3xl overflow-hidden bg-noche-800 border border-noche-700/60 shadow-2xl shadow-black/60">
+          <div className="relative overflow-hidden rounded-3xl border border-noche-700/60 bg-noche-800 shadow-2xl shadow-black/60">
             {/* Cabecera con gradiente */}
             <div
               className={[
-                "relative p-6 text-center overflow-hidden",
+                "relative overflow-hidden p-6 text-center",
                 correct
                   ? "bg-gradient-to-br from-vida-400 via-vida-500 to-emerald-700"
                   : "bg-gradient-to-br from-alerta-400 via-alerta-500 to-red-700",
               ].join(" ")}
             >
-              {/* Rayos de fondo en aciertos */}
               {correct && (
                 <div className="absolute inset-0 opacity-30">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.4)_0%,transparent_60%)] animate-pulse-soft" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.4)_0%,transparent_60%)] animate-pulse-soft motion-reduce:animate-none" />
                 </div>
               )}
 
@@ -54,13 +92,17 @@ export function ScoreFeedback({
                 variants={celebrate}
                 initial="hidden"
                 animate="visible"
-                className="relative text-6xl mb-2"
+                className="relative mb-2 text-6xl"
+                aria-hidden="true"
               >
                 {correct ? "🎉" : "💭"}
               </motion.div>
 
-              <h2 className="relative text-2xl font-bold text-white drop-shadow">
-                {correct ? "¡Correcto!" : "Incorrecto"}
+              <h2
+                id={titleId}
+                className="relative text-2xl font-bold text-white drop-shadow"
+              >
+                {title}
               </h2>
 
               {correct && points > 0 && (
@@ -68,7 +110,7 @@ export function ScoreFeedback({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="relative text-noche-900 font-bold text-lg mt-1.5 bg-white/30 backdrop-blur-sm rounded-full px-4 py-1 inline-block"
+                  className="relative mt-1.5 inline-block rounded-full bg-white/30 px-4 py-1 text-lg font-bold text-noche-900"
                 >
                   +{points} puntos
                 </motion.p>
@@ -76,23 +118,23 @@ export function ScoreFeedback({
             </div>
 
             {/* Contenido educativo */}
-            <div className="p-5 space-y-4">
+            <div className="space-y-4 p-5">
               <div>
-                <p className="text-xs uppercase tracking-wider text-alba-400 font-bold mb-1.5">
-                  Explicación
+                <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-alba-400">
+                  Por qué
                 </p>
-                <p className="text-slate-200 leading-relaxed">
+                <p className="leading-relaxed text-white/85">
                   {question.explanation}
                 </p>
               </div>
 
               {question.verse && (
-                <div className="bg-noche-900/70 rounded-xl p-4 border-l-4 border-alba-500">
-                  <p className="text-xs uppercase tracking-wider text-alba-400 font-bold mb-1.5">
+                <div className="rounded-xl border-l-4 border-alba-500 bg-noche-900/70 p-4">
+                  <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-alba-400">
                     {question.verse}
                   </p>
                   {question.verseText && (
-                    <p className="text-slate-300 italic text-sm leading-relaxed">
+                    <p className="text-sm italic leading-relaxed text-white/75">
                       "{question.verseText}"
                     </p>
                   )}
@@ -101,21 +143,21 @@ export function ScoreFeedback({
 
               {question.application && (
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-slate-500 font-bold mb-1.5">
-                    Aplicación
+                  <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-white/45">
+                    Para tu vida
                   </p>
-                  <p className="text-slate-300 text-sm leading-relaxed">
+                  <p className="text-sm leading-relaxed text-white/75">
                     {question.application}
                   </p>
                 </div>
               )}
 
               {question.reflection && (
-                <div className="bg-reino-600/20 rounded-xl p-4 border border-reino-500/30">
-                  <p className="text-xs uppercase tracking-wider text-reino-400 font-bold mb-1.5">
-                    Para reflexionar
+                <div className="rounded-xl border border-reino-500/30 bg-reino-600/20 p-4">
+                  <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-reino-400">
+                    Para pensar
                   </p>
-                  <p className="text-slate-300 text-sm italic leading-relaxed">
+                  <p className="text-sm italic leading-relaxed text-white/75">
                     {question.reflection}
                   </p>
                 </div>

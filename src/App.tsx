@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useGameStore } from "./store/useGameStore";
 import { AnimatedBackground } from "./components/AnimatedBackground";
+import { HomeSkeleton } from "./components/Skeleton";
 import { Home } from "./screens/Home";
 import { Game } from "./screens/Game";
 import { Results } from "./screens/Results";
@@ -23,11 +24,7 @@ function App() {
     return (
       <>
         <AnimatedBackground />
-        <div className="min-h-screen flex items-center justify-center">
-          <p className="text-alba-400 text-lg animate-pulse font-bold tracking-widest uppercase">
-            Cargando…
-          </p>
-        </div>
+        <HomeSkeleton />
       </>
     );
   }

@@ -47,6 +47,7 @@ interface GameStoreState {
     selectedIndex?: number;
     selectedBool?: boolean;
     selectedText?: string;
+    selectedOrder?: number[]; // ← NUEVO (verse-scramble, timeline)
     timeSpent: number;
     hintsUsed?: number;
   }) => Promise<void>;
@@ -71,7 +72,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   lastAnswerExplanation: null,
   newlyUnlockedBadges: [],
 
-  // ----------------------------------------------------------
   init: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -85,7 +85,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     }
   },
 
-  // ----------------------------------------------------------
   setNickname: async (nickname) => {
     const { profile } = get();
     if (!profile) return;
@@ -94,7 +93,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     set({ profile: updated });
   },
 
-  // ----------------------------------------------------------
   startGame: (mode, questions) => {
     const game: GameState = {
       mode,
@@ -116,11 +114,11 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     });
   },
 
-  // ----------------------------------------------------------
   answerQuestion: async ({
     selectedIndex,
     selectedBool,
     selectedText,
+    selectedOrder,
     timeSpent,
     hintsUsed = 0,
   }) => {
@@ -132,6 +130,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       selectedIndex,
       selectedBool,
       selectedText,
+      selectedOrder,
     });
 
     const timeLimit = question.timeLimit ?? 30;
@@ -184,7 +183,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     await saveProfile(updatedProfile);
   },
 
-  // ----------------------------------------------------------
   nextQuestion: () => {
     const { game } = get();
     if (!game) return;
@@ -200,7 +198,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     });
   },
 
-  // ----------------------------------------------------------
   finishGame: async () => {
     const { game, profile } = get();
     if (!game || !profile) return;
@@ -221,7 +218,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       return a.correct && q?.type === "hint-deduction" && !a.hintsUsed;
     });
 
-    // IDs de TODAS las insignias que debería tener el jugador ahora
     const allBadgeIds = evaluateBadges({
       profile: { ...withStreak, level: finalLevel, xp: finalXp },
       totalAnswered: game.answers.length,
@@ -232,10 +228,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       completedCategories,
     });
 
-    // Solo las NUEVAS (las que aún no tenía)
     const newBadges = getNewBadges(withStreak.badges, allBadgeIds);
 
-    // Unir las que ya tenía + las nuevas (sin duplicados)
     const mergedBadgeIds = Array.from(
       new Set([...withStreak.badges, ...allBadgeIds]),
     );
@@ -263,7 +257,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     });
   },
 
-  // ----------------------------------------------------------
   resetGame: () => {
     set({
       game: null,
@@ -274,7 +267,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     });
   },
 
-  // ----------------------------------------------------------
   clearFeedback: () => {
     set({
       lastAnswerCorrect: null,
@@ -283,7 +275,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     });
   },
 
-  // ----------------------------------------------------------
   clearNewBadges: () => {
     set({ newlyUnlockedBadges: [] });
   },
@@ -297,6 +288,32 @@ interface AnswerInput {
   selectedIndex?: number;
   selectedBool?: boolean;
   selectedText?: string;
+  selectedOrder?: number[];
+}
+
+/**
+ * Normaliza una respuesta de texto libre:
+ *  - trim
+ *  - minúsculas
+ *  - sin tildes (NFD + strip de diacríticos)
+ */
+function normalizeAnswer(s: string): string {
+  return s
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+/**
+ * Compara dos arrays de índices por igualdad posicional.
+ */
+function ordersMatch(a: number[], b: number[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 }
 
 function checkAnswer(question: Question, input: AnswerInput): boolean {
@@ -311,15 +328,17 @@ function checkAnswer(question: Question, input: AnswerInput): boolean {
 
     case "hint-deduction": {
       if (!input.selectedText) return false;
-      const normalized = input.selectedText.trim().toLowerCase();
+      const normalized = normalizeAnswer(input.selectedText);
       return question.acceptedAnswers.some(
-        (a) => a.trim().toLowerCase() === normalized,
+        (a) => normalizeAnswer(a) === normalized,
       );
     }
 
     case "verse-scramble":
-    case "timeline":
-      return input.selectedBool === true;
+    case "timeline": {
+      if (!input.selectedOrder) return false;
+      return ordersMatch(input.selectedOrder, question.correctOrder);
+    }
 
     default:
       return false;

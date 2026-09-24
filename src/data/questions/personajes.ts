@@ -188,7 +188,7 @@ export const PERSONAJES_QUESTIONS: Question[] = [
       "Fui llevado al cielo en un torbellino.",
     ],
     answer: "Elías",
-    acceptedAnswers: ["elías", "elias", "profeta elías", "profeta elias"],
+    acceptedAnswers: ["elias", "profeta elias"],
     explanation:
       "Elías fue uno de los profetas más importantes de Israel. Defendió la adoración a Jehová y no murió, sino que fue arrebatado al cielo.",
     verse: "2 Reyes 2:11",

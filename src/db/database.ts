@@ -133,6 +133,23 @@ export async function countAnswers(): Promise<{
 }
 
 // ============================================================
+// DIFICULTAD ADAPTATIVA — accuracy reciente
+// ============================================================
+
+/**
+ * Proporción de aciertos en las últimas `limit` respuestas.
+ * Reutiliza `getRecentAnswers` (ya ordena por answeredAt desc).
+ *
+ * @returns número en [0, 1]. Sin historial → 0.5 (neutro).
+ */
+export async function getRecentAccuracy(limit = 20): Promise<number> {
+  const recent = await getRecentAnswers(limit);
+  if (recent.length === 0) return 0.5;
+  const correct = recent.filter((a) => a.correct).length;
+  return correct / recent.length;
+}
+
+// ============================================================
 // DESAFÍO DIARIO
 // ============================================================
 

@@ -6,6 +6,8 @@ import {
   WhoSaidItQuestion,
   HintDeductionQuestion,
 } from "./questions";
+import { VerseScrambleQuestion } from "./questions/VerseScrambleQuestion";
+import { TimelineQuestion } from "./questions/TimelineQuestion";
 
 interface Props {
   question: Question;
@@ -13,6 +15,7 @@ interface Props {
     selectedIndex?: number;
     selectedBool?: boolean;
     selectedText?: string;
+    selectedOrder?: number[];
     hintsUsed?: number;
   }) => void;
   disabled?: boolean;
@@ -71,13 +74,22 @@ export function QuestionRenderer({
         />
       );
 
-    // Los tipos verse-scramble y timeline se implementarán en fase 2
     case "verse-scramble":
+      return (
+        <VerseScrambleQuestion
+          question={question}
+          onAnswer={(order) => onAnswer({ selectedOrder: order })}
+          disabled={disabled}
+        />
+      );
+
     case "timeline":
       return (
-        <div className="text-center text-slate-400 py-8">
-          Este tipo de pregunta estará disponible pronto.
-        </div>
+        <TimelineQuestion
+          question={question}
+          onAnswer={(order) => onAnswer({ selectedOrder: order })}
+          disabled={disabled}
+        />
       );
 
     default:

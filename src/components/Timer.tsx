@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 
 interface TimerProps {
@@ -14,6 +14,19 @@ const SIZES = {
   lg: { box: 104, text: "text-4xl", stroke: 5 },
 };
 
+/**
+ * Countdown basado en timestamps absolutos (Date.now) + rAF.
+ *
+ * Por qué no `setInterval(fn, 1000)`:
+ *  - setInterval acumula drift (~5-15 ms por tick).
+ *  - Si el componente padre re-renderiza (nuevo `onTimeUp` inline),
+ *    el effect se limpia y reinicia, matando el tick en curso.
+ *
+ * Esta implementación:
+ *  - Calcula `remaining` desde `startRef.current` → exacto sin drift.
+ *  - Guarda `onTimeUp` en ref → no reinicia el rAF al cambiar el callback.
+ *  - Solo depende de `[paused, seconds]` → estable durante toda la pregunta.
+ */
 export function Timer({
   seconds,
   onTimeUp,
@@ -21,27 +34,48 @@ export function Timer({
   size = "md",
 }: TimerProps) {
   const [remaining, setRemaining] = useState(seconds);
+  const onTimeUpRef = useRef(onTimeUp);
+  const startRef = useRef<number>(Date.now());
+  const firedRef = useRef(false);
 
+  // Mantener el callback actualizado SIN que dispare re-runs del rAF
   useEffect(() => {
+    onTimeUpRef.current = onTimeUp;
+  }, [onTimeUp]);
+
+  // Reset cuando cambia `seconds` (nueva pregunta / nuevo timeLimit)
+  useEffect(() => {
+    startRef.current = Date.now();
+    firedRef.current = false;
     setRemaining(seconds);
   }, [seconds]);
 
+  // Countdown por rAF — preciso, sin drift, sin retraso inicial
   useEffect(() => {
-    if (paused || remaining <= 0) return;
+    if (paused || seconds <= 0) return;
 
-    const interval = setInterval(() => {
-      setRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          onTimeUp?.();
-          return 0;
+    let raf = 0;
+    const tick = () => {
+      const elapsed = Date.now() - startRef.current;
+      const left = Math.max(0, seconds - Math.floor(elapsed / 1000));
+
+      // Solo dispara re-render cuando cambia el segundo (React hace bail-out
+      // si el valor es idéntico, así que esto es prácticamente gratis)
+      setRemaining(left);
+
+      if (left <= 0) {
+        if (!firedRef.current) {
+          firedRef.current = true;
+          onTimeUpRef.current?.();
         }
-        return prev - 1;
-      });
-    }, 1000);
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
 
-    return () => clearInterval(interval);
-  }, [paused, remaining, onTimeUp]);
+    return () => cancelAnimationFrame(raf);
+  }, [paused, seconds]);
 
   const isLow = remaining <= 5;
   const isMid = remaining <= seconds / 2;
@@ -106,6 +140,11 @@ export function Timer({
   );
 }
 
+/**
+ * Segundos transcurridos desde que `active` se volvió true.
+ * Usa Date.now() → exacto aunque el interval se retrase.
+ * Al desactivarse, vuelve a 0 (para la siguiente pregunta).
+ */
 export function useElapsedTime(active: boolean): number {
   const [elapsed, setElapsed] = useState(0);
 
@@ -117,7 +156,7 @@ export function useElapsedTime(active: boolean): number {
     const start = Date.now();
     const interval = setInterval(() => {
       setElapsed(Math.floor((Date.now() - start) / 1000));
-    }, 1000);
+    }, 250); // 250 ms → display cambia a tiempo real sin drift perceptible
     return () => clearInterval(interval);
   }, [active]);
 

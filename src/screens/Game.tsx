@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useGameStore } from "../store/useGameStore";
 import { QuestionRenderer } from "../components/QuestionRenderer";
@@ -66,11 +66,15 @@ export function Game({ onFinish, onQuit }: Props) {
     }
   };
 
-  const handleTimeUp = () => {
+  // useCallback: mantiene la misma referencia entre renders.
+  // Aunque el Timer ya usa una ref interna para el callback, esto evita
+  // re-crear la función en cada render del padre (menos garbage + más
+  // predecible para futuras optimizaciones).
+  const handleTimeUp = useCallback(() => {
     if (lastAnswerCorrect === null) {
       answerQuestion({ timeSpent: timeLimit });
     }
-  };
+  }, [lastAnswerCorrect, answerQuestion, timeLimit]);
 
   return (
     <div className="min-h-screen flex flex-col relative">

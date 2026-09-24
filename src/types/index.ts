@@ -42,12 +42,12 @@ export interface BaseQuestion {
   category: CategoryId;
   difficulty: Difficulty;
   points: number;
-  timeLimit?: number; // segundos; si no se define, se usa el default del modo
-  explanation: string; // por qué es correcta
-  verse?: string; // referencia bíblica, ej: 'Juan 3:16'
-  verseText?: string; // texto del versículo
-  application?: string; // aplicación práctica
-  reflection?: string; // pregunta para reflexionar en grupo
+  timeLimit?: number;
+  explanation: string;
+  verse?: string;
+  verseText?: string;
+  application?: string;
+  reflection?: string;
 }
 
 // ---------- Variantes por tipo ----------
@@ -64,10 +64,15 @@ export interface TrueFalseQuestion extends BaseQuestion {
   correct: boolean;
 }
 
+/**
+ * Ordenar palabras de un versículo.
+ * `words` = palabras en orden de presentación (desordenadas).
+ * `correctOrder` = índices en `words` que forman el orden correcto.
+ */
 export interface VerseScrambleQuestion extends BaseQuestion {
   type: "verse-scramble";
-  verseReference: string;
-  correctOrder: string[];
+  words: string[];
+  correctOrder: number[];
 }
 
 export interface WhoSaidItQuestion extends BaseQuestion {
@@ -77,6 +82,11 @@ export interface WhoSaidItQuestion extends BaseQuestion {
   correctIndex: number;
 }
 
+/**
+ * Ordenar eventos cronológicamente.
+ * `events` = eventos en orden de presentación (desordenados).
+ * `correctOrder` = índices en `events` que forman el orden cronológico.
+ */
 export interface TimelineQuestion extends BaseQuestion {
   type: "timeline";
   events: string[];
@@ -92,9 +102,9 @@ export interface FillBlankQuestion extends BaseQuestion {
 
 export interface HintDeductionQuestion extends BaseQuestion {
   type: "hint-deduction";
-  hints: string[]; // de más vaga a más específica
+  hints: string[];
   answer: string;
-  acceptedAnswers: string[]; // variantes aceptadas
+  acceptedAnswers: string[];
 }
 
 // ---------- Unión discriminada ----------
@@ -118,7 +128,7 @@ export interface UserProfile {
   streak: number;
   lastPlayedAt: number | null;
   badges: string[];
-  graceShieldAvailable: boolean; // escudo de gracia
+  graceShieldAvailable: boolean;
 }
 
 // ---------- Progreso ----------
@@ -132,7 +142,7 @@ export interface AnsweredQuestion {
 }
 
 export interface DailyChallengeProgress {
-  date: string; // 'YYYY-MM-DD'
+  date: string;
   completed: boolean;
   score: number;
   questionIds: string[];
@@ -152,6 +162,7 @@ export interface Badge {
   description: string;
   emoji: string;
   condition: string;
+  verse?: { ref: string; text: string };
 }
 
 // ---------- Sesión multijugador (Fase 2) ----------

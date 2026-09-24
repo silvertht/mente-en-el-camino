@@ -1,6 +1,7 @@
 import type { Question } from "../../types";
 
 export const EVANGELIOS_QUESTIONS: Question[] = [
+  // ... ev-001 a ev-010 (idénticos a los tuyos, con fix en ev-007 de Ronda 2) ...
   {
     id: "ev-001",
     type: "multiple-choice",
@@ -129,7 +130,7 @@ export const EVANGELIOS_QUESTIONS: Question[] = [
       "Prediqué en Pentecostés y miles se convirtieron.",
     ],
     answer: "Pedro",
-    acceptedAnswers: ["pedro", "simón pedro", "simon pedro", "san pedro"],
+    acceptedAnswers: ["pedro", "simon pedro", "san pedro"],
     explanation:
       "Pedro, cuyo nombre original era Simón, fue uno de los líderes de la iglesia primitiva. Negó a Jesús tres veces, pero fue restaurado por Él junto al mar de Galilea.",
     verse: "Juan 21:15-17",
@@ -203,5 +204,247 @@ export const EVANGELIOS_QUESTIONS: Question[] = [
       "No estamos solos. El Espíritu Santo nos guía, consuela y capacita cada día.",
     reflection:
       "¿Cuándo has sentido la guía del Espíritu Santo de forma clara?",
+  },
+
+  // ---------- NUEVAS: timeline ----------
+  {
+    id: "ev-011",
+    type: "timeline",
+    category: "evangelios",
+    difficulty: "medio",
+    points: 20,
+    timeLimit: 35,
+    events: [
+      "Resurrección",
+      "Entrada triunfal a Jerusalén",
+      "Crucifixión",
+      "Última Cena",
+    ],
+    correctOrder: [1, 3, 2, 0],
+    explanation:
+      "La Semana Santa comenzó con la entrada triunfal, siguió con la Última Cena, luego la crucifixión, y culminó con la resurrección al tercer día.",
+    verse: "Lucas 24:6-7",
+    verseText:
+      "No está aquí, sino que ha resucitado. Acordaos de lo que os habló, cuando aún estaba en Galilea.",
+    application:
+      "La historia de la salvación tiene un orden: Dios prepara, cumple y consuma. Confía en Su timing.",
+    reflection: "¿Qué etapa de tu caminar con Dios estás viviendo ahora mismo?",
+  },
+  {
+    id: "ev-012",
+    type: "timeline",
+    category: "evangelios",
+    difficulty: "dificil",
+    points: 30,
+    timeLimit: 40,
+    events: [
+      "Jesús llama a sus primeros discípulos",
+      "Bautismo en el Jordán",
+      "Entrada triunfal a Jerusalén",
+      "Sermón del Monte",
+    ],
+    correctOrder: [1, 0, 3, 2],
+    explanation:
+      "El ministerio de Jesús siguió un orden claro: bautismo → llamado de discípulos → enseñanzas (como el Sermón del Monte) → entrada triunfal a Jerusalén.",
+    verse: "Mateo 4:19",
+    verseText:
+      "Y les dijo: Venid en pos de mí, y os haré pescadores de hombres.",
+    application:
+      "Jesús nos llama paso a paso, no todo de golpe. Confía en Su proceso.",
+    reflection:
+      "¿Qué paso crees que Dios te está invitando a dar después del actual?",
+  },
+  {
+    id: "ev-013",
+    type: "timeline",
+    category: "evangelios",
+    difficulty: "medio",
+    points: 20,
+    timeLimit: 35,
+    events: [
+      "Día 6: animales y seres humanos",
+      "Día 1: luz y separación del día y la noche",
+      "En el principio: cielos y tierra",
+      "Día 3: vegetación",
+    ],
+    correctOrder: [2, 1, 3, 0],
+    explanation:
+      "Génesis 1 narra la creación en orden: primero el cielo y la tierra, luego la luz (día 1), la vegetación (día 3) y finalmente los animales y los humanos (día 6).",
+    verse: "Génesis 1:1",
+    verseText: "En el principio creó Dios los cielos y la tierra.",
+    application:
+      "Dios construye con orden y propósito. La creación no fue al azar, y tu vida tampoco.",
+    reflection:
+      "¿Cómo cambia tu perspectiva saber que Dios hace todo con orden?",
+  },
+
+  // ---------- timeline (batch 2) ----------
+  {
+    id: "ev-014",
+    type: "timeline",
+    category: "evangelios",
+    difficulty: "medio",
+    points: 20,
+    timeLimit: 35,
+    events: [
+      "Granizo y fuego",
+      "Sangre en el Nilo",
+      "Muerte de los primogénitos",
+      "Ranas",
+    ],
+    correctOrder: [1, 3, 0, 2],
+    explanation:
+      "Las plagas de Egipto siguieron un orden progresivo. Comenzaron con la sangre en el Nilo y culminaron con la muerte de los primogénitos.",
+    verse: "Éxodo 7-12",
+    verseText:
+      "Jehová dijo a Moisés: Faraón no os oirá, para que mis maravillas se multipliquen en la tierra de Egipto.",
+    application:
+      "Dios da oportunidades antes del juicio. La paciencia de Dios también es misericordia.",
+    reflection:
+      "¿Hay algo que Dios te ha estado mostrando con paciencia y aún no has atendido?",
+  },
+  {
+    id: "ev-015",
+    type: "timeline",
+    category: "evangelios",
+    difficulty: "medio",
+    points: 20,
+    timeLimit: 35,
+    events: [
+      "Se convierte en gobernador de Egipto",
+      "Vendido por sus hermanos",
+      "Se reencuentra con su familia",
+      "Interpreta sueños en prisión",
+    ],
+    correctOrder: [1, 3, 0, 2],
+    explanation:
+      "La vida de José muestra cómo Dios transforma la traición en propósito. Fue vendido, encarcelado, y finalmente usado para salvar a su familia.",
+    verse: "Génesis 50:20",
+    verseText:
+      "Vosotros pensasteis mal contra mí, mas Dios lo encaminó a bien, para hacer lo que vemos hoy, para mantener en vida a mucho pueblo.",
+    application:
+      "Lo que otros planean para mal, Dios lo puede redirigir para bien.",
+    reflection:
+      "¿Qué situación difícil pasada puedes ver hoy como usada por Dios?",
+  },
+  {
+    id: "ev-016",
+    type: "timeline",
+    category: "evangelios",
+    difficulty: "dificil",
+    points: 30,
+    timeLimit: 40,
+    events: [
+      "Concilio de Jerusalén",
+      "Conversión en el camino a Damasco",
+      "Viaje a Roma como prisionero",
+      "Primer viaje misionero",
+    ],
+    correctOrder: [1, 3, 0, 2],
+    explanation:
+      "El apóstol Pablo se convirtió en Damasco, luego hizo varios viajes misioneros, participó en el Concilio de Jerusalén y terminó predicando en Roma como prisionero.",
+    verse: "Hechos 9:15",
+    verseText:
+      "El Señor le dijo: Ve, porque instrumento escogido me es este, para que lleve mi nombre en presencia de los gentiles, y de reyes, y de los hijos de Israel.",
+    application:
+      "Dios puede transformar al peor enemigo en el mejor instrumento.",
+    reflection:
+      "¿Conoces a alguien que parece 'imposible' de alcanzar para Dios?",
+  },
+  {
+    id: "ev-017",
+    type: "timeline",
+    category: "evangelios",
+    difficulty: "medio",
+    points: 20,
+    timeLimit: 35,
+    events: [
+      "La zarza ardiente",
+      "Nacimiento y rescate en el Nilo",
+      "Éxodo de Egipto",
+      "Huida a Madián",
+    ],
+    correctOrder: [1, 3, 0, 2],
+    explanation:
+      "Moisés fue rescatado de bebé en el Nilo, huyó a Madián tras matar a un egipcio, escuchó a Dios en la zarza ardiente y lideró el éxodo.",
+    verse: "Éxodo 3:10",
+    verseText:
+      "Ven, por tanto, ahora, y te enviaré a Faraón, para que saques de Egipto a mi pueblo, los hijos de Israel.",
+    application:
+      "Dios llama a personas comunes para misiones extraordinarias.",
+    reflection:
+      "¿Qué te ha llamado Dios a hacer que sientes que no eres 'suficiente' para lograrlo?",
+  },
+  {
+    id: "ev-018",
+    type: "timeline",
+    category: "evangelios",
+    difficulty: "dificil",
+    points: 30,
+    timeLimit: 40,
+    events: [
+      "Vence a Goliat",
+      "Rey de todo Israel",
+      "Ungido por Samuel",
+      "Rey de Judá",
+    ],
+    correctOrder: [2, 0, 3, 1],
+    explanation:
+      "David fue ungido por Samuel siendo joven, venció a Goliat, reinó primero sobre Judá y luego sobre todo Israel.",
+    verse: "1 Samuel 16:13",
+    verseText:
+      "Y Samuel tomó el cuerno del aceite, y lo ungió en medio de sus hermanos; y desde aquel día en adelante el Espíritu de Jehová vino sobre David.",
+    application:
+      "Dios prepara en lo secreto antes de exponer en lo público.",
+    reflection:
+      "¿En qué área te está Dios preparando en lo privado antes de usarte en lo público?",
+  },
+  {
+    id: "ev-019",
+    type: "timeline",
+    category: "evangelios",
+    difficulty: "dificil",
+    points: 30,
+    timeLimit: 40,
+    events: [
+      "Conversión de Pablo",
+      "Pentecostés",
+      "Concilio de Jerusalén",
+      "Martirio de Esteban",
+    ],
+    correctOrder: [1, 3, 0, 2],
+    explanation:
+      "Hechos narra el nacimiento de la iglesia: comenzó en Pentecostés, siguió con el martirio de Esteban, la conversión de Pablo, y culminó con el Concilio de Jerusalén.",
+    verse: "Hechos 2:1-4",
+    verseText:
+      "Cuando llegó el día de Pentecostés, estaban todos unánimes juntos... y fueron todos llenos del Espíritu Santo.",
+    application:
+      "El Espíritu Santo no es un evento del pasado: sigue impulsando la iglesia hoy.",
+    reflection:
+      "¿Cómo estás dejando que el Espíritu Santo guíe tu vida diaria?",
+  },
+  {
+    id: "ev-020",
+    type: "timeline",
+    category: "evangelios",
+    difficulty: "medio",
+    points: 20,
+    timeLimit: 35,
+    events: [
+      "Nacimiento de Isaac",
+      "Llamado a salir de Harán",
+      "Prueba en el monte Moriah",
+      "Pacto y circuncisión",
+    ],
+    correctOrder: [1, 3, 0, 2],
+    explanation:
+      "Dios llamó a Abraham a salir de Harán, hizo pacto con él y le prometió descendencia. Isaac nació en la vejez, y luego Abraham fue probado en Moriah.",
+    verse: "Génesis 12:1",
+    verseText:
+      "Pero Jehová había dicho a Abram: Vete de tu tierra y de tu parentela, y de la casa de tu padre, a la tierra que te mostraré.",
+    application:
+      "Seguir a Dios a veces implica dejar lo cómodo para recibir lo mejor.",
+    reflection:
+      "¿A qué te está llamando Dios a 'dejar' para avanzar?",
   },
 ];

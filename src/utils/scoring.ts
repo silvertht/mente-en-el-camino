@@ -213,9 +213,19 @@ export function evaluateBadges(ctx: BadgeContext): string[] {
 /**
  * Dadas las insignias que ya tenía el jugador y las que debería tener ahora,
  * devuelve los objetos Badge de las NUEVAS (para mostrar modal).
+ * Dedupea defensivamente por si `after` trae IDs repetidos.
  */
 export function getNewBadges(before: string[], after: string[]): Badge[] {
-  const newIds = after.filter((id) => !before.includes(id));
+  const beforeSet = new Set(before);
+  const seen = new Set<string>();
+  const newIds: string[] = [];
+
+  for (const id of after) {
+    if (beforeSet.has(id) || seen.has(id)) continue;
+    seen.add(id);
+    newIds.push(id);
+  }
+
   return newIds
     .map((id) => BADGES.find((b) => b.id === id))
     .filter((b): b is Badge => b !== undefined);

@@ -4,9 +4,9 @@ import { useGameStore } from "../store/useGameStore";
 import { CATEGORY_LIST } from "../data/categories";
 import {
   countQuestionsByCategory,
-  pickRandomQuestions,
-  pickRandomFromCategory,
+  pickAdaptiveQuestions,
 } from "../data/questions";
+import { getTodayPrinciple } from "../data/dailyPrinciples";
 import { CategoryCard } from "../components/CategoryCard";
 import { Button } from "../components/Button";
 import { ProgressBar } from "../components/ProgressBar";
@@ -22,44 +22,15 @@ interface Props {
   onOpenProfile: () => void;
 }
 
-const VERSES_OF_DAY = [
-  {
-    text: "Lámpara es a mis pies tu palabra, y lumbrera a mi camino.",
-    ref: "Salmos 119:105",
-  },
-  {
-    text: "Fíate de Jehová de todo tu corazón, y no te apoyes en tu propia prudencia.",
-    ref: "Proverbios 3:5",
-  },
-  { text: "Todo lo puedo en Cristo que me fortalece.", ref: "Filipenses 4:13" },
-  {
-    text: "Esforzaos y cobrad ánimo; no temáis, ni tengáis miedo.",
-    ref: "Josué 10:25",
-  },
-  {
-    text: "Jehová es mi luz y mi salvación; ¿de quién temeré?",
-    ref: "Salmos 27:1",
-  },
-  {
-    text: "El que comenzó en vosotros la buena obra, la perfeccionará.",
-    ref: "Filipenses 1:6",
-  },
-  {
-    text: "Porque yo sé los pensamientos que tengo acerca de vosotros… pensamientos de paz.",
-    ref: "Jeremías 29:11",
-  },
-];
-
-function getVerseOfDay() {
-  return VERSES_OF_DAY[new Date().getDate() % VERSES_OF_DAY.length];
-}
-
 export function Home({ onStartGame, onOpenProfile }: Props) {
   const profile = useGameStore((s) => s.profile);
   const startGame = useGameStore((s) => s.startGame);
   const [dailyCompleted, setDailyCompleted] = useState(false);
+  const [loadingGame, setLoadingGame] = useState(false);
   const counts = countQuestionsByCategory();
-  const verse = getVerseOfDay();
+
+  // Principio del día (rotación determinística por fecha — ver dailyPrinciples.ts)
+  const principle = getTodayPrinciple();
 
   useEffect(() => {
     getTodayProgress().then((p) => setDailyCompleted(!!p?.completed));
@@ -70,101 +41,207 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
   const xpProgress = xpProgressInLevel(profile.xp);
   const totalBadges = profile.badges.length;
 
-  const handleDaily = () => {
-    startGame("daily", pickRandomQuestions(10));
-    onStartGame();
+  const handleDaily = async () => {
+    if (loadingGame || dailyCompleted) return;
+    setLoadingGame(true);
+    try {
+      const questions = await pickAdaptiveQuestions(10);
+      startGame("daily", questions);
+      onStartGame();
+    } finally {
+      setLoadingGame(false);
+    }
   };
 
-  const handleCategory = (categoryId: CategoryId) => {
-    const questions = pickRandomFromCategory(categoryId, 10);
-    if (questions.length === 0) return;
-    startGame("campaign", questions);
-    onStartGame();
+  const handleCategory = async (categoryId: CategoryId) => {
+    if (loadingGame) return;
+    setLoadingGame(true);
+    try {
+      const questions = await pickAdaptiveQuestions(10, categoryId);
+      if (questions.length === 0) return;
+      startGame("campaign", questions);
+      onStartGame();
+    } finally {
+      setLoadingGame(false);
+    }
   };
 
   return (
-    <div className="min-h-screen text-white relative">
+    <div className="relative min-h-screen text-white">
       <motion.header
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
-        className="p-5 sm:p-8 max-w-4xl mx-auto pb-20"
+        className="mx-auto max-w-4xl p-5 pb-20 sm:p-8"
       >
         {/* ============ 1. IDENTIDAD ============ */}
         <motion.div
           variants={fadeInUp}
-          className="flex items-start justify-between gap-4 mb-8"
+          className="mb-6 flex items-start justify-between gap-4"
         >
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-alba-500 animate-pulse-soft" />
-              <p className="text-[10px] uppercase tracking-[0.3em] text-alba-500 font-black">
+          <div className="min-w-0 flex-1">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-alba-500 animate-pulse-soft motion-reduce:animate-none" />
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-alba-500">
                 El camino comienza
               </p>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black leading-[1.05] mb-2">
+            <h1 className="mb-2 text-3xl font-black leading-[1.05] sm:text-4xl">
               Mente en el{" "}
               <GradientText shimmer className="inline-block">
                 Camino
               </GradientText>
             </h1>
-            <p className="text-sm text-slate-400">
-              Hola,{" "}
-              <span className="text-white font-semibold">
-                {profile.nickname}
-              </span>{" "}
-              <span className="inline-block animate-float">👋</span>
+            <p className="text-sm text-white/75">
+              {profile.streak > 0 ? (
+                <>
+                  <span className="font-semibold text-white">
+                    {profile.nickname}
+                  </span>
+                  , llevas{" "}
+                  <span className="font-semibold text-fuego-400">
+                    {profile.streak}
+                  </span>{" "}
+                  {profile.streak === 1 ? "día" : "días"} caminando.
+                </>
+              ) : (
+                <>
+                  Hola,{" "}
+                  <span className="font-semibold text-white">
+                    {profile.nickname}
+                  </span>
+                  . Te esperábamos.{" "}
+                  <span className="inline-block animate-float motion-reduce:animate-none">
+                    👋
+                  </span>
+                </>
+              )}
             </p>
           </div>
 
+          {/* Avatar — glow sin blur-lg (radial-gradient nativo) */}
           <motion.button
             whileHover={{ scale: 1.08, rotate: 4 }}
             whileTap={{ scale: 0.92 }}
             onClick={onOpenProfile}
             aria-label="Abrir perfil"
-            className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-full flex items-center justify-center text-3xl border-2 border-alba-500/40 bg-gradient-to-br from-noche-700 to-noche-800 shadow-lg shadow-alba-500/20 hover:border-alba-400 transition-colors flex-shrink-0"
+            className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full border-2 border-alba-500/40 bg-gradient-to-br from-noche-700 to-noche-800 text-3xl shadow-lg shadow-alba-500/20 transition-colors hover:border-alba-400 sm:h-18 sm:w-18"
           >
-            <span className="absolute inset-0 rounded-full border-2 border-alba-500/30 animate-pulse-soft" />
-            <span className="absolute -inset-1 rounded-full bg-alba-500/20 blur-lg opacity-60" />
+            <span
+              aria-hidden="true"
+              className="absolute -inset-2 rounded-full opacity-70"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(245,181,68,0.30) 0%, transparent 70%)",
+              }}
+            />
+            <span className="absolute inset-0 rounded-full border-2 border-alba-500/30 animate-pulse-soft motion-reduce:animate-none" />
             <span className="relative">{profile.avatar ?? "🙂"}</span>
           </motion.button>
         </motion.div>
 
-        {/* ============ 2. DESAFÍO DIARIO ============ */}
-        <motion.div variants={fadeInUp} className="mb-8">
-          <div className="relative rounded-3xl overflow-hidden border border-alba-500/40 shadow-2xl shadow-alba-500/20">
-            {/* Fondo dorado */}
-            <div className="absolute inset-0 bg-gradient-to-br from-alba-600 via-alba-500 to-alba-400" />
-
-            {/* Brillo diagonal */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-60" />
-
-            {/* Rayos giratorios */}
-            <div
-              className="absolute -top-40 -right-40 w-[500px] h-[500px] opacity-25 animate-rays pointer-events-none"
-              aria-hidden
+        {/* ============ 2. PALABRA PARA HOY ============ */}
+        <motion.section
+          variants={popIn}
+          className="mb-8"
+          aria-labelledby="palabra-hoy-titulo"
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <span
+              id="palabra-hoy-titulo"
+              className="text-[10px] font-black uppercase tracking-[0.3em] text-alba-500"
             >
-              <div className="w-full h-full bg-[conic-gradient(from_0deg,transparent_0deg,white_15deg,transparent_30deg,transparent_180deg,white_195deg,transparent_210deg)] rounded-full blur-lg" />
+              Palabra para hoy
+            </span>
+            <div className="h-px flex-1 bg-gradient-to-r from-alba-500/40 to-transparent" />
+          </div>
+
+          <div className="relative overflow-hidden rounded-2xl border border-noche-700/60 bg-noche-800/60 p-6 sm:p-7">
+            {/* Línea dorada superior */}
+            <div
+              aria-hidden="true"
+              className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-alba-500/60 to-transparent"
+            />
+
+            {/* Comilla decorativa */}
+            <div
+              aria-hidden="true"
+              className="absolute -top-6 left-5 select-none font-serif text-8xl leading-none text-alba-500/10"
+            >
+              "
             </div>
 
-            {/* Contenido */}
-            <div className="relative p-6 sm:p-8">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-2xl">🌅</span>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-noche-900/80 font-black">
-                  Desafío del día
+            {/* Versículo (jerarquía principal) */}
+            <p className="relative mb-3 text-center text-sm italic leading-relaxed text-white/90 sm:text-base">
+              {principle.text}
+            </p>
+
+            {/* Referencia (acento) */}
+            <p className="relative mb-6 text-center text-[10px] font-black uppercase tracking-[0.3em] text-alba-500">
+              — {principle.ref}
+            </p>
+
+            {/* Divider sutil */}
+            <div className="relative mb-5 h-px bg-gradient-to-r from-transparent via-noche-700 to-transparent" />
+
+            {/* Aplicación y reflexión (jerarquía descendente) */}
+            <div className="relative space-y-5">
+              <div>
+                <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.25em] text-alba-500/80">
+                  Hoy
+                </p>
+                <p className="text-sm leading-relaxed text-white/80">
+                  {principle.application}
                 </p>
               </div>
 
-              <h2 className="text-2xl sm:text-3xl font-black text-noche-900 leading-tight mb-2">
+              <div>
+                <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.25em] text-reino-400/80">
+                  Para pensar
+                </p>
+                <p className="text-sm italic leading-relaxed text-white/65">
+                  {principle.reflection}
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ============ 3. RETO DE HOY ============ */}
+        <motion.div variants={fadeInUp} className="mb-8">
+          <div className="relative overflow-hidden rounded-3xl border border-alba-500/40 shadow-2xl shadow-alba-500/20">
+            {/* Fondo dorado (gradient estático) */}
+            <div className="absolute inset-0 bg-gradient-to-br from-alba-600 via-alba-500 to-alba-400" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-60" />
+
+            {/* Rayos de sol — conic-gradient ESTÁTICO, sin blur, sin animación
+                (antes: 500×500px con blur-lg + animate-rays → carísimo en móvil) */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-40 -top-40 h-[500px] w-[500px] opacity-15"
+              style={{
+                background:
+                  "conic-gradient(from 0deg, transparent 0deg, white 15deg, transparent 30deg, transparent 180deg, white 195deg, transparent 210deg)",
+              }}
+            />
+
+            <div className="relative p-6 sm:p-8">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-2xl">🌅</span>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-noche-900/80">
+                  El reto de hoy
+                </p>
+              </div>
+
+              <h2 className="mb-2 text-2xl font-black leading-tight text-noche-900 sm:text-3xl">
                 {dailyCompleted
                   ? "¡Ya completaste el día!"
                   : "Recorre 10 preguntas"}
               </h2>
-              <p className="text-noche-900/80 text-sm mb-6 font-semibold">
+              <p className="mb-6 text-sm font-semibold text-noche-900/80">
                 {dailyCompleted
                   ? "Vuelve mañana para mantener la racha 🔥"
-                  : "Mantén tu racha y suma puntos de experiencia"}
+                  : "Un paso más en tu camino."}
               </p>
 
               <Button
@@ -172,27 +249,58 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
                 size="lg"
                 fullWidth
                 onClick={handleDaily}
-                disabled={dailyCompleted}
+                disabled={dailyCompleted || loadingGame}
                 className={[
-                  "!font-black uppercase tracking-widest !text-sm",
+                  "!text-sm !font-black uppercase tracking-widest",
                   dailyCompleted
                     ? ""
                     : "!bg-noche-950 !text-alba-400 hover:!bg-black",
                 ].join(" ")}
               >
-                {dailyCompleted ? "✓ Completado hoy" : "→ Comenzar travesía"}
+                <span className="inline-flex items-center justify-center gap-2">
+                  {loadingGame && (
+                    <svg
+                      className="h-4 w-4 animate-spin motion-reduce:animate-none"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        opacity="0.25"
+                      />
+                      <path
+                        d="M22 12a10 10 0 0 1-10 10"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  )}
+                  <span>
+                    {dailyCompleted
+                      ? "✓ Completado hoy"
+                      : loadingGame
+                        ? "Preparando…"
+                        : "→ Comenzar travesía"}
+                  </span>
+                </span>
               </Button>
             </div>
           </div>
         </motion.div>
 
-        {/* ============ 3. BITÁCORA ============ */}
+        {/* ============ 4. BITÁCORA ============ */}
         <motion.div variants={fadeInUp} className="mb-8">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-slate-600 font-black">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">
               Bitácora del viajero
             </span>
-            <div className="flex-1 h-px bg-gradient-to-r from-noche-700 to-transparent" />
+            <div className="h-px flex-1 bg-gradient-to-r from-noche-700 to-transparent" />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
@@ -215,7 +323,7 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
             />
             <StatPill
               icon="🏅"
-              label="Insignias"
+              label="Medallas"
               value={totalBadges}
               color="text-reino-400"
               glowColor="rgba(124,58,237,0.15)"
@@ -233,18 +341,18 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
           </div>
         </motion.div>
 
-        {/* ============ 4. SENDAS ============ */}
+        {/* ============ 5. SENDAS ============ */}
         <motion.div variants={fadeInUp} className="mb-8">
-          <div className="flex items-end justify-between mb-5">
+          <div className="mb-5 flex items-end justify-between">
             <div>
-              <h2 className="text-xl sm:text-2xl font-black text-white">
+              <h2 className="text-xl font-black text-white sm:text-2xl">
                 Elige tu senda
               </h2>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="mt-1 text-sm text-white/50">
                 Cinco rutas para crecer hoy
               </p>
             </div>
-            <span className="text-[10px] text-slate-600 font-mono uppercase tracking-widest hidden sm:block">
+            <span className="hidden text-[10px] font-mono uppercase tracking-widest text-white/30 sm:block">
               {CATEGORY_LIST.length} rutas
             </span>
           </div>
@@ -253,7 +361,10 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            className={[
+              "grid grid-cols-1 gap-4 transition-opacity duration-200 sm:grid-cols-2 lg:grid-cols-3",
+              loadingGame ? "pointer-events-none opacity-60" : "",
+            ].join(" ")}
           >
             {CATEGORY_LIST.map((cat) => (
               <CategoryCard
@@ -261,35 +372,16 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
                 category={cat}
                 questionCount={counts[cat.id] ?? 0}
                 onClick={handleCategory}
-                disabled={(counts[cat.id] ?? 0) === 0}
+                disabled={(counts[cat.id] ?? 0) === 0 || loadingGame}
               />
             ))}
           </motion.div>
         </motion.div>
 
-        {/* ============ 5. VERSÍCULO ============ */}
-        <motion.div variants={popIn} className="mt-12">
-          <div className="relative rounded-2xl p-6 sm:p-7 bg-noche-800/40 backdrop-blur-md border border-noche-700/60 overflow-hidden">
-            {/* Brillo superior */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-alba-500/50 to-transparent" />
-
-            <div className="absolute -top-6 left-5 text-8xl text-alba-500/10 font-serif leading-none select-none">
-              "
-            </div>
-
-            <p className="relative text-slate-300 italic text-center leading-relaxed mb-3 text-sm sm:text-base">
-              {verse.text}
-            </p>
-            <p className="relative text-center text-[10px] uppercase tracking-[0.3em] text-alba-500 font-black">
-              — {verse.ref}
-            </p>
-          </div>
-        </motion.div>
-
         {/* Footer */}
         <motion.p
           variants={fadeInUp}
-          className="text-center text-[9px] uppercase tracking-[0.4em] text-slate-700 mt-10"
+          className="mt-10 text-center text-[9px] uppercase tracking-[0.4em] text-white/20"
         >
           Mente en el Camino · {new Date().getFullYear()}
         </motion.p>

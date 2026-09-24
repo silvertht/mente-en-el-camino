@@ -55,10 +55,12 @@
    ============================================================ */
 
 @keyframes float {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -68,6 +70,7 @@
   0% {
     background-position: -200% center;
   }
+
   100% {
     background-position: 200% center;
   }
@@ -77,16 +80,19 @@
   from {
     box-shadow: 0 0 8px rgba(245, 181, 68, 0.35);
   }
+
   to {
     box-shadow: 0 0 24px rgba(245, 181, 68, 0.7);
   }
 }
 
 @keyframes pulseSoft {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.85;
   }
@@ -96,6 +102,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -108,6 +115,21 @@
 html {
   color-scheme: dark;
   scroll-behavior: smooth;
+
+  /* ----------------------------------------------------------
+     SCROLL INVISIBLE PERO FUNCIONAL
+     ----------------------------------------------------------
+     - Firefox: scrollbar-width: none
+     - IE/Edge legacy: -ms-overflow-style: none
+     - Chrome/Safari/Edge modernos: ::-webkit-scrollbar (abajo)
+
+     Efecto: el scroll sigue funcionando con rueda, teclado y
+     gesto táctil, pero no se ve la barra. Elimina de raíz el
+     layout-shift al abrir modales (no hay scrollbar que
+     desaparezca y desplace el contenido).
+     ---------------------------------------------------------- */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 body {
@@ -131,25 +153,19 @@ body {
 }
 
 /* ============================================================
-   SCROLLBAR PERSONALIZADA
+   OCULTAR SCROLLBAR (WebKit / Blink)
+   ============================================================
+   El selector universal `*::-webkit-scrollbar` cubre también
+   contenedores internos con overflow (ej. el body scrollable
+   del Modal) para que la experiencia sea consistente.
    ============================================================ */
 
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: #131a2b;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #2d3a5a;
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #d18f1e;
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 /* ============================================================
@@ -167,4 +183,24 @@ body {
 
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   ACCESIBILIDAD — prefers-reduced-motion
+   ============================================================
+   Red de seguridad global: si el usuario pide reducir movimiento
+   en el SO, matamos TODAS las animaciones y transiciones CSS.
+   Motion (JS) ya lo respeta por su cuenta con useReducedMotion().
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
