@@ -125,8 +125,8 @@ Configurada en @theme de src/index.css (Tailwind v4).
 | Área      | Estado             | Pendientes                                    |
 | --------- | ------------------ | --------------------------------------------- |
 | Funcional | ✅ Fase 1 cerrada  | Ampliar banco 70 → 100+ (post Test #2)        |
-| Visual    | 🔄 Fase 2 activa   | Handoffs PWA (index.html, favicon, icons.svg) |
-| UX        | ⏳ 1 handoff       | Cambiar textos "Mente en el Camino" → "Selah" |
+| Visual    | ✅ Fase 2 cerrada  | Bloqueado hasta Test #2                       |
+| UX        | 🔄 Fase 2 activa   | Cambiar textos "Mente en el Camino" → "Selah" |
 | Admin     | ✅ Tarea 1 cerrada | Analytics + Core Web Vitals + Supabase        |
 
 ## 10. Roadmap Fase 2 (post-Test #2)

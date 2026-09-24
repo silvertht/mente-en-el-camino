@@ -3,7 +3,7 @@
 Registro cronológico de cambios por área (Funcional, Visual, UX, Admin).
 Formato: `[ÁREA] Descripción · Estado`.
 
-**Última actualización**: 2026-09-24 · Fase 2 · Admin cerró PWA, Visual activo.
+**Última actualización**: 2026-09-24 · Fase 2 · Visual cerró handoffs PWA. UX activo.
 **Estado del proyecto**: PWA instalable. Fase 2 en curso.
 
 ---
@@ -13,8 +13,8 @@ Formato: `[ÁREA] Descripción · Estado`.
 | Área          | Estado             | Pendiente real                                |
 | ------------- | ------------------ | --------------------------------------------- |
 | **Funcional** | ✅ Fase 1 cerrada  | Ampliar banco 70 → 100+ (post Test #2)        |
-| **Visual**    | 🔄 Fase 2 activa   | Cerrar 3 handoffs PWA                         |
-| **UX**        | ⏳ 1 handoff       | Cambiar textos "Mente en el Camino" → "Selah" |
+| **Visual**    | ✅ Fase 2 cerrada  | Bloqueado hasta Test #2                       |
+| **UX**        | 🔄 Fase 2 activa   | Cambiar textos "Mente en el Camino" → "Selah" |
 | **Admin**     | ✅ Tarea 1 cerrada | Analytics + Core Web Vitals + Supabase        |
 
 **Métricas**:
@@ -25,12 +25,84 @@ Formato: `[ÁREA] Descripción · Estado`.
 | Categorías activas | 5 (de 9)                 |
 | Tipos de pregunta  | 7/7                      |
 | Tests unitarios    | 66/66 pasando            |
-| Build              | ✓ 629 ms, sin errores TS |
+| Build              | ✓ limpio, sin errores TS |
 | Bundle gzip        | 181.65 kB                |
 | Precache PWA       | 16 entries · 815 KB      |
 | PWA installable    | ✅ Chrome                |
+| Favicon            | ✅ llama Selah           |
 | Insignias          | 19                       |
 | Principios del día | 31                       |
+
+---
+
+## 2026-09-24 — FASE 2 · Visual · Handoffs PWA CERRADOS
+
+### [VISUAL] Cierre de los 3 handoffs visuales de PWA
+
+**Origen**: Admin cerró PWA en Fase 2 y dejó 4 handoffs. El #2 (textos
+"Mente en el Camino" → "Selah") es territorio UX. Los #1, #3 y #4 eran
+territorio Visual y quedaron cerrados en esta sesión.
+
+**Handoff 1 — `index.html` actualizado**
+
+- `lang="en"` → `lang="es"`.
+- `<title>` → `Selah — Trivia Bíblica` (alineado con `manifest.name`).
+- Añadido `<meta name="description">` con slogan.
+- Añadido `<meta name="theme-color" content="#F5B544">`.
+- Añadido `<link rel="apple-touch-icon" href="/apple-touch-icon.png">`.
+- Añadidas metas iOS: `apple-mobile-web-app-capable`,
+  `apple-mobile-web-app-status-bar-style`, `apple-mobile-web-app-title`.
+- `viewport-fit=cover` añadido (safe-area-inset en móviles con notch).
+- **No** se añadió `<link rel="manifest">` (lo inyecta `vite-plugin-pwa`).
+- Verificado en producción: pestaña muestra "Selah — Trivia Bíblica".
+
+**Handoff 3 — `public/favicon.svg` rediseñado**
+
+- Antes: rayo morado de Vite (default de plantilla).
+- Ahora: llama teardrop con gradiente `alba-400` → `alba-500` → `fuego-500`.
+- Núcleo interior (gota alargada) con gradiente alba claro.
+- Glow radial cálido detrás de la llama.
+- Fondo rounded square `rx=14` con gradiente `#151129` → `#060912`.
+- Diseño alineado 1:1 con los íconos PWA de Admin.
+- Peso: ~700 bytes.
+- Verificado abriendo `/favicon.svg` en navegador.
+
+**Handoff 4 — `public/icons.svg` eliminado**
+
+- Verificación runtime: DevTools → Network con filtro `icons.svg` →
+  0/8 requests.
+- Verificación código: búsqueda global en VS Code → 9 resultados, todos
+  en documentación, ninguno en `.tsx`, `.ts`, `.html` o `.css`.
+- Confirmado huérfano. Eliminado sin romper build ni runtime.
+
+**Commits en `main`**:
+
+- `[VISUAL] Handoff 1 PWA — index.html con marca Selah, theme-color y metas iOS`
+- `[VISUAL] Handoff 3 PWA — favicon.svg rediseñado como llama Selah (alba→fuego)`
+- `[VISUAL] Handoff 4 PWA — eliminar public/icons.svg (placeholder sin uso)`
+
+**Verificación técnica**:
+| Métrica | Valor |
+|---|---|
+| `npm run build` | ✅ limpio |
+| Manifest en producción | ✅ `Selah — Trivia Bíblica` |
+| theme_color en producción | ✅ `#F5B544` |
+| Favicon en producción | ✅ llama Selah |
+| Peticiones a `icons.svg` | 0 (eliminado) |
+| Tests unitarios | 66/66 |
+
+**Estado del área Visual**: ✅ Sin pendientes activos. Bloqueados hasta
+Test #2 (microinteracciones refinadas, modo claro opcional).
+
+**Handoffs restantes**:
+| # | Tarea | Área | Estado |
+|---|-------|------|--------|
+| 2 | Cambiar textos "Mente en el Camino" → "Selah" en pantallas | UX | ⏳ Activo |
+| 5 | Vercel Analytics + Core Web Vitals | Admin | ⏳ Pendiente |
+
+**Nota para Admin**: Chrome DevTools reporta 2 warnings opcionales en el
+manifest (falta campo `screenshots` para "Richer PWA Install UI"). No es
+un error. Pendiente futuro.
 
 ---
 
@@ -46,44 +118,27 @@ Formato: `[ÁREA] Descripción · Estado`.
 
 **Configurado en `vite.config.ts`**:
 
-- Manifest completo: `name: "Selah — Trivia Bíblica"`, `short_name: "Selah"`.
+- Manifest: `name: "Selah — Trivia Bíblica"`, `short_name: "Selah"`.
 - `theme_color: "#F5B544"`, `background_color: "#0B0F1A"`.
 - `display: "standalone"`, `orientation: "portrait"`.
-- 3 íconos PWA + apple-touch-icon registrados.
-- Workbox: autoUpdate, precache del shell, `devOptions.enabled: false`.
-
-**`.gitignore`**: añadida línea `dev-dist`.
+- 3 íconos PWA + apple-touch-icon.
+- Workbox: autoUpdate, precache del shell.
 
 **Nuevos assets en `public/`**:
 
-- `pwa-192x192.png`
-- `pwa-512x512.png`
-- `maskable-icon-512x512.png`
-- `apple-touch-icon.png` (180×180)
+- `pwa-192x192.png`, `pwa-512x512.png`, `maskable-icon-512x512.png`, `apple-touch-icon.png`.
 - Diseño: llama neón alba-500 → fuego-500 sobre noche-900.
-- Referencia: Jeremías 23:29 ("mi palabra es fuego"), Lucas 24:32.
+- Referencia: Jeremías 23:29 ("mi palabra es fuego").
 
-**Commit en `main`**: `[ADMIN] PWA configurada — manifest Selah + SW + íconos`
+**Verificación**:
 
-**Verificación técnica**:
-| Métrica | Valor |
-|---|---|
-| `npm run build` | ✅ |
-| `dist/manifest.webmanifest` | ✅ |
-| `dist/sw.js` + workbox | ✅ |
-| Precache | 16 entries · 815 KB |
-| Bundle JS gzip | 181.65 kB (baseline) |
-| Deploy Vercel | ✅ automático |
-| Install prompt Chrome | ✅ confirmado |
-
-**Handoffs pendientes** (territorio Visual/UX):
-
-| #   | Tarea                                                                 | Área destino |
-| --- | --------------------------------------------------------------------- | ------------ |
-| 1   | Actualizar `index.html` (título Selah, theme-color, apple-touch-icon) | Visual       |
-| 2   | Cambiar textos "Mente en el Camino" → "Selah" en pantallas            | UX           |
-| 3   | Rediseñar `public/favicon.svg` (hoy: rayo morado de Vite)             | Visual       |
-| 4   | Revisar/eliminar `public/icons.svg` (placeholder sin uso)             | Visual       |
+- `npm run build` ✅
+- `manifest.webmanifest` generado ✅
+- Service worker + workbox ✅
+- Precache: 16 entries · 815 KB
+- Bundle gzip: 181.65 kB (baseline)
+- Deploy Vercel ✅
+- Install prompt Chrome ✅
 
 ---
 
@@ -92,10 +147,9 @@ Formato: `[ÁREA] Descripción · Estado`.
 ### [SISTEMA] Documentación maestra
 
 - Creada documentación maestra del proyecto (`docs/`).
-- Estructurado el proyecto en 4 áreas: Funcional, Visual, UX, Admin.
+- 4 áreas: Funcional, Visual, UX, Admin.
 - Paleta "Noche y Alba" como fuente única de verdad visual.
-- Stack: React 19 · TypeScript · Vite 8 · Tailwind v4 · Zustand v5 ·
-  Dexie · Motion · vite-plugin-pwa.
+- Stack: React 19 · TypeScript · Vite 8 · Tailwind v4 · Zustand v5 · Dexie · Motion.
 
 ### [FEEDBACK] Test #1 — 5 jóvenes
 
@@ -111,63 +165,25 @@ Formato: `[ÁREA] Descripción · Estado`.
 - Funcional: dificultad adaptativa.
 - UX: microcopy cálido + identidad cristiana visible.
 
----
+### [VISUAL] Fase 1 — 4 rondas
 
-## 🎨 VISUAL — Resumen Fase 1
+- **Ronda 1**: Optimización + rediseño Results/Profile + Skeleton + HintDeduction microinteracciones.
+- **Ronda 2**: Modales custom (Modal, BadgeDetail, Prompt, Confirm).
+- **Ronda 3**: Migración paleta Home + scrollbar invisible.
+- **Ronda 4**: SortableList + VerseScramble + Timeline UI.
 
-### Ronda 1 — Optimización + rediseño base
+### [FUNCIONAL] Fase 1 — 3 rondas
 
-- `deviceTier.ts` (low/mid/high).
-- `AnimatedBackground` optimizado (60 → 0/8/15 estrellas, sin blurs).
-- `Results.tsx` rediseñado (podio 5 niveles).
-- `Profile.tsx` rediseñado (hero + vitrina).
-- `Skeleton.tsx` (6 variantes).
-- `HintDeductionQuestion` microinteracciones.
+- **Ronda 1**: dailyPrinciples + Badge.verse + dificultad adaptativa.
+- **Ronda 2**: Bugs críticos (Timer, pista inicial, tildes).
+- **Ronda 3**: Tipos verse-scramble + timeline + 14 datos + vitest (66 tests).
 
-### Ronda 2 — Modales custom
+### [UX] Fase 1 — 4 sesiones
 
-- `Modal.tsx`, `BadgeDetailModal.tsx`, `PromptDialog.tsx`, `ConfirmDialog.tsx`.
-- Focus trap + accesibilidad completa.
-
-### Ronda 3 — Cierre handoffs UX
-
-- `Home.tsx` migración paleta + pulido.
-- `index.css` scrollbar invisible + fix salto.
-
-### Ronda 4 — UI de los 2 tipos nuevos
-
-- `SortableList.tsx` + `VerseScrambleQuestion.tsx` + `TimelineQuestion.tsx`.
-
----
-
-## ⚙️ FUNCIONAL — Resumen Fase 1
-
-### Ronda 1 — Handoffs + dificultad adaptativa
-
-- `dailyPrinciples.ts` (31 principios).
-- `Badge.verse?` añadido.
-- `getRecentAccuracy` + `pickAdaptiveQuestions`.
-
-### Ronda 2 — Bugs críticos post-test
-
-- Timer reescrito con `requestAnimationFrame`.
-- Hint-deduction pista inicial gratis.
-- `normalizeAnswer()` para tildes.
-
-### Ronda 3 — Tipos nuevos + tests
-
-- `verse-scramble` + `timeline` implementados.
-- Banco: 56 → 70 preguntas.
-- Vitest setup: 66 tests pasando.
-
----
-
-## 🟣 UX — Resumen Fase 1
-
-- Sesión 1: Microcopy global + reorden Home.
-- Sesión 2: Microcopy tipos nuevos.
-- Sesión 3: Validación `SortableList` (fix aria-live).
-- Sesión 4: Validaciones navegador.
+- **Sesión 1**: Microcopy global + reorden Home.
+- **Sesión 2**: Microcopy tipos nuevos.
+- **Sesión 3**: Validación SortableList (fix aria-live).
+- **Sesión 4**: Validaciones navegador.
 
 ---
 
@@ -175,15 +191,12 @@ Formato: `[ÁREA] Descripción · Estado`.
 
 | #   | Tarea                                         | Área              | Estado          |
 | --- | --------------------------------------------- | ----------------- | --------------- |
-| 1   | Actualizar `index.html`                       | Visual            | 🔄 Activo       |
-| 2   | Cambiar textos "Mente en el Camino" → "Selah" | UX                | ⏳              |
-| 3   | Rediseñar `favicon.svg`                       | Visual            | 🔄 Activo       |
-| 4   | Revisar `icons.svg`                           | Visual            | 🔄 Activo       |
-| 5   | Vercel Analytics + Core Web Vitals            | Admin             | ⏳              |
-| 6   | Validar en móvil real (Test #2)               | UX                | ⏳              |
-| 7   | Ampliar banco 70 → 100+                       | Funcional         | 🟡 Post Test #2 |
-| 8   | Onboarding primera vez                        | UX                | ⏸               |
-| 9   | Migración a Supabase                          | Admin + Funcional | 🟢              |
+| 1   | Cambiar textos "Mente en el Camino" → "Selah" | UX                | 🔄 Activo       |
+| 2   | Vercel Analytics + Core Web Vitals            | Admin             | ⏳              |
+| 3   | Validar en móvil real (Test #2)               | UX                | ⏳              |
+| 4   | Ampliar banco 70 → 100+                       | Funcional         | 🟡 Post Test #2 |
+| 5   | Onboarding primera vez                        | UX                | ⏸               |
+| 6   | Migración a Supabase                          | Admin + Funcional | 🟢              |
 
 ---
 
