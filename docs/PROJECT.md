@@ -126,37 +126,32 @@ Configurada en @theme de src/index.css (Tailwind v4).
 - GitHub Desktop para commits (no terminal)
 
 ## 9. Estado de las áreas
+| Área | Estado | Pendientes |
+|------|--------|-----------|
+| Funcional | ✅ Fase 1 cerrada | Ampliar banco 70 → 100+ (post Test #2) |
+| Visual | ✅ Fase 2 limpia | Bloqueado hasta Test #2 |
+| UX | ✅ Handoffs cerrados | Test #2 con los 5 jóvenes |
+| Admin | ⏳ Tarea 3 esperando datos | Core Web Vitals (24-48h) · Supabase (Fase 2.5) |
 
-| Área      | Estado                     | Pendientes                                     |
-| --------- | -------------------------- | ---------------------------------------------- |
-| Funcional | ✅ Fase 1 cerrada          | Ampliar banco 70 → 100+ (post Test #2)         |
-| Visual    | 🔄 Fix género TapToPlace   | aria-labels con itemGender prop                |
-| UX        | ✅ Handoffs 1 y 2 cerrados | Test #2 con los 5 jóvenes                      |
-| Admin     | ⏳ Tarea 3 esperando datos | Core Web Vitals (24-48h) · Supabase (Fase 2.5) |
-
-## 10. Roadmap Fase 2 (post-Test #2)
-
+## 10. Roadmap Fase 2
 ### Prioridad 1 — Producción real
-
 - [x] Configurar PWA (manifest, íconos, service worker) [Admin ✅]
 - [x] Cerrar handoffs visuales PWA [Visual ✅]
 - [x] Implementar TapToPlace (drag → tap) [Visual ✅]
 - [x] Vercel Analytics + Speed Insights [Admin ✅]
 - [x] Cambiar textos "Mente en el Camino" → "Selah" [UX ✅]
 - [x] Adaptar microcopy "palabra" → "evento" en Timeline [UX ✅]
-- [ ] Fix género gramatical en TapToPlace [Visual 🔄]
+- [x] Fix género gramatical en TapToPlace [Visual ✅]
+- [ ] **Test #2 con los 5 jóvenes** ← PRÓXIMO
 - [ ] Medir Core Web Vitals reales (24-48h) [Admin ⏳]
-- [ ] Test #2 con los 5 jóvenes [UX ⏳]
 
 ### Prioridad 2 — Crecimiento
-
 - [ ] Ampliar banco a 100+ preguntas [Funcional]
 - [ ] Onboarding de primera vez [UX]
 - [ ] Sistema de notificaciones para racha [UX + Admin]
 - [ ] Migración a Supabase (Fase 2.5) [Admin + Funcional]
 
 ### Prioridad 3 — Pulido
-
 - [ ] Análisis Test #2 y siguientes [UX]
 - [ ] Microinteracciones refinadas [Visual]
 - [ ] Modo claro opcional [Visual]
