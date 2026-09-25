@@ -44,27 +44,24 @@ WCAG 2.2 AA · 2.5.7 (Dragging Movements). Decisión UX autorizada por
 product owner.
 
 **Motivos del cambio**:
-
 - Lag táctil en móvil con Motion Reorder (~300 ms de espera por `touch-action`).
 - `whileDrag` animaba `boxShadow` y `borderColor` → repaint por frame.
 - 3 fases (hold + move + release) → 1 toque.
 - Accesibilidad teclado/lector: difícil → natural.
 
 **Archivos nuevos**:
-
 - `src/components/questions/TapToPlace.tsx` — componente genérico
   tap-to-place. Recibe `items: string[]` (ya desordenados por el juego)
   y devuelve `onAnswer(order: number[])` con índices sobre `items`.
 
 **Archivos modificados**:
-
 - `src/components/questions/VerseScrambleQuestion.tsx` — usa `TapToPlace`
   en vez de `SortableList`. Microcopy: "Toca una palabra y colócala en
   su orden. Toca de nuevo para devolverla."
 - `src/components/questions/TimelineQuestion.tsx` — usa `TapToPlace`.
   Microcopy: "Toca una palabra y colócala en su orden. Toca de nuevo para
-  devolverla." ⚠️ _Adaptación de "palabra" → "evento" pendiente de
-  confirmación UX (Pendiente #10)._
+  devolverla." ⚠️ *Adaptación de "palabra" → "evento" pendiente de
+  confirmación UX (Pendiente #10).*
 - `src/components/questions/SortableList.tsx` — marcado como
   `@deprecated` con comentario guía. NO borrado todavía (ver Pendiente #8).
 - `src/components/Button.tsx` — **fix de paleta**: reemplazados `amber-*`,
@@ -74,13 +71,11 @@ product owner.
   `focus-visible:ring-offset-noche-900` para coherencia.
 
 **Cambios de comportamiento**:
-
 - Botón "Confirmar orden" pasa de "siempre habilitado" (SortableList) a
   "habilitado solo al llenar todos los slots" (TapToPlace). Decisión UX
   para eliminar envíos incompletos.
 
 **Accesibilidad implementada**:
-
 - Chips son `<button>` → Tab + Enter/Space.
 - `aria-live="polite"` anuncia "X colocada en posición N de M" y
   "X devuelta al banco".
@@ -90,7 +85,6 @@ product owner.
 - Respeta `prefers-reduced-motion` (Motion solo anima `opacity` y `scale`).
 
 **Impacto en bundle**:
-
 - Bundle gzip: 181.65 kB → **179.39 kB** (−2.26 kB).
 - Precache PWA: 16 → **15 entries** · 815 KB → **799 KB** (−16 KB).
 - Sin dependencias nuevas.
@@ -98,14 +92,12 @@ product owner.
 **Tests**: 66/66 siguen pasando. Lógica de negocio intacta.
 
 **Pendientes generados por este handoff**:
-
 - 🔵 Retirar `SortableList.tsx` definitivamente tras Post-Test #2 si
   sigue sin uso (Pendiente #8).
 - ⚠️ Microcopy de Timeline: "palabra" → "evento" pendiente de confirmar
   con UX (Pendiente #10).
 
 **Commits en `main`**:
-
 - `[VISUAL] Handoff UX — TapToPlace reemplaza drag & drop en verse-scramble y timeline + fix paleta Button`
 - `[VISUAL] CHANGELOG — Handoff UX TapToPlace cerrado + fix Button.tsx`
 
@@ -125,11 +117,11 @@ product owner.
 fix paleta Button. Sin pendientes activos hasta Test #2.
 
 **Handoffs restantes**:
-| # | Tarea | Área | Estado |
+| #   | Tarea                                              | Área              | Estado          |
 | --- | -------------------------------------------------- | ----------------- | --------------- |
-| 2 | Cambiar textos "Mente en el Camino" → "Selah" | UX | ⏳ Pendiente |
-| 3 | Vercel Analytics + Core Web Vitals | Admin | ⏳ Pendiente |
-| 10 | Adaptar microcopy "palabra" → "evento" en Timeline | UX | ⏳ Pendiente |
+| 2   | Cambiar textos "Mente en el Camino" → "Selah"      | UX                | ⏳ Pendiente    |
+| 3   | Vercel Analytics + Core Web Vitals                 | Admin             | ⏳ Pendiente    |
+| 10  | Adaptar microcopy "palabra" → "evento" en Timeline | UX                | ⏳ Pendiente    |
 
 **Nota para Admin**: Chrome DevTools reporta 2 warnings opcionales en el
 manifest (falta campo `screenshots` para "Richer PWA Install UI"). No es
