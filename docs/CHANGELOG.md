@@ -3,19 +3,19 @@
 Registro cronológico de cambios por área (Funcional, Visual, UX, Admin).
 Formato: `[ÁREA] Descripción · Estado`.
 
-**Última actualización**: 2026-09-24 · Fase 2 · Visual cerró handoffs PWA. UX activo.
+**Última actualización**: 2026-09-25 · Fase 2 · UX entregó handoff TapToPlace a Visual.
 **Estado del proyecto**: PWA instalable. Fase 2 en curso.
 
 ---
 
 ## 📊 ESTADO GLOBAL ACTUAL
 
-| Área          | Estado             | Pendiente real                                |
-| ------------- | ------------------ | --------------------------------------------- |
-| **Funcional** | ✅ Fase 1 cerrada  | Ampliar banco 70 → 100+ (post Test #2)        |
-| **Visual**    | ✅ Fase 2 cerrada  | Bloqueado hasta Test #2                       |
-| **UX**        | 🔄 Fase 2 activa   | Cambiar textos "Mente en el Camino" → "Selah" |
-| **Admin**     | ✅ Tarea 1 cerrada | Analytics + Core Web Vitals + Supabase        |
+| Área          | Estado               | Pendiente real                                |
+| ------------- | -------------------- | --------------------------------------------- |
+| **Funcional** | ✅ Fase 1 cerrada    | Ampliar banco 70 → 100+ (post Test #2)        |
+| **Visual**    | 🔄 Fase 2 activa     | Implementar TapToPlace (handoff UX)           |
+| **UX**        | ✅ Handoff entregado | Cambiar textos "Mente en el Camino" → "Selah" |
+| **Admin**     | ✅ Tarea 1 cerrada   | Analytics + Core Web Vitals + Supabase        |
 
 **Métricas**:
 
@@ -32,6 +32,71 @@ Formato: `[ÁREA] Descripción · Estado`.
 | Favicon            | ✅ llama Selah           |
 | Insignias          | 19                       |
 | Principios del día | 31                       |
+
+---
+
+## 2026-09-25 — FASE 2 · UX · Handoff a Visual (PENDIENTE)
+
+### [UX→VISUAL] Reemplazar drag & drop por tap-to-place en Timeline y Verse-scramble
+
+**Estado**: ⏳ Pendiente de Visual.
+
+**Origen**: Feedback de testers. El drag & drop (`SortableList.tsx` con
+Motion Reorder) tiene retraso táctil en móvil y se percibe tedioso.
+Además, incumple WCAG 2.2 AA · 2.5.7 (Dragging Movements).
+
+**Decisión UX** (autorizada por product owner): reemplazar el modelo de
+interacción por "tap-to-place" (sentence builder tipo Duolingo/Kahoot).
+Un toque = una acción. Cero arrastre.
+
+**Territorio**: Visual. UX entrega spec completo, no implementa.
+
+**Archivos afectados** (Visual):
+
+- `src/components/questions/SortableList.tsx` → crear reemplazo
+  `TapToPlace.tsx`. No borrar `SortableList.tsx` hasta confirmar que
+  nadie más lo usa.
+- `src/components/questions/TimelineQuestion.tsx` → cambiar import.
+- `src/components/questions/VerseScrambleQuestion.tsx` → cambiar import.
+
+**Archivos que NO se tocan**:
+
+- `src/store/useGameStore.ts` (Funcional). Firma `onAnswer(order: number[])`
+  se mantiene.
+- `src/types/index.ts` (Funcional). Estructura de datos se mantiene.
+
+**Argumento objetivo** (además del feedback):
+
+- Velocidad percibida: 3 fases (hold+move+release) → 1 toque.
+- Precisión motora requerida: alta → baja.
+- Accesibilidad teclado/lector: difícil → natural.
+- WCAG 2.2 AA · 2.5.7: ❌ incumple → ✅ cumple.
+
+**Diagnóstico técnico del lag actual** (por si Visual quiere referencia):
+
+1. `SortableList.tsx` no tiene `touch-action` → el navegador espera
+   ~300 ms al primer toque para decidir scroll vs drag.
+2. `whileDrag` anima `boxShadow` y `borderColor` → repaint completo por frame.
+3. Motion Reorder mide el DOM en cada `pointermove` → jank con 10 ítems.
+4. `layoutScroll` en `Reorder.Group` es overhead innecesario aquí.
+5. Sin `dragMomentum={false}` ni `dragElastic={0}` → se siente resbaloso.
+
+**Microcopy nuevo** (territorio UX, fijo):
+
+- Hint: `"Toca una palabra y colócala en su orden. Toca de nuevo para devolverla."`
+  (reemplaza `"Arrastra para ordenar. También puedes usar las flechas."`)
+
+**Impacto en métricas esperadas**:
+
+- Sin cambio en bundle (se reemplaza un componente por otro similar).
+- Sin cambio en tests unitarios (lógica intacta).
+
+**Bloqueantes/riesgos**:
+
+- Si algún componente fuera de estos 3 también importa `SortableList.tsx`,
+  Visual debe reportarlo antes de retirarlo.
+- Botón "Confirmar orden" cambia de "siempre habilitado" a "habilitado
+  al llenar todos los slots" → decisión UX para eliminar envíos incompletos.
 
 ---
 
@@ -91,13 +156,13 @@ territorio Visual y quedaron cerrados en esta sesión.
 | Peticiones a `icons.svg` | 0 (eliminado) |
 | Tests unitarios | 66/66 |
 
-**Estado del área Visual**: ✅ Sin pendientes activos. Bloqueados hasta
-Test #2 (microinteracciones refinadas, modo claro opcional).
+**Estado del área Visual**: ✅ Handoffs PWA cerrados. Ahora trabaja en
+TapToPlace (handoff UX).
 
 **Handoffs restantes**:
 | # | Tarea | Área | Estado |
 |---|-------|------|--------|
-| 2 | Cambiar textos "Mente en el Camino" → "Selah" en pantallas | UX | ⏳ Activo |
+| 2 | Cambiar textos "Mente en el Camino" → "Selah" | UX | ⏳ Pendiente |
 | 5 | Vercel Analytics + Core Web Vitals | Admin | ⏳ Pendiente |
 
 **Nota para Admin**: Chrome DevTools reporta 2 warnings opcionales en el
@@ -158,12 +223,14 @@ un error. Pendiente futuro.
 1. **Rendimiento**: algunos teléfonos sienten la app pesada y lenta.
 2. **Preguntas trampa**: molestan al mezclarse con fáciles.
 3. **Percepción general**: "se siente vacía", "sin principios".
+4. **Nuevo (Fase 2)**: drag & drop con lag táctil en móvil.
 
 **Acciones**:
 
 - Visual: optimización (deviceTier + AnimatedBackground).
 - Funcional: dificultad adaptativa.
 - UX: microcopy cálido + identidad cristiana visible.
+- UX→Visual: TapToPlace (Fase 2, pendiente).
 
 ### [VISUAL] Fase 1 — 4 rondas
 
@@ -191,12 +258,14 @@ un error. Pendiente futuro.
 
 | #   | Tarea                                         | Área              | Estado          |
 | --- | --------------------------------------------- | ----------------- | --------------- |
-| 1   | Cambiar textos "Mente en el Camino" → "Selah" | UX                | 🔄 Activo       |
-| 2   | Vercel Analytics + Core Web Vitals            | Admin             | ⏳              |
-| 3   | Validar en móvil real (Test #2)               | UX                | ⏳              |
-| 4   | Ampliar banco 70 → 100+                       | Funcional         | 🟡 Post Test #2 |
-| 5   | Onboarding primera vez                        | UX                | ⏸               |
-| 6   | Migración a Supabase                          | Admin + Funcional | 🟢              |
+| 1   | Implementar TapToPlace (drag → tap)           | Visual            | 🔄 Activo       |
+| 2   | Cambiar textos "Mente en el Camino" → "Selah" | UX                | ⏳              |
+| 3   | Vercel Analytics + Core Web Vitals            | Admin             | ⏳              |
+| 4   | Validar en móvil real (Test #2)               | UX                | ⏳              |
+| 5   | Ampliar banco 70 → 100+                       | Funcional         | 🟡 Post Test #2 |
+| 6   | Onboarding primera vez                        | UX                | ⏸               |
+| 7   | Migración a Supabase                          | Admin + Funcional | 🟢              |
+| 8   | Retirar `SortableList.tsx` definitivamente    | Visual            | 🟢 Post Test #2 |
 
 ---
 

@@ -54,7 +54,7 @@ src/
 │ ├── Button, Card, ProgressBar, Timer, BadgeCard, CategoryCard
 │ ├── ScoreFeedback, QuestionRenderer, AnimatedBackground, GradientText
 │ ├── StatPill, Skeleton, Modal, BadgeDetailModal, PromptDialog, ConfirmDialog
-│ └── questions/ → 7 tipos + SortableList + 2 wrappers
+│ └── questions/ → 7 tipos + SortableList (deprecating) + 2 wrappers
 ├── screens/
 │ ├── Home.tsx → rediseñado (identidad + reto + bitácora + sendas)
 │ ├── Game.tsx → rediseñado (dots + timer flotante + racha)
@@ -65,8 +65,7 @@ public/
 ├── pwa-512x512.png
 ├── maskable-icon-512x512.png
 ├── apple-touch-icon.png
-├── favicon.svg (pendiente rediseñar)
-└── icons.svg (pendiente revisar)
+└── favicon.svg → llama Selah (alba→fuego)
 
 ## 4. Sistema de juego
 
@@ -89,6 +88,12 @@ public/
 2. timeline · 6. fill-blank · 7. hint-deduction
 
 Todos con: explanation + verse + verseText + application + reflection.
+
+**Nota Fase 2**: `verse-scramble` y `timeline` están migrando de drag & drop
+(`SortableList.tsx`) a tap-to-place (`TapToPlace.tsx`) por decisión UX.
+Motivo: lag táctil en móvil + incumplimiento WCAG 2.2 AA · 2.5.7.
+Microcopy nuevo: "Toca una palabra y colócala en su orden. Toca de nuevo
+para devolverla."
 
 ## 6. Paleta "Noche y Alba"
 
@@ -122,22 +127,23 @@ Configurada en @theme de src/index.css (Tailwind v4).
 
 ## 9. Estado de las áreas
 
-| Área      | Estado             | Pendientes                                    |
-| --------- | ------------------ | --------------------------------------------- |
-| Funcional | ✅ Fase 1 cerrada  | Ampliar banco 70 → 100+ (post Test #2)        |
-| Visual    | ✅ Fase 2 cerrada  | Bloqueado hasta Test #2                       |
-| UX        | 🔄 Fase 2 activa   | Cambiar textos "Mente en el Camino" → "Selah" |
-| Admin     | ✅ Tarea 1 cerrada | Analytics + Core Web Vitals + Supabase        |
+| Área      | Estado               | Pendientes                                              |
+| --------- | -------------------- | ------------------------------------------------------- |
+| Funcional | ✅ Fase 1 cerrada    | Ampliar banco 70 → 100+ (post Test #2)                  |
+| Visual    | 🔄 Fase 2 activa     | Implementar TapToPlace (handoff UX)                     |
+| UX        | ✅ Handoff entregado | Cambiar textos "Mente en el Camino" → "Selah" + Test #2 |
+| Admin     | ✅ Tarea 1 cerrada   | Analytics + Core Web Vitals + Supabase                  |
 
 ## 10. Roadmap Fase 2 (post-Test #2)
 
 ### Prioridad 1 — Producción real
 
 - [x] Configurar PWA (manifest, íconos, service worker) [Admin ✅]
-- [ ] Cerrar handoffs visuales PWA [Visual]
-- [ ] Cambiar textos "Mente en el Camino" → "Selah" [UX]
-- [ ] Instalar Vercel Analytics + Speed Insights [Admin]
-- [ ] Medir Core Web Vitals reales en móvil [Admin]
+- [x] Cerrar handoffs visuales PWA [Visual ✅]
+- [ ] Implementar TapToPlace (drag & drop → tap) [Visual 🔄]
+- [ ] Cambiar textos "Mente en el Camino" → "Selah" [UX ⏳]
+- [ ] Instalar Vercel Analytics + Speed Insights [Admin ⏳]
+- [ ] Medir Core Web Vitals reales en móvil [Admin ⏳]
 
 ### Prioridad 2 — Crecimiento
 
@@ -176,6 +182,7 @@ Configurada en @theme de src/index.css (Tailwind v4).
 | Bundle gzip        | 181.65 kB           |
 | Precache PWA       | 16 entries · 815 KB |
 | PWA installable    | ✅ Chrome           |
+| Favicon            | ✅ llama Selah      |
 
 ## 13. Historial de fases
 
@@ -183,5 +190,27 @@ Configurada en @theme de src/index.css (Tailwind v4).
   Funcional (3 rondas) · Visual (4 rondas) · UX (4 sesiones).
 - **Fase 2** (en curso): producción, medición, crecimiento.
   - Admin: PWA configurada + rebrand a Selah. ✅
-  - Visual: cerrando handoffs PWA. 🔄
-  - UX: pendiente cambiar textos. ⏳
+  - Visual: handoffs PWA cerrados. 🔄 TapToPlace en curso.
+  - UX: handoff TapToPlace entregado. ⏳ Textos Selah pendientes.
+
+## 14. Archivos críticos por área
+
+**Funcional**: types, data, db, store, scoring.
+**Visual**: index.css, animations, components visuales, index.html, favicon.
+**UX**: screens, microcopy, ScoreFeedback, QuestionRenderer.
+**Admin**: vite.config.ts, package.json, public/ (íconos), docs/.
+
+## 15. Workflow de trabajo
+
+1. Product owner (usuario) recibe tarea o la identifica.
+2. Se abre el chat del área correspondiente.
+3. Se pegan los 3 documentos: PROJECT.md, CONTEXT-\*.md, CHANGELOG.md.
+4. Chat entrega solución.
+5. Product owner aplica, verifica, commitea, hace push.
+6. Vercel redeploya.
+7. Se actualiza CHANGELOG.md.
+8. Handoffs entre áreas se anotan en el CHANGELOG.
+
+---
+
+**Fin del PROJECT.md (Fase 2).**
