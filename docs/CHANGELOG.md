@@ -3,19 +3,19 @@
 Registro cronológico de cambios por área (Funcional, Visual, UX, Admin).
 Formato: `[ÁREA] Descripción · Estado`.
 
-**Última actualización**: 2026-09-25 · Fase 2 · Admin cerró Analytics. UX activo con 2 handoffs.
+**Última actualización**: 2026-09-25 · Fase 2 · Visual cerró handoff género TapToPlace.
 **Estado del proyecto**: PWA instalable + métricas activas. Fase 2 en curso.
 
 ---
 
 ## 📊 ESTADO GLOBAL ACTUAL
 
-| Área          | Estado                     | Pendiente real                         |
-| ------------- | -------------------------- | -------------------------------------- |
-| **Funcional** | ✅ Fase 1 cerrada          | Ampliar banco 70 → 100+ (post Test #2) |
-| **Visual**    | ✅ Fase 2 limpia           | Bloqueado hasta Test #2                |
-| **UX**        | ⏳ 2 handoffs              | Textos "Selah" + microcopy Timeline    |
-| **Admin**     | ⏳ Tarea 3 esperando datos | Core Web Vitals · Supabase (Fase 2.5)  |
+| Área          | Estado                     | Pendiente real                                 |
+| ------------- | -------------------------- | ---------------------------------------------- |
+| **Funcional** | ✅ Fase 1 cerrada          | Ampliar banco 70 → 100+ (post Test #2)         |
+| **Visual**    | ✅ Fase 2 limpia           | Bloqueado hasta Test #2                        |
+| **UX**        | ✅ Handoffs 1 y 2 cerrados | Test #2 con los 5 jóvenes                      |
+| **Admin**     | ⏳ Tarea 3 esperando datos | Core Web Vitals (24-48h) · Supabase (Fase 2.5) |
 
 **Métricas**:
 
@@ -35,208 +35,92 @@ Formato: `[ÁREA] Descripción · Estado`.
 
 ---
 
-## 2026-09-25 — FASE 2 · Admin · Tarea 2 CERRADA: Analytics
+## 2026-09-25 — FASE 2 · Visual · Handoff género TapToPlace CERRADO
 
-### [ADMIN] Vercel Analytics + Speed Insights integradas
+### [VISUAL] Concordancia de género en TapToPlace (handoff UX)
 
-**Origen**: Tarea 2 de Admin en Fase 2. Objetivo: tener datos objetivos
-antes del Test #2 con los 5 jóvenes.
+**Origen**: Al adaptar Timeline ("palabra" → "evento") se detectó que
+`TapToPlace.tsx` usaba pronombres femeninos fijos en `aria-label` y
+`aria-live`. Correcto para `verse-scramble` (palabras), incorrecto para
+`timeline` (eventos).
 
-**Dependencias instaladas**:
+**Solución implementada**:
 
-- `@vercel/analytics` — page views, visitors, bounce rate, referrers.
-- `@vercel/speed-insights` — Core Web Vitals reales (LCP, INP, CLS).
-
-**Integración en código** (handoff Admin → Funcional, aplicado):
-
-- `src/main.tsx`: añadidos `<Analytics />` y `<SpeedInsights />` dentro de
-  `<StrictMode>` y después de `<App />`. Colocados al final del árbol para
-  no bloquear el render inicial (protege LCP).
-
-**Activación en Vercel dashboard**:
-
-- Web Analytics: activado en plan **Hobby (Free)**.
-- Speed Insights: activado en plan **Hobby (Free)**.
-- **Costo: $0/mes.**
-
-**Documentación creada**:
-
-- `docs/ANALYTICS.md` — guía completa de interpretación: qué se mide y qué
-  no, métricas de uso, Core Web Vitals con umbrales, protocolo de escalado,
-  limitaciones del plan Hobby, cómo acceder al dashboard.
-
-**Verificación técnica**:
-| Métrica | Valor | Cambio |
-|---|---|---|
-| Módulos transformados | 474 | +2 |
-| Bundle JS gzip | 180.87 kB | +1.48 kB |
-| CSS gzip | 10.22 kB | +0.08 kB |
-| Precache PWA | 15 entries · 803.84 KB | +4.84 KB |
-| Build time | 1.36 s | limpio |
-| Errores TS | 0 | — |
-| Tests unitarios | 66/66 | sin cambio |
-
-**Verificación en producción**:
-
-- ✅ Analytics muestra datos reales (1 visitor, 5 page views, 0% bounce).
-- ⏳ Speed Insights: esperando ~24-48h de tráfico real.
-
-**Commits en `main`**:
-
-- `[ADMIN] Vercel Analytics + Speed Insights — integración`
-- `[ADMIN] docs/ANALYTICS.md — guía de interpretación`
-
-**Handoffs restantes**:
-| # | Tarea | Área | Estado |
-|---|-------|------|--------|
-| 1 | Textos "Mente en el Camino" → "Selah" | UX | ⏳ |
-| 2 | Microcopy "palabra" → "evento" en Timeline | UX | ⏳ |
-
----
-
-## 2026-09-25 — FASE 2 · Visual · Handoff UX TapToPlace CERRADO
-
-### [VISUAL] TapToPlace reemplaza drag & drop + fix paleta Button
-
-**Origen**: Handoff UX del 2026-09-25. Feedback de testers +
-incumplimiento WCAG 2.2 AA · 2.5.7.
-
-**Archivos nuevos**:
-
-- `src/components/questions/TapToPlace.tsx` — componente genérico
-  tap-to-place. Recibe `items: string[]` y devuelve `onAnswer(order: number[])`.
+- Nueva prop opcional `itemGender?: "f" | "m"` con default `"f"`
+  (retrocompatible con `verse-scramble`).
+- Objeto `pron` interno resuelve las 4 variantes:
+  - `colocada` / `colocado`
+  - `devuelta` / `devuelto`
+  - `colocarla` / `colocarlo`
+  - `devolverla` / `devolverlo`
+- `TimelineQuestion.tsx` pasa `itemGender="m"`.
+- Aprovechado el cambio para adaptar el hint de Timeline:
+  "Toca un evento y colócalo en su orden. Toca de nuevo para devolverlo."
+  (cierra Pendiente #10).
 
 **Archivos modificados**:
 
-- `src/components/questions/VerseScrambleQuestion.tsx` — usa TapToPlace.
-- `src/components/questions/TimelineQuestion.tsx` — usa TapToPlace.
-- `src/components/questions/SortableList.tsx` — marcado `@deprecated`.
-- `src/components/Button.tsx` — **fix de paleta**: `amber-*`, `slate-*`,
-  `red-*` reemplazados por `alba-*`, `noche-*`, `alerta-*`. Variante
-  `reino` añadida.
+- `src/components/questions/TapToPlace.tsx`
+- `src/components/questions/TimelineQuestion.tsx`
 
-**Cambios de comportamiento**:
+**Archivos sin cambios**:
 
-- Botón "Confirmar orden" pasa a habilitarse solo al llenar todos los slots.
+- `src/components/questions/VerseScrambleQuestion.tsx` (usa default "f").
 
-**Accesibilidad implementada**:
+**Accesibilidad**:
 
-- Chips son `<button>` → Tab + Enter/Space.
-- `aria-live="polite"` anuncia colocación/devolución.
-- `aria-describedby` apunta al hint.
-- Focus visible con ring `alba-400`.
-- Tamaño táctil ≥44px.
-- Respeta `prefers-reduced-motion`.
+- Lector de pantalla anuncia concordancia correcta en ambos tipos.
+- Sin cambios en comportamiento táctil/teclado.
+- Sin cambios en paleta, animaciones o bundle.
 
-**Impacto en bundle**:
+**Verificación**:
+| Métrica | Valor |
+|---|---|
+| `npm run build` | ✅ limpio |
+| Tests unitarios | ✅ 66/66 |
+| Lector de pantalla en Timeline | ✅ verificado en local |
+| Lector de pantalla en Verse-scramble | ✅ verificado en local |
 
-- Bundle gzip: 181.65 → 179.39 kB (−2.26 kB).
-- Precache: 16 → 15 entries.
+**Commit en `main`**:
 
-**Tests**: 66/66.
+- `[VISUAL] Handoff UX — Concordancia de género en TapToPlace (itemGender prop)`
 
----
-
-## 2026-09-24 — FASE 2 · Visual · Handoffs PWA CERRADOS
-
-### [VISUAL] Cierre de los 3 handoffs visuales de PWA
-
-**Handoff 1 — `index.html` actualizado**:
-
-- `lang="en"` → `lang="es"`.
-- `<title>` → `Selah — Trivia Bíblica`.
-- Añadidos: meta description, theme-color #F5B544, apple-touch-icon,
-  metas iOS, viewport-fit=cover.
-
-**Handoff 3 — `public/favicon.svg` rediseñado**:
-
-- Llama teardrop con gradiente alba→fuego sobre noche.
-- Peso: ~700 bytes.
-
-**Handoff 4 — `public/icons.svg` eliminado**:
-
-- Confirmado huérfano (0 requests, 0 imports en código).
+**Estado del área Visual**: ✅ Sin pendientes activos. Bloqueado hasta Test #2.
 
 ---
 
-## 2026-09-24 — FASE 2 · Admin · Tarea 1 CERRADA: PWA
+## 2026-09-25 — FASE 2 · UX → VISUAL · Handoff género en TapToPlace
 
-### [ADMIN] PWA configurada + rebrand a "Selah"
+### [UX→VISUAL] Pronombres de género hardcodeados en TapToPlace
 
-**Decisión de marca**:
+**Estado**: ✅ Cerrado por Visual (ver entrada "2026-09-25 · Visual · Handoff género TapToPlace CERRADO" arriba).
 
-- Nombre público: **Selah** ("pausa, medita" — hebreo, Salmos).
-- Slogan: "Pausa. Reflexiona. Aprende."
-- Nombre interno del repo: `mente-en-el-camino` (no cambia).
+**Origen**: Al adaptar Timeline ("palabra" → "evento") se detectó que
+`TapToPlace.tsx` usa pronombres femeninos fijos en `aria-label` y `aria-live`.
+Correcto para verse-scramble, incorrecto para timeline.
 
-**Configurado**: `vite.config.ts` con manifest, Workbox, íconos.
-**Assets**: `pwa-192x192.png`, `pwa-512x512.png`, `maskable-icon-512x512.png`, `apple-touch-icon.png`.
-**Verificación**: build limpio, install prompt Chrome OK, Vercel deploy OK.
+**Impacto**: Usuarios con lector de pantalla en Timeline escuchan
+concordancia incorrecta ("Diluvio colocada en posición 1").
 
----
+**Archivos afectados** (Visual):
 
-## 2026-09-23 / 2026-09-24 — FASE 1 (consolidado)
+- `src/components/questions/TapToPlace.tsx` → añadir prop opcional
+  `itemGender?: "f" | "m"` (default `"f"`). Ajustar 4 strings:
+  - `aria-label` slot: "Activa para devolver**la** al banco."
+  - `aria-label` banco: "Activa para colocar**la** en el siguiente espacio..."
+  - `aria-live` colocar: "... **colocada** en posición N..."
+  - `aria-live` devolver: "... **devuelta** al banco."
+- `src/components/questions/TimelineQuestion.tsx` → pasar `itemGender="m"`.
 
-### [SISTEMA] Documentación maestra
+**Propuesta de solución**:
 
-- 4 áreas: Funcional, Visual, UX, Admin.
-- Paleta "Noche y Alba" como fuente única de verdad visual.
-
-### [FEEDBACK] Test #1 — 5 jóvenes
-
-**Hallazgos**:
-
-1. Rendimiento (móviles gama baja).
-2. Preguntas trampa mezcladas con fáciles.
-3. "Se siente vacía", "sin principios".
-4. Drag & drop con lag táctil (Fase 2).
-
-**Acciones**: deviceTier + AnimatedBackground, dificultad adaptativa,
-microcopy cálido, TapToPlace.
-
-### [VISUAL] Fase 1 — 4 rondas
-
-Ronda 1: Optimización + Results/Profile. Ronda 2: Modales custom.
-Ronda 3: Home + scrollbar. Ronda 4: SortableList + tipos nuevos.
-
-### [FUNCIONAL] Fase 1 — 3 rondas
-
-Ronda 1: dailyPrinciples + dificultad adaptativa.
-Ronda 2: Bugs críticos (Timer, pista, tildes).
-Ronda 3: Tipos nuevos + 14 datos + vitest (66 tests).
-
-### [UX] Fase 1 — 4 sesiones
-
-Sesión 1: Microcopy global. Sesión 2: Microcopy tipos nuevos.
-Sesión 3: Validación SortableList. Sesión 4: Validaciones navegador.
-
----
-
-## 📋 Pendientes activos (Fase 2)
-
-| #   | Tarea                                         | Área              | Estado             |
-| --- | --------------------------------------------- | ----------------- | ------------------ |
-| 1   | Cambiar textos "Mente en el Camino" → "Selah" | UX                | 🔄 Activo          |
-| 2   | Microcopy "palabra" → "evento" en Timeline    | UX                | 🔄 Activo          |
-| 3   | Core Web Vitals (24-48h)                      | Admin             | ⏳ Esperando datos |
-| 4   | Test #2 con los 5 jóvenes                     | UX                | ⏳ Post handoffs   |
-| 5   | Ampliar banco 70 → 100+                       | Funcional         | 🟡 Post Test #2    |
-| 6   | Onboarding primera vez                        | UX                | ⏸                  |
-| 7   | Migración a Supabase (Fase 2.5)               | Admin + Funcional | 🟢                 |
-| 8   | Retirar `SortableList.tsx` definitivamente    | Visual            | 🟢 Post Test #2    |
-
----
-
-## 🔑 Reglas de oro
-
-1. Nunca romper lógica funcional sin avisar.
-2. Mobile-first siempre.
-3. Nunca exponer `node_modules` a GitHub.
-4. Cada respuesta enseña.
-5. Contenido teológico revisado (RVR1960).
-6. Optimizar peso.
-7. Un chat por área, todo pasa por el usuario (product owner).
-
----
-
-**Fin del CHANGELOG.**
+```tsx
+interface TapToPlaceProps {
+  // ... resto igual
+  /**
+   * Género gramatical de los ítems, para concordancia de pronombres
+   * en aria-labels y aria-live. Default: "f" (compat con verse-scramble).
+   */
+  itemGender?: "f" | "m";
+}
+```

@@ -127,12 +127,12 @@ Configurada en @theme de src/index.css (Tailwind v4).
 
 ## 9. Estado de las áreas
 
-| Área      | Estado                     | Pendientes                                                 |
-| --------- | -------------------------- | ---------------------------------------------------------- |
-| Funcional | ✅ Fase 1 cerrada          | Ampliar banco 70 → 100+ (post Test #2)                     |
-| Visual    | ✅ Fase 2 limpia           | Bloqueado hasta Test #2                                    |
-| UX        | ⏳ 2 handoffs              | Textos "Mente en el Camino" → "Selah" + microcopy Timeline |
-| Admin     | ⏳ Tarea 3 esperando datos | Core Web Vitals (24-48h) · Supabase (Fase 2.5)             |
+| Área      | Estado                     | Pendientes                                     |
+| --------- | -------------------------- | ---------------------------------------------- |
+| Funcional | ✅ Fase 1 cerrada          | Ampliar banco 70 → 100+ (post Test #2)         |
+| Visual    | 🔄 Fix género TapToPlace   | aria-labels con itemGender prop                |
+| UX        | ✅ Handoffs 1 y 2 cerrados | Test #2 con los 5 jóvenes                      |
+| Admin     | ⏳ Tarea 3 esperando datos | Core Web Vitals (24-48h) · Supabase (Fase 2.5) |
 
 ## 10. Roadmap Fase 2 (post-Test #2)
 
@@ -142,8 +142,9 @@ Configurada en @theme de src/index.css (Tailwind v4).
 - [x] Cerrar handoffs visuales PWA [Visual ✅]
 - [x] Implementar TapToPlace (drag → tap) [Visual ✅]
 - [x] Vercel Analytics + Speed Insights [Admin ✅]
-- [ ] Cambiar textos "Mente en el Camino" → "Selah" [UX ⏳]
-- [ ] Adaptar microcopy "palabra" → "evento" en Timeline [UX ⏳]
+- [x] Cambiar textos "Mente en el Camino" → "Selah" [UX ✅]
+- [x] Adaptar microcopy "palabra" → "evento" en Timeline [UX ✅]
+- [ ] Fix género gramatical en TapToPlace [Visual 🔄]
 - [ ] Medir Core Web Vitals reales (24-48h) [Admin ⏳]
 - [ ] Test #2 con los 5 jóvenes [UX ⏳]
 

@@ -37,6 +37,13 @@ interface TapToPlaceProps {
   submitLabel: string;
   /** Título opcional sobre el hint. Si no se pasa, no se renderiza. */
   title?: string;
+  /**
+   * Género gramatical de los ítems, para concordancia de pronombres
+   * en aria-labels y aria-live.
+   *   - "f" (default): palabras → "colocada", "devuelta", "devolverla".
+   *   - "m": eventos → "colocado", "devuelto", "devolverlo".
+   */
+  itemGender?: "f" | "m";
   /** Bloquea interacción (tras confirmar o si el padre lo pide). */
   disabled?: boolean;
 }
@@ -47,10 +54,30 @@ export function TapToPlace({
   hint,
   submitLabel,
   title,
+  itemGender = "f",
   disabled = false,
 }: TapToPlaceProps) {
   const reduceMotion = useReducedMotion();
   const hintId = useId();
+
+  /**
+   * Concordancia de pronombres según `itemGender`.
+   * Uso interno, no se expone fuera.
+   */
+  const pron =
+    itemGender === "m"
+      ? {
+          colocada: "colocado",
+          devuelta: "devuelto",
+          colocarla: "colocarlo",
+          devolverla: "devolverlo",
+        }
+      : {
+          colocada: "colocada",
+          devuelta: "devuelta",
+          colocarla: "colocarla",
+          devolverla: "devolverla",
+        };
 
   /**
    * Asignación de slots: array de longitud `items.length`.
@@ -99,10 +126,10 @@ export function TapToPlace({
       next[firstEmpty] = originalIndex;
       setSlotAssignments(next);
       setLiveMessage(
-        `${items[originalIndex]} colocada en posición ${firstEmpty + 1} de ${items.length}.`,
+        `${items[originalIndex]} ${pron.colocada} en posición ${firstEmpty + 1} de ${items.length}.`,
       );
     },
-    [disabled, slotAssignments, items],
+    [disabled, slotAssignments, items, pron.colocada],
   );
 
   const handleReturn = useCallback(
@@ -113,9 +140,9 @@ export function TapToPlace({
       const next = [...slotAssignments];
       next[slotIndex] = null;
       setSlotAssignments(next);
-      setLiveMessage(`${items[originalIndex]} devuelta al banco.`);
+      setLiveMessage(`${items[originalIndex]} ${pron.devuelta} al banco.`);
     },
-    [disabled, slotAssignments, items],
+    [disabled, slotAssignments, items, pron.devuelta],
   );
 
   const handleConfirm = useCallback(() => {
@@ -205,7 +232,7 @@ export function TapToPlace({
                   type="button"
                   onClick={() => handleReturn(slotIndex)}
                   disabled={disabled}
-                  aria-label={`${items[assignedIdx]}. En posición ${slotIndex + 1} de ${items.length}. Activa para devolverla al banco.`}
+                  aria-label={`${items[assignedIdx]}. En posición ${slotIndex + 1} de ${items.length}. Activa para ${pron.devolverla} al banco.`}
                   className={`${chipBase} border border-alba-600 bg-alba-500 text-noche-950 hover:bg-alba-400 active:bg-alba-600`}
                 >
                   {items[assignedIdx]}
@@ -237,7 +264,7 @@ export function TapToPlace({
                 type="button"
                 onClick={() => handlePlace(idx)}
                 disabled={disabled}
-                aria-label={`${text}. Activa para colocarla en el siguiente espacio disponible.`}
+                aria-label={`${text}. Activa para ${pron.colocarla} en el siguiente espacio disponible.`}
                 className={`${chipBase} border border-noche-600 bg-noche-700 text-white hover:bg-noche-600 active:bg-noche-800`}
               >
                 {text}

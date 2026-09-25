@@ -30,8 +30,9 @@ export function TimelineQuestion({
       onAnswer={onAnswer}
       disabled={disabled}
       title="Ordena los eventos"
-      hint="Toca una palabra y colócala en su orden. Toca de nuevo para devolverla."
+      hint="Toca un evento y colócalo en su orden. Toca de nuevo para devolverlo."
       submitLabel="Confirmar orden"
+      itemGender="m"
     />
   );
 }
