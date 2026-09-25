@@ -5,11 +5,13 @@
  *
  * Área: VISUAL (UI). La validación vive en useGameStore.checkAnswer
  * comparando `selectedOrder` con `question.correctOrder`.
+ *
+ * Interacción: tap-to-place (TapToPlace) desde 2026-09-25.
  * ---------------------------------------------------------------------------
  */
 
 import type { TimelineQuestion as TLQuestion } from "../../types";
-import { SortableList } from "./SortableList";
+import { TapToPlace } from "./TapToPlace";
 
 interface Props {
   question: TLQuestion;
@@ -23,15 +25,13 @@ export function TimelineQuestion({
   disabled = false,
 }: Props) {
   return (
-    <SortableList
+    <TapToPlace
       items={question.events}
-      onSubmit={onAnswer}
+      onAnswer={onAnswer}
       disabled={disabled}
-      labels={{
-        title: "Ordena los eventos",
-        hint: "Arrastra para ordenar. También puedes usar las flechas.",
-        submitLabel: "Confirmar orden",
-      }}
+      title="Ordena los eventos"
+      hint="Toca una palabra y colócala en su orden. Toca de nuevo para devolverla."
+      submitLabel="Confirmar orden"
     />
   );
 }

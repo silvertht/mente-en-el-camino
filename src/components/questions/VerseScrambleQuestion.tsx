@@ -5,11 +5,13 @@
  *
  * Área: VISUAL (UI). La validación vive en useGameStore.checkAnswer
  * comparando `selectedOrder` con `question.correctOrder`.
+ *
+ * Interacción: tap-to-place (TapToPlace) desde 2026-09-25.
  * ---------------------------------------------------------------------------
  */
 
 import type { VerseScrambleQuestion as VSQuestion } from "../../types";
-import { SortableList } from "./SortableList";
+import { TapToPlace } from "./TapToPlace";
 
 interface Props {
   question: VSQuestion;
@@ -23,15 +25,13 @@ export function VerseScrambleQuestion({
   disabled = false,
 }: Props) {
   return (
-    <SortableList
+    <TapToPlace
       items={question.words}
-      onSubmit={onAnswer}
+      onAnswer={onAnswer}
       disabled={disabled}
-      labels={{
-        title: "Ordena las palabras",
-        hint: "Arrastra para ordenar. También puedes usar las flechas.",
-        submitLabel: "Confirmar orden",
-      }}
+      title="Ordena las palabras"
+      hint="Toca una palabra y colócala en su orden. Toca de nuevo para devolverla."
+      submitLabel="Confirmar orden"
     />
   );
 }

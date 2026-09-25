@@ -1,4 +1,20 @@
 /**
+ * @deprecated desde 2026-09-25 (handoff UX).
+ *
+ * Reemplazado por `TapToPlace.tsx` en `verse-scramble` y `timeline`.
+ *
+ * Motivos del reemplazo:
+ *   - Lag táctil en móvil con Motion Reorder.
+ *   - Incumple WCAG 2.2 AA · 2.5.7 (Dragging Movements).
+ *
+ * NO USAR EN CÓDIGO NUEVO.
+ *
+ * Se conserva temporalmente hasta confirmar que no queda ninguna
+ * importación activa. Eliminar en Post-Test #2 si sigue sin uso
+ * (ver CHANGELOG → Pendiente #8).
+ */
+
+/**
  * SortableList.tsx
  * ---------------------------------------------------------------------------
  * Lista ordenable accesible y reutilizable para `verse-scramble` y `timeline`.
@@ -108,7 +124,7 @@ export function SortableList({
         setGrabbedId(item.id);
         setLiveMessage(
           `${item.text} agarrado. Posición ${index + 1} de ${order.length}. ` +
-          "Usa las flechas para mover, espacio para soltar.",
+            "Usa las flechas para mover, espacio para soltar.",
         );
       }
       return;
@@ -176,7 +192,7 @@ export function SortableList({
         ref={listRef}
         axis="y"
         values={order}
-        onReorder={disabled ? () => { } : setOrder}
+        onReorder={disabled ? () => {} : setOrder}
         layoutScroll
         className="m-0 list-none space-y-2 p-0"
       >
