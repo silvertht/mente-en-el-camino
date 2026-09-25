@@ -3,7 +3,7 @@
 Registro cronológico de cambios por área (Funcional, Visual, UX, Admin).
 Formato: `[ÁREA] Descripción · Estado`.
 
-**Última actualización**: 2026-09-25 · Fase 2 · UX entregó handoff TapToPlace a Visual.
+**Última actualización**: 2026-09-25 · Fase 2 · Visual cerró TapToPlace + fix Button.
 **Estado del proyecto**: PWA instalable. Fase 2 en curso.
 
 ---
@@ -13,7 +13,7 @@ Formato: `[ÁREA] Descripción · Estado`.
 | Área          | Estado               | Pendiente real                                |
 | ------------- | -------------------- | --------------------------------------------- |
 | **Funcional** | ✅ Fase 1 cerrada    | Ampliar banco 70 → 100+ (post Test #2)        |
-| **Visual**    | 🔄 Fase 2 activa     | Implementar TapToPlace (handoff UX)           |
+| **Visual**    | ✅ Fase 2 limpia     | Bloqueado hasta Test #2                       |
 | **UX**        | ✅ Handoff entregado | Cambiar textos "Mente en el Camino" → "Selah" |
 | **Admin**     | ✅ Tarea 1 cerrada   | Analytics + Core Web Vitals + Supabase        |
 
@@ -26,8 +26,8 @@ Formato: `[ÁREA] Descripción · Estado`.
 | Tipos de pregunta  | 7/7                      |
 | Tests unitarios    | 66/66 pasando            |
 | Build              | ✓ limpio, sin errores TS |
-| Bundle gzip        | 181.65 kB                |
-| Precache PWA       | 16 entries · 815 KB      |
+| Bundle gzip        | 179.39 kB                |
+| Precache PWA       | 15 entries · 799 KB      |
 | PWA installable    | ✅ Chrome                |
 | Favicon            | ✅ llama Selah           |
 | Insignias          | 19                       |
@@ -35,11 +35,114 @@ Formato: `[ÁREA] Descripción · Estado`.
 
 ---
 
-## 2026-09-25 — FASE 2 · UX · Handoff a Visual (PENDIENTE)
+## 2026-09-25 — FASE 2 · Visual · Handoff UX TapToPlace CERRADO
+
+### [VISUAL] TapToPlace reemplaza drag & drop en verse-scramble y timeline
+
+**Origen**: Handoff UX del 2026-09-25. Feedback de testers + incumplimiento
+WCAG 2.2 AA · 2.5.7 (Dragging Movements). Decisión UX autorizada por
+product owner.
+
+**Motivos del cambio**:
+
+- Lag táctil en móvil con Motion Reorder (~300 ms de espera por `touch-action`).
+- `whileDrag` animaba `boxShadow` y `borderColor` → repaint por frame.
+- 3 fases (hold + move + release) → 1 toque.
+- Accesibilidad teclado/lector: difícil → natural.
+
+**Archivos nuevos**:
+
+- `src/components/questions/TapToPlace.tsx` — componente genérico
+  tap-to-place. Recibe `items: string[]` (ya desordenados por el juego)
+  y devuelve `onAnswer(order: number[])` con índices sobre `items`.
+
+**Archivos modificados**:
+
+- `src/components/questions/VerseScrambleQuestion.tsx` — usa `TapToPlace`
+  en vez de `SortableList`. Microcopy: "Toca una palabra y colócala en
+  su orden. Toca de nuevo para devolverla."
+- `src/components/questions/TimelineQuestion.tsx` — usa `TapToPlace`.
+  Microcopy: "Toca una palabra y colócala en su orden. Toca de nuevo para
+  devolverla." ⚠️ _Adaptación de "palabra" → "evento" pendiente de
+  confirmación UX (Pendiente #10)._
+- `src/components/questions/SortableList.tsx` — marcado como
+  `@deprecated` con comentario guía. NO borrado todavía (ver Pendiente #8).
+- `src/components/Button.tsx` — **fix de paleta**: reemplazados `amber-*`,
+  `slate-*`, `red-*` (prohibidos por PROJECT.md §6) por `alba-*`,
+  `noche-*`, `alerta-*`. Añadida variante `reino` faltante
+  (`reino-500`/`reino-400`/`reino-600`). Añadido
+  `focus-visible:ring-offset-noche-900` para coherencia.
+
+**Cambios de comportamiento**:
+
+- Botón "Confirmar orden" pasa de "siempre habilitado" (SortableList) a
+  "habilitado solo al llenar todos los slots" (TapToPlace). Decisión UX
+  para eliminar envíos incompletos.
+
+**Accesibilidad implementada**:
+
+- Chips son `<button>` → Tab + Enter/Space.
+- `aria-live="polite"` anuncia "X colocada en posición N de M" y
+  "X devuelta al banco".
+- `aria-describedby` apunta al hint en ambos grupos (construcción y banco).
+- Focus visible con ring `alba-400` + offset `noche-900`.
+- Tamaño táctil ≥44px (`min-h-11`).
+- Respeta `prefers-reduced-motion` (Motion solo anima `opacity` y `scale`).
+
+**Impacto en bundle**:
+
+- Bundle gzip: 181.65 kB → **179.39 kB** (−2.26 kB).
+- Precache PWA: 16 → **15 entries** · 815 KB → **799 KB** (−16 KB).
+- Sin dependencias nuevas.
+
+**Tests**: 66/66 siguen pasando. Lógica de negocio intacta.
+
+**Pendientes generados por este handoff**:
+
+- 🔵 Retirar `SortableList.tsx` definitivamente tras Post-Test #2 si
+  sigue sin uso (Pendiente #8).
+- ⚠️ Microcopy de Timeline: "palabra" → "evento" pendiente de confirmar
+  con UX (Pendiente #10).
+
+**Commits en `main`**:
+
+- `[VISUAL] Handoff UX — TapToPlace reemplaza drag & drop en verse-scramble y timeline + fix paleta Button`
+- `[VISUAL] CHANGELOG — Handoff UX TapToPlace cerrado + fix Button.tsx`
+
+**Verificación técnica**:
+| Métrica | Valor |
+|---|---|
+| `npm run build` | ✅ limpio |
+| Tests unitarios | 66/66 |
+| Bundle gzip | 179.39 kB (−2.26 kB) |
+| Precache PWA | 15 entries · 799 KB |
+| Botón Confirmar en alba | ✅ verificado en local |
+| Tap-to-place en móvil | ✅ verificado en local |
+| Navegación teclado | ✅ verificado en local |
+| `prefers-reduced-motion` | ✅ verificado en local |
+
+**Estado del área Visual**: ✅ Handoffs PWA cerrados + TapToPlace cerrado +
+fix paleta Button. Sin pendientes activos hasta Test #2.
+
+**Handoffs restantes**:
+| # | Tarea | Área | Estado |
+| --- | -------------------------------------------------- | ----------------- | --------------- |
+| 2 | Cambiar textos "Mente en el Camino" → "Selah" | UX | ⏳ Pendiente |
+| 3 | Vercel Analytics + Core Web Vitals | Admin | ⏳ Pendiente |
+| 10 | Adaptar microcopy "palabra" → "evento" en Timeline | UX | ⏳ Pendiente |
+
+**Nota para Admin**: Chrome DevTools reporta 2 warnings opcionales en el
+manifest (falta campo `screenshots` para "Richer PWA Install UI"). No es
+un error. Pendiente futuro.
+
+---
+
+## 2026-09-25 — FASE 2 · UX · Handoff a Visual (CERRADO)
 
 ### [UX→VISUAL] Reemplazar drag & drop por tap-to-place en Timeline y Verse-scramble
 
-**Estado**: ⏳ Pendiente de Visual.
+**Estado**: ✅ Cerrado por Visual (ver entrada "2026-09-25 · Visual · Handoff
+UX TapToPlace CERRADO" arriba).
 
 **Origen**: Feedback de testers. El drag & drop (`SortableList.tsx` con
 Motion Reorder) tiene retraso táctil en móvil y se percibe tedioso.
@@ -49,37 +152,12 @@ Además, incumple WCAG 2.2 AA · 2.5.7 (Dragging Movements).
 interacción por "tap-to-place" (sentence builder tipo Duolingo/Kahoot).
 Un toque = una acción. Cero arrastre.
 
-**Territorio**: Visual. UX entrega spec completo, no implementa.
-
-**Archivos afectados** (Visual):
-
-- `src/components/questions/SortableList.tsx` → crear reemplazo
-  `TapToPlace.tsx`. No borrar `SortableList.tsx` hasta confirmar que
-  nadie más lo usa.
-- `src/components/questions/TimelineQuestion.tsx` → cambiar import.
-- `src/components/questions/VerseScrambleQuestion.tsx` → cambiar import.
-
-**Archivos que NO se tocan**:
-
-- `src/store/useGameStore.ts` (Funcional). Firma `onAnswer(order: number[])`
-  se mantiene.
-- `src/types/index.ts` (Funcional). Estructura de datos se mantiene.
-
 **Argumento objetivo** (además del feedback):
 
 - Velocidad percibida: 3 fases (hold+move+release) → 1 toque.
 - Precisión motora requerida: alta → baja.
 - Accesibilidad teclado/lector: difícil → natural.
 - WCAG 2.2 AA · 2.5.7: ❌ incumple → ✅ cumple.
-
-**Diagnóstico técnico del lag actual** (por si Visual quiere referencia):
-
-1. `SortableList.tsx` no tiene `touch-action` → el navegador espera
-   ~300 ms al primer toque para decidir scroll vs drag.
-2. `whileDrag` anima `boxShadow` y `borderColor` → repaint completo por frame.
-3. Motion Reorder mide el DOM en cada `pointermove` → jank con 10 ítems.
-4. `layoutScroll` en `Reorder.Group` es overhead innecesario aquí.
-5. Sin `dragMomentum={false}` ni `dragElastic={0}` → se siente resbaloso.
 
 **Microcopy nuevo** (territorio UX, fijo):
 
@@ -90,13 +168,6 @@ Un toque = una acción. Cero arrastre.
 
 - Sin cambio en bundle (se reemplaza un componente por otro similar).
 - Sin cambio en tests unitarios (lógica intacta).
-
-**Bloqueantes/riesgos**:
-
-- Si algún componente fuera de estos 3 también importa `SortableList.tsx`,
-  Visual debe reportarlo antes de retirarlo.
-- Botón "Confirmar orden" cambia de "siempre habilitado" a "habilitado
-  al llenar todos los slots" → decisión UX para eliminar envíos incompletos.
 
 ---
 
@@ -230,7 +301,7 @@ un error. Pendiente futuro.
 - Visual: optimización (deviceTier + AnimatedBackground).
 - Funcional: dificultad adaptativa.
 - UX: microcopy cálido + identidad cristiana visible.
-- UX→Visual: TapToPlace (Fase 2, pendiente).
+- UX→Visual: TapToPlace (Fase 2, cerrado 2026-09-25).
 
 ### [VISUAL] Fase 1 — 4 rondas
 
@@ -256,16 +327,18 @@ un error. Pendiente futuro.
 
 ## 📋 Pendientes activos (Fase 2)
 
-| #   | Tarea                                         | Área              | Estado          |
-| --- | --------------------------------------------- | ----------------- | --------------- |
-| 1   | Implementar TapToPlace (drag → tap)           | Visual            | 🔄 Activo       |
-| 2   | Cambiar textos "Mente en el Camino" → "Selah" | UX                | ⏳              |
-| 3   | Vercel Analytics + Core Web Vitals            | Admin             | ⏳              |
-| 4   | Validar en móvil real (Test #2)               | UX                | ⏳              |
-| 5   | Ampliar banco 70 → 100+                       | Funcional         | 🟡 Post Test #2 |
-| 6   | Onboarding primera vez                        | UX                | ⏸               |
-| 7   | Migración a Supabase                          | Admin + Funcional | 🟢              |
-| 8   | Retirar `SortableList.tsx` definitivamente    | Visual            | 🟢 Post Test #2 |
+| #   | Tarea                                              | Área              | Estado          |
+| --- | -------------------------------------------------- | ----------------- | --------------- |
+| 1   | Implementar TapToPlace (drag → tap)                | Visual            | ✅ Cerrado      |
+| 2   | Cambiar textos "Mente en el Camino" → "Selah"      | UX                | ⏳              |
+| 3   | Vercel Analytics + Core Web Vitals                 | Admin             | ⏳              |
+| 4   | Validar en móvil real (Test #2)                    | UX                | ⏳              |
+| 5   | Ampliar banco 70 → 100+                            | Funcional         | 🟡 Post Test #2 |
+| 6   | Onboarding primera vez                             | UX                | ⏸               |
+| 7   | Migración a Supabase                               | Admin + Funcional | 🟢              |
+| 8   | Retirar `SortableList.tsx` definitivamente         | Visual            | 🟢 Post Test #2 |
+| 9   | Arreglar paleta de `Button.tsx`                    | Visual            | ✅ Cerrado      |
+| 10  | Adaptar microcopy "palabra" → "evento" en Timeline | UX                | ⏳              |
 
 ---
 
