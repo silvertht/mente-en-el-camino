@@ -127,12 +127,12 @@ Configurada en @theme de src/index.css (Tailwind v4).
 
 ## 9. Estado de las áreas
 
-| Área      | Estado               | Pendientes                                              |
-| --------- | -------------------- | ------------------------------------------------------- |
-| Funcional | ✅ Fase 1 cerrada    | Ampliar banco 70 → 100+ (post Test #2)                  |
-| Visual    | 🔄 Fase 2 activa     | Implementar TapToPlace (handoff UX)                     |
-| UX        | ✅ Handoff entregado | Cambiar textos "Mente en el Camino" → "Selah" + Test #2 |
-| Admin     | ✅ Tarea 1 cerrada   | Analytics + Core Web Vitals + Supabase                  |
+| Área      | Estado                     | Pendientes                                                 |
+| --------- | -------------------------- | ---------------------------------------------------------- |
+| Funcional | ✅ Fase 1 cerrada          | Ampliar banco 70 → 100+ (post Test #2)                     |
+| Visual    | ✅ Fase 2 limpia           | Bloqueado hasta Test #2                                    |
+| UX        | ⏳ 2 handoffs              | Textos "Mente en el Camino" → "Selah" + microcopy Timeline |
+| Admin     | ⏳ Tarea 3 esperando datos | Core Web Vitals (24-48h) · Supabase (Fase 2.5)             |
 
 ## 10. Roadmap Fase 2 (post-Test #2)
 
@@ -140,17 +140,19 @@ Configurada en @theme de src/index.css (Tailwind v4).
 
 - [x] Configurar PWA (manifest, íconos, service worker) [Admin ✅]
 - [x] Cerrar handoffs visuales PWA [Visual ✅]
-- [ ] Implementar TapToPlace (drag & drop → tap) [Visual 🔄]
+- [x] Implementar TapToPlace (drag → tap) [Visual ✅]
+- [x] Vercel Analytics + Speed Insights [Admin ✅]
 - [ ] Cambiar textos "Mente en el Camino" → "Selah" [UX ⏳]
-- [ ] Instalar Vercel Analytics + Speed Insights [Admin ⏳]
-- [ ] Medir Core Web Vitals reales en móvil [Admin ⏳]
+- [ ] Adaptar microcopy "palabra" → "evento" en Timeline [UX ⏳]
+- [ ] Medir Core Web Vitals reales (24-48h) [Admin ⏳]
+- [ ] Test #2 con los 5 jóvenes [UX ⏳]
 
 ### Prioridad 2 — Crecimiento
 
 - [ ] Ampliar banco a 100+ preguntas [Funcional]
 - [ ] Onboarding de primera vez [UX]
 - [ ] Sistema de notificaciones para racha [UX + Admin]
-- [ ] Migración a Supabase (cuentas + multijugador) [Admin + Funcional]
+- [ ] Migración a Supabase (Fase 2.5) [Admin + Funcional]
 
 ### Prioridad 3 — Pulido
 
