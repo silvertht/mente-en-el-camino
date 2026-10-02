@@ -1,5 +1,6 @@
 import type { CategoryId, Question } from "../../types";
-import { getOrCreateProfile, getRecentAccuracy } from "../../db/database";
+import { getUserRating } from "../../db/database";
+import { pickQuestionsByRating } from "../../utils/rating";
 import { EVANGELIOS_QUESTIONS } from "./evangelios";
 import { PERSONAJES_QUESTIONS } from "./personajes";
 import { VERSICULOS_QUESTIONS } from "./versiculos";
@@ -94,107 +95,38 @@ export function countQuestionsByCategory(): Record<CategoryId, number> {
 }
 
 // ============================================================
-// DIFICULTAD ADAPTATIVA
+// SELECCIÓN ADAPTATIVA POR RATING (Fase 3 · R3)
+// ============================================================
+// Reemplaza la lógica anterior basada en `getRecentAccuracy`. Ahora lee
+// el rating persistente del usuario y delega la selección a
+// `pickQuestionsByRating`, que aplica banda ±(150/100) y cap +400.
+//
+// Firma pública sin cambios: `pickAdaptiveQuestions(count, categoryId?)`.
 // ============================================================
 
-interface DifficultyWeights {
-  facil: number;
-  medio: number;
-  dificil: number;
-}
-
 /**
- * Traduce accuracy reciente → pesos por dificultad.
- *  - > 0.70 → sube el reto (favorece medio/difícil)
- *  - < 0.40 → protege al jugador (favorece fácil)
- *  - 0.40–0.70 → mezcla equilibrada
- */
-function getWeightsForAccuracy(accuracy: number): DifficultyWeights {
-  if (accuracy > 0.7) return { facil: 1, medio: 3, dificil: 3 };
-  if (accuracy < 0.4) return { facil: 4, medio: 2, dificil: 1 };
-  return { facil: 2, medio: 3, dificil: 2 };
-}
-
-/**
- * Selección ponderada de UNA pregunta del pool.
- * Recorre el array restando pesos hasta cruzar 0.
- */
-function weightedPick(
-  pool: Question[],
-  weights: DifficultyWeights,
-): Question | null {
-  if (pool.length === 0) return null;
-
-  const total = pool.reduce((sum, q) => sum + (weights[q.difficulty] ?? 1), 0);
-  if (total <= 0) return pool[0];
-
-  let r = Math.random() * total;
-  for (const q of pool) {
-    r -= weights[q.difficulty] ?? 1;
-    if (r <= 0) return q;
-  }
-  return pool[pool.length - 1];
-}
-
-/**
- * Pregunta "trampa": hint-deduction en dificultad difícil.
- * Su aparición está condicionada al desempeño del jugador.
- */
-function isTrapQuestion(q: Question): boolean {
-  return q.type === "hint-deduction" && q.difficulty === "dificil";
-}
-
-/**
- * Selecciona `count` preguntas aplicando dificultad adaptativa.
+ * Selecciona `count` preguntas adaptadas al rating actual del usuario.
  *
- * Reglas:
- *  - Usa el accuracy de las últimas 20 respuestas para pesar dificultades.
- *  - Las preguntas "trampa" (`hint-deduction` + `dificil`) solo entran si:
- *      nivel del jugador ≥ 3  Y  accuracy reciente > 0.65.
- *  - Regla ESTRICTA: si no califica, las trampas NUNCA aparecen
- *    (aunque eso implique devolver menos preguntas de las pedidas).
- *  - Selección sin reemplazo (no se repite pregunta en la misma partida).
+ * Reglas (R3):
+ *  - Lee `getUserRating().global` (persistido en Dexie).
+ *  - Delega en `pickQuestionsByRating` (rating ELO, cap +400, mezcla 60/20/20).
+ *  - Sin puerta explícita de "trampas": el rating ya filtra naturalmente.
+ *  - Si `categoryId` se pasa, restringe el pool a esa categoría.
+ *  - Puede devolver menos de `count` si el cap deja el pool corto
+ *    (regla estricta: mejor pocas que frustrar).
  *
  * @param count       número deseado de preguntas.
  * @param categoryId  si se pasa, limita a esa categoría (campaña).
- *                    Si no, usa todas (desafío diario).
  */
 export async function pickAdaptiveQuestions(
   count: number,
   categoryId?: CategoryId,
 ): Promise<Question[]> {
-  const [accuracy, profile] = await Promise.all([
-    getRecentAccuracy(20),
-    getOrCreateProfile(),
-  ]);
-
-  // El perfil ya guarda el nivel calculado por el store.
-  const level = profile.level;
-
-  // Puerta AND: nivel alto Y buen desempeño reciente.
-  const allowTraps = level >= 3 && accuracy > 0.65;
-
+  const rating = await getUserRating();
   const basePool = categoryId
     ? getQuestionsByCategory(categoryId)
     : ALL_QUESTIONS;
-
-  const eligible = allowTraps
-    ? basePool
-    : basePool.filter((q) => !isTrapQuestion(q));
-
-  const weights = getWeightsForAccuracy(accuracy);
-
-  const selected: Question[] = [];
-  const available = [...eligible];
-
-  while (selected.length < count && available.length > 0) {
-    const pick = weightedPick(available, weights);
-    if (!pick) break;
-    selected.push(pick);
-    available.splice(available.indexOf(pick), 1);
-  }
-
-  return selected;
+  return pickQuestionsByRating(basePool, rating.global, count);
 }
 
 // ============================================================
@@ -261,9 +193,6 @@ export interface AcceptedAnswersAudit {
   }[];
 }
 
-/**
- * Normaliza texto quitando tildes para comparaciones internas.
- */
 function stripDiacritics(s: string): string {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
@@ -298,8 +227,6 @@ export function auditAcceptedAnswers(): AcceptedAnswersAudit {
       issues.push("sin variantes");
     }
 
-    // Verificación normalizada: `answer` puede tener tildes (display),
-    // los `acceptedAnswers` no. Comparamos sin diacríticos ambos lados.
     const answerNorm = stripDiacritics(q.answer.toLowerCase());
     const acceptedNorm = q.acceptedAnswers.map((a) =>
       stripDiacritics(a.toLowerCase()),

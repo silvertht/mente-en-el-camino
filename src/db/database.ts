@@ -5,7 +5,9 @@ import type {
   DailyChallengeProgress,
   GameSession,
   UserProfile,
+  UserRating,
 } from "../types";
+import { RATING_INITIAL } from "../utils/rating";
 
 // ============================================================
 // BASE DE DATOS LOCAL (IndexedDB vía Dexie)
@@ -17,6 +19,7 @@ export class MenteEnElCaminoDB extends Dexie {
   dailyProgress!: Table<DailyChallengeProgress, string>;
   campaignProgress!: Table<CampaignProgress & { id?: string }, string>;
   sessions!: Table<GameSession, string>;
+  userRating!: Table<UserRating, string>;
 
   constructor() {
     super("MenteEnElCaminoDB");
@@ -27,6 +30,17 @@ export class MenteEnElCaminoDB extends Dexie {
       dailyProgress: "date, completed",
       campaignProgress: "id, categoryId, completed",
       sessions: "id, code, status, createdAt",
+    });
+
+    // v2 — Fase 3 · R2: tabla userRating (rating adaptativo).
+    // Migración idempotente: Dexie conserva los datos de v1.
+    this.version(2).stores({
+      profile: "id, nickname, level, streak, lastPlayedAt",
+      answers: "++id, questionId, correct, answeredAt",
+      dailyProgress: "date, completed",
+      campaignProgress: "id, categoryId, completed",
+      sessions: "id, code, status, createdAt",
+      userRating: "id",
     });
   }
 }
@@ -84,6 +98,7 @@ export async function resetProfile(): Promise<UserProfile> {
   await db.answers.clear();
   await db.dailyProgress.clear();
   await db.campaignProgress.clear();
+  await db.userRating.clear();
   const profile = createDefaultProfile();
   await db.profile.put(profile);
   return profile;
@@ -133,7 +148,45 @@ export async function countAnswers(): Promise<{
 }
 
 // ============================================================
+// RATING ADAPTATIVO (Fase 3 · R2)
+// ============================================================
+
+export function createDefaultUserRating(): UserRating {
+  return {
+    id: DEFAULT_PROFILE_ID,
+    global: RATING_INITIAL,
+    answeredCount: 0,
+    lastUpdatedAt: Date.now(),
+  };
+}
+
+/**
+ * Obtiene el rating local. Si no existe, lo crea con valores por defecto.
+ */
+export async function getUserRating(): Promise<UserRating> {
+  const existing = await db.userRating.get(DEFAULT_PROFILE_ID);
+  if (existing) return existing;
+  const rating = createDefaultUserRating();
+  await db.userRating.put(rating);
+  return rating;
+}
+
+export async function saveUserRating(rating: UserRating): Promise<void> {
+  await db.userRating.put(rating);
+}
+
+export async function resetUserRating(): Promise<UserRating> {
+  const rating = createDefaultUserRating();
+  await db.userRating.put(rating);
+  return rating;
+}
+
+// ============================================================
 // DIFICULTAD ADAPTATIVA — accuracy reciente
+// ============================================================
+// @deprecated desde Fase 3 · R2. Se retirará en R5 cuando el selector
+// de preguntas migre a `pickQuestionsByRating`. Se mantiene mientras
+// `pickAdaptiveQuestions` siga activo.
 // ============================================================
 
 /**
@@ -278,16 +331,18 @@ export interface BackupData {
   answers: AnsweredQuestion[];
   dailyProgress: DailyChallengeProgress[];
   campaignProgress: CampaignProgress[];
+  userRating: UserRating | undefined;
 }
 
 export async function exportBackup(): Promise<BackupData> {
   return {
-    version: 1,
+    version: 2,
     exportedAt: Date.now(),
     profile: await db.profile.get(DEFAULT_PROFILE_ID),
     answers: await db.answers.toArray(),
     dailyProgress: await db.dailyProgress.toArray(),
     campaignProgress: await db.campaignProgress.toArray(),
+    userRating: await db.userRating.get(DEFAULT_PROFILE_ID),
   };
 }
 
@@ -298,11 +353,13 @@ export async function importBackup(data: BackupData): Promise<void> {
     db.answers,
     db.dailyProgress,
     db.campaignProgress,
+    db.userRating,
     async () => {
       await db.profile.clear();
       await db.answers.clear();
       await db.dailyProgress.clear();
       await db.campaignProgress.clear();
+      await db.userRating.clear();
 
       if (data.profile) await db.profile.put(data.profile);
       if (data.answers.length) await db.answers.bulkAdd(data.answers);
@@ -310,6 +367,7 @@ export async function importBackup(data: BackupData): Promise<void> {
         await db.dailyProgress.bulkPut(data.dailyProgress);
       if (data.campaignProgress.length)
         await db.campaignProgress.bulkPut(data.campaignProgress);
+      if (data.userRating) await db.userRating.put(data.userRating);
     },
   );
 }

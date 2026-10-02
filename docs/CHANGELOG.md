@@ -1,151 +1,154 @@
-# CHANGELOG — Mente en el Camino (Selah)
+# CHANGELOG GLOBAL — Mente en el Camino (Selah)
 
-Registro cronológico de cambios por área (Funcional, Visual, UX, Admin).
-Formato: `[ÁREA] Descripción · Estado`.
+> ⚠️ **DOCUMENTO GLOBAL**. Solo se actualiza cuando el product owner
+> regresa al chat maestro. Los changelogs de cada área viven en
+> `CHANGELOG-{ÁREA}.md`.
 
-**Última actualización**: 2026-09-25 · Fase 2 · Visual cerró handoff género. Listo para Test #2.
-**Estado del proyecto**: PWA instalable + métricas activas. Fase 2 en curso.
+**Última actualización**: 2026-10-02 · Fase 3 en curso (Funcional R1-R3 cerrados).
+**Estado**: PWA + Analytics + Rating adaptativo en producción. Test #2 en pausa.
 
 ---
 
-## 📊 ESTADO GLOBAL ACTUAL
+## 📊 ESTADO GLOBAL (2026-10-02)
 
-| Área          | Estado                     | Pendiente real                                 |
-| ------------- | -------------------------- | ---------------------------------------------- |
-| **Funcional** | ✅ Fase 1 cerrada          | Ampliar banco 70 → 100+ (post Test #2)         |
-| **Visual**    | ✅ Fase 2 limpia           | Bloqueado hasta Test #2                        |
-| **UX**        | ✅ Handoffs 1 y 2 cerrados | Test #2 con los 5 jóvenes                      |
-| **Admin**     | ⏳ Tarea 3 esperando datos | Core Web Vitals (24-48h) · Supabase (Fase 2.5) |
+| Área      | Estado                  | Pendiente real                                  |
+| --------- | ----------------------- | ----------------------------------------------- |
+| Funcional | ✅ Rating R1-R3 cerrado | R5 limpieza · Ampliar banco 70 → 110+           |
+| Visual    | ✅ Fase 2 limpia        | Rating en Profile (handoff) · Bloqueado Test #2 |
+| UX        | ✅ Fase 2 cerrada       | Onboarding calibración · Test #2                |
+| Admin     | ⏳ Tarea 3 activa       | Core Web Vitals · Supabase (Fase 3.5)           |
 
 **Métricas**:
-
-| Métrica            | Valor                  |
-| ------------------ | ---------------------- |
-| Preguntas en banco | 70                     |
-| Categorías activas | 5 (de 9)               |
-| Tipos de pregunta  | 7/7                    |
-| Tests unitarios    | 66/66                  |
-| Bundle gzip        | 180.87 kB              |
-| Precache PWA       | 15 entries · 803.84 KB |
-| PWA installable    | ✅ Chrome              |
-| Web Analytics      | ✅ Funcionando         |
-| Speed Insights     | ⏳ Recolectando        |
-| Insignias          | 19                     |
-| Principios del día | 31                     |
-
----
-
-## 2026-09-25 — FASE 2 · Visual · Handoff género TapToPlace CERRADO
-
-### [VISUAL] Concordancia de género en TapToPlace
-
-**Origen**: Al adaptar Timeline ("palabra" → "evento") se detectó que
-`TapToPlace.tsx` usaba pronombres femeninos fijos en `aria-label` y
-`aria-live`. Correcto para `verse-scramble` (palabras), incorrecto para
-`timeline` (eventos).
-
-**Solución implementada**:
-
-- Nueva prop opcional `itemGender?: "f" | "m"` con default `"f"`.
-- Objeto `pron` interno resuelve 4 variantes: colocada/colocado,
-  devuelta/devuelto, colocarla/colocarlo, devolverla/devolverlo.
-- `TimelineQuestion.tsx` pasa `itemGender="m"`.
-
-**Archivos modificados**: `TapToPlace.tsx`, `TimelineQuestion.tsx`.
-**Sin cambios**: `VerseScrambleQuestion.tsx` (usa default "f").
-
-**Verificación**: build limpio, 66/66 tests, lector de pantalla OK.
-
-**Estado del área Visual**: ✅ Sin pendientes activos. Bloqueado hasta Test #2.
+| Métrica | Valor |
+|---------|-------|
+| Preguntas en banco | 70 |
+| Categorías activas | 5 (de 9) |
+| Tipos de pregunta | 7/7 |
+| Insignias | 19 |
+| Principios del día | 31 |
+| Tests unitarios | **127/127** |
+| Bundle gzip | **181.51 kB** |
+| Precache PWA | 15 entries · 805.98 KB |
+| PWA installable | ✅ Chrome |
+| Web Analytics | ✅ Funcionando |
+| Speed Insights | ⏳ Recolectando |
+| Rating adaptativo | ✅ Activo |
+| Costo mensual | $0 |
 
 ---
 
-## 2026-09-25 — FASE 2 · UX → VISUAL · Handoff género en TapToPlace
+## 🎯 FASE 3 — OBJETIVOS
 
-**Estado**: ✅ Cerrado por Visual.
-
-**Origen**: Pronombres femeninos hardcodeados en `TapToPlace.tsx`.
-
-**Solución**: prop `itemGender?: "f" | "m"` (default "f").
-
----
-
-## 2026-09-25 — FASE 2 · UX · Handoff 2 CERRADO
-
-### [UX] Timeline hint "palabra" → "evento"
-
-- `TimelineQuestion.tsx`: hint → "Toca un evento y colócalo en su orden.
-  Toca de nuevo para devolverlo."
-- `VerseScrambleQuestion.tsx` sin cambios (correcto con "palabra").
-- Botón "Confirmar orden" genérico.
-
-**Estado Handoff 2**: ✅ Cerrado.
+1. **Test #2** con los 5 jóvenes (en pausa por decisión del PO).
+2. **Análisis de feedback** cualitativo + cuantitativo.
+3. **Lectura Core Web Vitals** y decisiones.
+4. **Ampliar banco** 70 → 110+ preguntas.
+5. **Onboarding** de primera vez.
+6. **Notificaciones** de racha diaria.
+7. **Fase 3.5**: migración a Supabase (auth, ranking, multijugador).
 
 ---
 
-## 2026-09-25 — FASE 2 · UX · Handoff 1 CERRADO
+## 📋 PENDIENTES ACTIVOS (Fase 3)
 
-### [UX] Rebrand "Mente en el Camino" → "Selah" en pantallas
-
-- `Home.tsx:91` `<h1>`: "Selah" con GradientText shimmer.
-- `Home.tsx`: subtítulo "Pausa. Reflexiona. Aprende.".
-- `Home.tsx:388` footer: "Selah · {año}".
-
-**No modificado (regla dura)**: `MenteEnElCaminoDB` en `database.ts`.
-Renombrar rompería IndexedDB de usuarios existentes.
-
-**Estado**: ✅ Cerrado.
-
----
-
-## 2026-09-25 — FASE 2 · Admin · Tarea 2 CERRADA: Analytics
-
-### [ADMIN] Vercel Analytics + Speed Insights integradas
-
-- `@vercel/analytics` + `@vercel/speed-insights` instaladas.
-- `src/main.tsx`: `<Analytics />` + `<SpeedInsights />`.
-- Plan Hobby (Free). **Costo: $0/mes.**
-- Documentación: `docs/ANALYTICS.md`.
-- Bundle gzip: 180.87 kB (+1.48 kB).
-- Precache: 15 entries · 803.84 KB.
-- Analytics funcionando ✅. Speed Insights recolectando ⏳.
+| #   | Tarea                                | Área               | Estado               |
+| --- | ------------------------------------ | ------------------ | -------------------- |
+| 1   | Rating visible en Profile            | Visual + Funcional | 🟡 Handoff listo     |
+| 2   | Onboarding calibración (3 preguntas) | UX + Funcional     | 🟡 Handoff listo     |
+| 3   | **R5** — Retirar `getRecentAccuracy` | Funcional          | 🟡 Próximo           |
+| 4   | Ampliar banco 70 → 110+              | Funcional          | 🟡 Post R5           |
+| 5   | Lectura Core Web Vitals + decisiones | Admin              | ⏳ Datos disponibles |
+| 6   | Workflow de contenido (documentar)   | Admin              | 🟡 Bloquea Funcional |
+| 7   | Test #2 con los 5 jóvenes            | UX                 | ⏸ Pausa PO           |
+| 8   | Notificaciones de racha              | UX + Admin         | 🟢 Post Test #2      |
+| 9   | Retirar `SortableList.tsx`           | Visual             | 🟢 Post Test #2      |
+| 10  | Migración a Supabase (Fase 3.5)      | Admin + Funcional  | 🟢 Futuro            |
 
 ---
 
-## 2026-09-25 — FASE 2 · Visual · Handoff UX TapToPlace CERRADO
+## 📚 HISTORIAL CONSOLIDADO FASE 3
 
-### [VISUAL] TapToPlace reemplaza drag & drop + fix paleta Button
+### 2026-10-02 — Funcional · R3 CERRADO: Selector por rating
 
-**Archivos nuevos**: `TapToPlace.tsx`.
-**Modificados**: `VerseScrambleQuestion.tsx`, `TimelineQuestion.tsx`,
-`SortableList.tsx` (deprecated), `Button.tsx` (fix paleta + variante reino).
+- `pickAdaptiveQuestions` reescrito: lee `getUserRating()`, delega en
+  `pickQuestionsByRating`.
+- Cap `MAX_STRETCH = 400`: nunca sirve una pregunta por encima de
+  `userRating + 400`.
+- Puerta de "trampas" eliminada: rating filtra naturalmente.
+- 61 tests de rating. Suite total: **127/127**.
+- Verificado manualmente: rating 1000 → fáciles/medias.
+  Rating 1800 → difíciles con hint-deduction.
 
-**Cambios**: botón "Confirmar orden" solo se habilita al llenar todos los slots.
-**Accesibilidad**: chips `<button>`, aria-live, focus visible, ≥44px.
-**Bundle**: 181.65 → 179.39 kB (−2.26 kB).
+### 2026-10-02 — Funcional · R2 CERRADO: Persistencia del rating
+
+- `UserRating` con `id: string` (clave Dexie).
+- Dexie `version(2)`: tabla `userRating` (id = `local-player`).
+- Migración idempotente: datos v1 intactos.
+- Nuevas funciones: `getUserRating`, `saveUserRating`, `resetUserRating`,
+  `createDefaultUserRating`.
+- `resetProfile` limpia `userRating`.
+- Backup incluye `userRating` (`version: 2`).
+- `getRecentAccuracy` marcado `@deprecated` (se retira en R5).
+- Store: `userRating` en `init()`. `answerQuestion` actualiza rating.
+- Nuevas acciones: `calibrateWithResults`, `resetRating`.
+- Tests: 121/121. Bundle +0.53 kB gzip.
+
+### 2026-10-02 — Funcional · R1 CERRADO: Módulo de rating aislado
+
+- Nuevo `src/utils/rating.ts`: fórmula ELO-like (K=32 early / K=16 stable),
+  `getQuestionRating`, `calibrateInitialRating`, `pickQuestionsByRating`,
+  `getRatingLabel`.
+- Nuevo `src/utils/rating.test.ts` (55 tests).
+- Nuevos tipos: `UserRating`, `RatingSnapshot`, `RatingConfig`.
+- No integrado aún: cero riesgo funcional.
+- Tests: 66 → 121. Bundle sin cambios (tree-shaken).
+
+### 2026-10-01 — Fase 3 iniciada
+
+- Fase 2 no tocó territorio Funcional.
+- Handoff de Admin (Analytics) aplicado en `src/main.tsx`.
 
 ---
 
-## 2026-09-24 — FASE 2 · Visual · Handoffs PWA CERRADOS
+## 📚 HISTORIAL CONSOLIDADO FASE 2
 
-- Handoff 1: `index.html` (lang es, título Selah, metas iOS).
-- Handoff 3: `favicon.svg` (llama teardrop alba→fuego).
-- Handoff 4: `icons.svg` eliminado.
+### 2026-09-25 — Visual · Handoff género TapToPlace CERRADO
+
+- Prop `itemGender?: "f" | "m"` (default "f").
+- `TimelineQuestion.tsx` pasa `"m"`. `VerseScrambleQuestion.tsx` usa default.
+- Build limpio, 66/66 tests.
+
+### 2026-09-25 — UX · Handoffs 1 y 2 CERRADOS
+
+- **Handoff 1**: "Mente en el Camino" → "Selah" en Home.tsx.
+- **Handoff 2**: microcopy Timeline "palabra" → "evento".
+- No renombrado: `MenteEnElCaminoDB`.
+
+### 2026-09-25 — Admin · Tarea 2 CERRADA: Analytics
+
+- `@vercel/analytics` + `@vercel/speed-insights` integradas.
+- Plan Hobby (Free). Costo: $0/mes.
+- Docs: `docs/ANALYTICS.md`.
+- Analytics ✅. Speed Insights ⏳.
+
+### 2026-09-25 — Visual · Handoff UX TapToPlace CERRADO
+
+- Nuevo `TapToPlace.tsx`.
+- `SortableList.tsx` marcado `@deprecated`.
+- `Button.tsx`: paleta arreglada + variante `reino`.
+- Bundle gzip: −2.26 kB.
+
+### 2026-09-24 — Visual · Handoffs PWA CERRADOS
+
+- `index.html`, `favicon.svg`, `icons.svg` eliminado.
+
+### 2026-09-24 — Admin · Tarea 1 CERRADA: PWA
+
+- Marca pública: Selah. Slogan: "Pausa. Reflexiona. Aprende.".
 
 ---
 
-## 2026-09-24 — FASE 2 · Admin · Tarea 1 CERRADA: PWA
-
-### [ADMIN] PWA configurada + rebrand a "Selah"
-
-- Marca: Selah (pausa, medita — hebreo, Salmos).
-- Slogan: "Pausa. Reflexiona. Aprende.".
-- `vite.config.ts` con manifest, Workbox, íconos.
-- 4 íconos PWA generados.
-
----
-
-## 2026-09-23 / 2026-09-24 — FASE 1 (consolidado)
+## 📚 HISTORIAL CONSOLIDADO FASE 1
 
 ### [SISTEMA] Documentación maestra
 
@@ -153,41 +156,31 @@ Renombrar rompería IndexedDB de usuarios existentes.
 
 ### [FEEDBACK] Test #1 — 5 jóvenes
 
-1. Rendimiento. 2. Preguntas trampa. 3. "Vacía / sin principios". 4. Drag & drop con lag.
-
-**Acciones**: deviceTier + AnimatedBackground, dificultad adaptativa,
-microcopy cálido, TapToPlace.
+1. Rendimiento móviles gama baja.
+2. Preguntas trampa mezcladas con fáciles. ← **RESUELTO por Rating R1-R3.**
+3. "Se siente vacía", "sin principios".
+4. Drag & drop con lag táctil.
 
 ### [VISUAL] Fase 1 — 4 rondas
 
-Optimización + Results/Profile. Modales custom. Home + scrollbar.
-SortableList + tipos nuevos.
+Ronda 1: Optimización + Results/Profile + Skeleton.
+Ronda 2: Modales custom.
+Ronda 3: Home + scrollbar.
+Ronda 4: SortableList + tipos nuevos.
 
 ### [FUNCIONAL] Fase 1 — 3 rondas
 
-dailyPrinciples + dificultad adaptativa. Bugs críticos. Tipos nuevos + vitest (66 tests).
+Ronda 1: dailyPrinciples + Badge.verse + dificultad adaptativa.
+Ronda 2: Bugs críticos.
+Ronda 3: Tipos nuevos + 14 datos + vitest.
 
 ### [UX] Fase 1 — 4 sesiones
 
-Microcopy global. Microcopy tipos nuevos. Validación SortableList. Validaciones navegador.
+Microcopy global, tipos nuevos, SortableList, validaciones navegador.
 
 ---
 
-## 📋 Pendientes activos (Fase 2)
-
-| #   | Tarea                                       | Área              | Estado             |
-| --- | ------------------------------------------- | ----------------- | ------------------ |
-| 1   | **Test #2 con los 5 jóvenes**               | UX                | 🔥 PRÓXIMO         |
-| 2   | Core Web Vitals (24-48h)                    | Admin             | ⏳ Esperando datos |
-| 3   | Ampliar banco 70 → 100+                     | Funcional         | 🟡 Post Test #2    |
-| 4   | Onboarding primera vez                      | UX                | ⏸ Post Test #2     |
-| 5   | Migración a Supabase (Fase 2.5)             | Admin + Funcional | 🟢                 |
-| 6   | Retirar `SortableList.tsx` definitivamente  | Visual            | 🟢 Post Test #2    |
-| 7   | Renombrar comentarios Funcional (cosmético) | Funcional         | 🟢 Opcional        |
-
----
-
-## 🔑 Reglas de oro
+## 🔑 REGLAS DE ORO
 
 1. Nunca romper lógica funcional sin avisar.
 2. Mobile-first siempre.
@@ -195,9 +188,9 @@ Microcopy global. Microcopy tipos nuevos. Validación SortableList. Validaciones
 4. Cada respuesta enseña.
 5. Contenido teológico revisado (RVR1960).
 6. Optimizar peso.
-7. Un chat por área, todo pasa por el usuario (product owner).
-8. **NUNCA renombrar `MenteEnElCaminoDB`** (rompe IndexedDB de usuarios).
+7. Un chat por área, todo pasa por el product owner.
+8. **NUNCA renombrar `MenteEnElCaminoDB`**.
 
 ---
 
-**Fin del CHANGELOG.**
+**Fin del CHANGELOG global (Fase 3 · R1-R3 consolidados).**

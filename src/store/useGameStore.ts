@@ -6,6 +6,7 @@ import type {
   GameState,
   Question,
   UserProfile,
+  UserRating,
 } from "../types";
 import {
   getOrCreateProfile,
@@ -13,6 +14,9 @@ import {
   saveAnswer,
   getCompletedCategories,
   markDailyCompleted,
+  getUserRating,
+  saveUserRating,
+  resetUserRating,
 } from "../db/database";
 import {
   calculateQuestionScore,
@@ -23,6 +27,11 @@ import {
   updateStreak,
   xpForAnswer,
 } from "../utils/scoring";
+import {
+  getQuestionRating,
+  updateRating,
+  calibrateInitialRating,
+} from "../utils/rating";
 
 // ============================================================
 // ESTADO DE LA TIENDA
@@ -31,6 +40,7 @@ import {
 interface GameStoreState {
   profile: UserProfile | null;
   game: GameState | null;
+  userRating: UserRating | null;
   isLoading: boolean;
   error: string | null;
 
@@ -47,7 +57,7 @@ interface GameStoreState {
     selectedIndex?: number;
     selectedBool?: boolean;
     selectedText?: string;
-    selectedOrder?: number[]; // ← NUEVO (verse-scramble, timeline)
+    selectedOrder?: number[]; // verse-scramble, timeline
     timeSpent: number;
     hintsUsed?: number;
   }) => Promise<void>;
@@ -56,6 +66,8 @@ interface GameStoreState {
   resetGame: () => void;
   clearFeedback: () => void;
   clearNewBadges: () => void;
+  calibrateWithResults: (results: boolean[]) => Promise<void>;
+  resetRating: () => Promise<void>;
 }
 
 // ============================================================
@@ -65,6 +77,7 @@ interface GameStoreState {
 export const useGameStore = create<GameStoreState>((set, get) => ({
   profile: null,
   game: null,
+  userRating: null,
   isLoading: false,
   error: null,
   lastAnswerCorrect: null,
@@ -75,11 +88,14 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   init: async () => {
     set({ isLoading: true, error: null });
     try {
-      const profile = await getOrCreateProfile();
+      const [profile, userRating] = await Promise.all([
+        getOrCreateProfile(),
+        getUserRating(),
+      ]);
       const level = calculateLevel(profile.xp);
       const synced = { ...profile, level };
       if (level !== profile.level) await saveProfile(synced);
-      set({ profile: synced, isLoading: false });
+      set({ profile: synced, userRating, isLoading: false });
     } catch (e) {
       set({ error: (e as Error).message, isLoading: false });
     }
@@ -181,6 +197,27 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     await saveAnswer(answer);
     await saveProfile(updatedProfile);
+
+    // Actualizar rating adaptativo (Fase 3 · R2).
+    // No altera el flujo visible: solo persiste el rating para R3.
+    const currentRating = get().userRating;
+    if (currentRating) {
+      const questionRating = getQuestionRating(question);
+      const newGlobal = updateRating(
+        currentRating.global,
+        questionRating,
+        isCorrect,
+        currentRating.answeredCount,
+      );
+      const updatedRating: UserRating = {
+        ...currentRating,
+        global: newGlobal,
+        answeredCount: currentRating.answeredCount + 1,
+        lastUpdatedAt: Date.now(),
+      };
+      set({ userRating: updatedRating });
+      await saveUserRating(updatedRating);
+    }
   },
 
   nextQuestion: () => {
@@ -277,6 +314,26 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   clearNewBadges: () => {
     set({ newlyUnlockedBadges: [] });
+  },
+
+  calibrateWithResults: async (results) => {
+    const current = get().userRating;
+    if (!current) return;
+    const initial = calibrateInitialRating(results);
+    const updated: UserRating = {
+      ...current,
+      global: initial,
+      // La calibración NO incrementa answeredCount: es un punto de partida,
+      // no historial de juego. Mantiene K alto en las primeras partidas reales.
+      lastUpdatedAt: Date.now(),
+    };
+    set({ userRating: updated });
+    await saveUserRating(updated);
+  },
+
+  resetRating: async () => {
+    const rating = await resetUserRating();
+    set({ userRating: rating });
   },
 }));
 

@@ -190,3 +190,36 @@ export interface GameState {
   startedAt: number;
   finishedAt: number | null;
 }
+
+// ---------- Rating adaptativo (Fase 3 · R1 + R2) ----------
+export interface UserRating {
+  /** Clave primaria Dexie (misma que el perfil: `local-player`). */
+  id: string;
+  /** Rating global actual. */
+  global: number;
+  /** Rating por categoría (Fase 3.5, opcional). */
+  byCategory?: Partial<Record<CategoryId, number>>;
+  /** Total de respuestas contabilizadas. */
+  answeredCount: number;
+  /** Timestamp de última actualización. */
+  lastUpdatedAt: number;
+}
+
+export interface RatingSnapshot {
+  rating: number;
+  label: string;
+  answeredCount: number;
+}
+
+export interface RatingConfig {
+  initial: number;
+  min: number;
+  max: number;
+  kEarly: number;
+  kStable: number;
+  kEarlyThreshold: number;
+  lowerBand: number;
+  upperBand: number;
+  reinforceRatio: number;
+  stretchRatio: number;
+}

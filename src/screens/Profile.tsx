@@ -11,6 +11,12 @@ import { BadgeDetailModal } from "../components/BadgeDetailModal";
 import { PromptDialog } from "../components/PromptDialog";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { xpProgressInLevel } from "../utils/scoring";
+import {
+  getRatingLabel,
+  RATING_INITIAL,
+  RATING_MIN,
+  RATING_MAX,
+} from "../utils/rating";
 import { resetProfile as resetProfileDB } from "../db/database";
 import { useCountUp } from "../hooks/useCountUp";
 import { fadeInUp, popIn, staggerContainer } from "../utils/animations";
@@ -20,8 +26,28 @@ interface Props {
   onBack: () => void;
 }
 
+// ── Rating: umbrales espejo de `getRatingLabel` ──────────────
+// TODO(handoff Funcional): exponer `getRatingTiers()` en utils/rating.ts
+// para eliminar esta duplicación. Mientras tanto, si cambian los
+// umbrales de `getRatingLabel`, actualizar también aquí.
+const RATING_TIERS = [RATING_MIN, 1100, 1300, 1500, 1700, 1900, RATING_MAX];
+
+/** Devuelve el piso y techo del tier actual del rating. */
+function getRatingTier(rating: number): { floor: number; ceil: number } {
+  for (let i = 0; i < RATING_TIERS.length - 1; i++) {
+    if (rating < RATING_TIERS[i + 1]) {
+      return { floor: RATING_TIERS[i], ceil: RATING_TIERS[i + 1] };
+    }
+  }
+  return {
+    floor: RATING_TIERS[RATING_TIERS.length - 2],
+    ceil: RATING_TIERS[RATING_TIERS.length - 1],
+  };
+}
+
 export function Profile({ onBack }: Props) {
   const profile = useGameStore((s) => s.profile);
+  const userRating = useGameStore((s) => s.userRating?.global);
   const setNickname = useGameStore((s) => s.setNickname);
   const init = useGameStore((s) => s.init);
 
@@ -38,9 +64,20 @@ export function Profile({ onBack }: Props) {
   const unlockedCount = profile.badges.length;
   const totalBadges = BADGES.length;
 
+  // ── Rating ELO (handoff Funcional → Visual) ────────────────
+  const rating = userRating ?? RATING_INITIAL;
+  const ratingLabel = getRatingLabel(rating);
+  const ratingTier = getRatingTier(rating);
+  const tierSpan = ratingTier.ceil - ratingTier.floor;
+  const tierProgress =
+    tierSpan > 0
+      ? Math.min(1, Math.max(0, (rating - ratingTier.floor) / tierSpan))
+      : 1;
+
   const xpTotal = useCountUp(profile.xp, 900);
   const xpCurrent = useCountUp(xp.current, 900);
   const streak = useCountUp(profile.streak, 600);
+  const ratingDisplay = useCountUp(rating, 900);
 
   const hasEmojiAvatar = Boolean(profile.avatar);
   const initial = profile.nickname.trim().charAt(0).toUpperCase() || "?";
@@ -171,6 +208,61 @@ export function Profile({ onBack }: Props) {
             color="text-reino-400"
             compact
           />
+        </motion.div>
+
+        {/* ── Rating ELO (handoff Funcional → Visual) ──────────── */}
+        <motion.div variants={fadeInUp}>
+          <div
+            role="group"
+            aria-label={`Tu nivel de experiencia: ${rating} puntos, ${ratingLabel}`}
+            className="relative overflow-hidden rounded-2xl border border-white/5 bg-noche-800/60 p-4 sm:p-5"
+          >
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-12 -top-16 h-44 w-44"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(167,139,250,0.16) 0%, transparent 70%)",
+              }}
+            />
+
+            <div className="relative">
+              <div className="mb-3 flex items-center gap-2">
+                <span aria-hidden="true" className="text-base">
+                  📈
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-white/40">
+                  Experiencia
+                </span>
+              </div>
+
+              <div className="mb-3 flex items-baseline gap-3">
+                <span className="text-3xl font-bold tabular-nums text-alba-400 sm:text-4xl">
+                  {ratingDisplay}
+                </span>
+                <span className="text-sm font-semibold uppercase tracking-wide text-reino-400">
+                  {ratingLabel}
+                </span>
+              </div>
+
+              <div
+                role="progressbar"
+                aria-valuenow={rating}
+                aria-valuemin={ratingTier.floor}
+                aria-valuemax={ratingTier.ceil}
+                aria-valuetext={`${rating} de ${ratingTier.ceil} para subir de nivel`}
+                className="h-1.5 overflow-hidden rounded-full bg-noche-700"
+              >
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: tierProgress }}
+                  transition={{ duration: 0.9, ease: "easeOut" }}
+                  style={{ originX: 0 }}
+                  className="h-full w-full rounded-full bg-gradient-to-r from-alba-500 to-fuego-500"
+                />
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         {/* ── Vitrina ────────────────────────────────────────────── */}

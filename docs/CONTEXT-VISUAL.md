@@ -1,8 +1,8 @@
 # CONTEXT-VISUAL — Área Visual · Mente en el Camino (Fase 2)
 
 Documento de traspaso para el asistente especializado en el **área Visual**.
-Última actualización: 2026-09-24 (Fase 2).
-Estado: 🔄 Cerrando handoffs PWA del Admin.
+Última actualización: 2026-10-01 (Fase 2).
+Estado: ✅ Área limpia. Sin pendientes activos hasta Test #2.
 
 ---
 
@@ -32,7 +32,7 @@ Especializada en:
 **Nombre público**: Selah ("pausa, medita" — hebreo, Salmos)
 **Slogan**: "Pausa. Reflexiona. Aprende."
 **Tipo**: Trivia bíblica interactiva para jóvenes (13-25 años).
-**Estado**: PWA instalable. Fase 2 en curso.
+**Estado**: PWA instalable + métricas activas. Fase 2 en curso.
 **Repo**: `github.com/silverth/mente-en-el-camino`
 **Producción**: `https://mente-en-el-camino.vercel.app`
 
@@ -55,12 +55,13 @@ Especializada en:
 
 - `src/index.css` — paleta `@theme`, keyframes, reset, utilidades.
 - `src/utils/animations.ts` — variantes Motion.
-- `index.html` — título, meta tags, favicon (NUEVO en Fase 2).
-- `public/favicon.svg`, `public/icons.svg` (NUEVO en Fase 2).
+- `index.html` — título, meta tags, favicon.
+- `public/favicon.svg` — llama Selah.
+- `public/icons.svg` — ❌ ELIMINADO en Fase 2 (handoff 4).
 
 ### Componentes visuales
 
-- `src/components/Button.tsx`
+- `src/components/Button.tsx` ⚠️ (paleta arreglada en Fase 2 — ver §8).
 - `src/components/Card.tsx`
 - `src/components/ProgressBar.tsx`
 - `src/components/Timer.tsx`
@@ -76,9 +77,17 @@ Especializada en:
 - `src/components/ConfirmDialog.tsx`
 - `src/components/ScoreFeedback.tsx` (solo estilos)
 - `src/components/QuestionRenderer.tsx` (solo estilos)
-- `src/components/questions/SortableList.tsx`
-- `src/components/questions/VerseScrambleQuestion.tsx`
-- `src/components/questions/TimelineQuestion.tsx`
+
+### Componentes de preguntas
+
+- `src/components/questions/TapToPlace.tsx` ✅ NUEVO (Fase 2).
+- `src/components/questions/VerseScrambleQuestion.tsx` ✅ Migrado a TapToPlace.
+- `src/components/questions/TimelineQuestion.tsx` ✅ Migrado a TapToPlace.
+- `src/components/questions/SortableList.tsx` ⚠️ **@deprecated** (Fase 2).
+  - NO usar en código nuevo. Pendiente eliminar tras Test #2.
+  - Ningún archivo lo importa (verificado con búsqueda global).
+- Otros 5 tipos de pregunta (`MultipleChoice`, `TrueFalse`, `WhoSaidIt`,
+  `FillBlank`, `HintDeduction`) — solo estilos si toca.
 
 ### Pantallas (solo capa visual)
 
@@ -121,6 +130,8 @@ Definida en `src/index.css` dentro de `@theme`. **Fuente única de verdad**.
 - Import: `import { motion, AnimatePresence } from "motion/react";`
 - Variantes en `src/utils/animations.ts`.
 - Respetar `useReducedMotion()` para guards locales.
+- **Motion solo anima `transform` y `opacity`**. Nunca `boxShadow`,
+  `borderColor`, `filter: blur` (repaint por frame).
 
 ### Componentes
 
@@ -146,78 +157,82 @@ Definida en `src/index.css` dentro de `@theme`. **Fuente única de verdad**.
 
 ## 6. ESTADO ACTUAL DEL ÁREA
 
-### Completado en Fase 1 (4 rondas)
+### ✅ Cerrado en Fase 1 (4 rondas)
 
-✅ Optimización de rendimiento (deviceTier, AnimatedBackground).
-✅ Rediseño Results (podio 5 niveles), Profile (hero + vitrina).
-✅ Modales custom (Modal, BadgeDetail, Prompt, Confirm).
-✅ UI de tipos nuevos (SortableList + 2 wrappers).
-✅ Accesibilidad final (aria-live, prefers-reduced-motion).
-✅ Build limpio: 181.65 kB gzip.
+- Optimización de rendimiento (deviceTier, AnimatedBackground).
+- Rediseño Results (podio 5 niveles), Profile (hero + vitrina).
+- Modales custom (Modal, BadgeDetail, Prompt, Confirm).
+- UI de tipos nuevos (SortableList + 2 wrappers).
+- Accesibilidad final (aria-live, prefers-reduced-motion).
+- Build limpio: 181.65 kB gzip (baseline).
 
-### Fase 2 — Trabajo activo
+### ✅ Cerrado en Fase 2 (esta sesión)
 
-🔄 **3 handoffs de Admin (PWA)**:
+**Handoffs PWA (Admin → Visual)**
 | # | Tarea | Estado |
 |---|-------|--------|
-| 1 | Actualizar `index.html` (título Selah, theme-color, apple-touch-icon) | ⏳ |
-| 3 | Rediseñar `public/favicon.svg` (llama neón alineada con PWA) | ⏳ |
-| 4 | Revisar/eliminar `public/icons.svg` (placeholder) | ⏳ |
+| 1 | `index.html` con marca Selah, theme-color, metas iOS | ✅ |
+| 3 | `public/favicon.svg` rediseñado (llama alba→fuego) | ✅ |
+| 4 | `public/icons.svg` eliminado (huérfano confirmado) | ✅ |
 
-### Pendientes bloqueados
+**Handoff UX → Visual: TapToPlace**
 
-| Pendiente                    | Bloqueado por  |
-| ---------------------------- | -------------- |
-| Modo claro (opcional)        | Prioridad baja |
-| Microinteracciones refinadas | Post Test #2   |
+- `src/components/questions/TapToPlace.tsx` (nuevo componente).
+- Reemplaza drag & drop por tap-to-place en `verse-scramble` y `timeline`.
+- Motivos: lag táctil + incumplimiento WCAG 2.2 AA · 2.5.7.
+- `SortableList.tsx` marcado `@deprecated`.
 
----
+**Fix paleta `Button.tsx`**
 
-## 7. FLUJO DE TRABAJO
+- Reemplazados `amber-*`, `slate-*`, `red-*` por `alba-*`, `noche-*`, `alerta-*`.
+- Añadida variante `reino`.
 
-1. Recibir tarea (de UX, Funcional, Admin o usuario).
-2. Verificar que está dentro del territorio Visual.
-3. Proponer solución visual con justificación técnica.
-4. Entregar archivo completo con clases Tailwind v4.
-5. Verificar en navegador antes de commitear.
-6. Actualizar `CHANGELOG.md`.
+**Handoff género en TapToPlace**
 
-### Antes de proponer cambios
+- Nueva prop `itemGender?: "f" | "m"` (default `"f"`).
+- `TimelineQuestion` pasa `"m"`. `VerseScrambleQuestion` usa `"f"`.
 
-- Verificar si el archivo está en territorio compartido (`Home.tsx`).
-- Coordinar con UX si toca microcopy.
-- Coordinar con Funcional si toca lógica (no debería).
-- Coordinar con Admin si toca PWA/manifest.
+### 🟢 Pendientes (bloqueados hasta Test #2)
 
-### Antes de commitear
-
-- `npm run build` limpio.
-- Prueba visual en navegador.
-- Verificar `prefers-reduced-motion` no rompe.
-- Verificar responsive (mobile-first).
+| Pendiente                                   | Bloqueado por  |
+| ------------------------------------------- | -------------- |
+| Microinteracciones refinadas                | Post Test #2   |
+| Modo claro (opcional)                       | Prioridad baja |
+| Eliminar `SortableList.tsx` definitivamente | Post Test #2   |
 
 ---
 
-## 8. APRENDIZAJES Y PATRONES (Fase 1)
+## 7. APRENDIZAJES Y PATRONES
 
 ### Rendimiento
 
 - **NUNCA** `backdrop-blur` en elementos animados.
 - **NUNCA** `filter: blur()` en bucles de render.
+- **NUNCA** animar `boxShadow` ni `borderColor` (repaint por frame).
+  - ⚠️ El viejo `SortableList` lo hacía en `whileDrag` → lag táctil.
+  - `TapToPlace` lo resolvió animando solo `opacity` + `scale`.
 - **SIEMPRE** animar solo `transform` y `opacity`.
 - **PREFERIR** `radial-gradient` antes que blur.
+
+### Tap-to-place (patrón nuevo, Fase 2)
+
+- Slots fijos + banco desordenado + tap = una acción (WCAG-friendly).
+- Botón confirmar deshabilitado hasta llenar todos los slots.
+- `aria-live` anuncia cada acción ("X colocada en posición N").
+- `itemGender` para concordancia gramatical en lector de pantalla.
 
 ### Accesibilidad
 
 - Todo modal: `role="dialog"` + `aria-modal="true"` + `aria-labelledby`.
 - Focus trap + restauración de foco.
 - `aria-live="polite"` para mensajes de estado.
-- Tamaños táctiles ≥44px.
+- Tamaños táctiles ≥44px (`min-h-11` en Tailwind v4).
 - `prefers-reduced-motion` → guard local + guard global.
+- Focus visible: `ring-alba-400` + `ring-offset-noche-900`.
 
 ### Motion
 
-- `Reorder` de Motion para listas ordenables.
+- `Reorder` de Motion para listas ordenables (❌ deprecado en TapToPlace).
 - `AnimatePresence` para entradas/salidas.
 - `useReducedMotion()` respeta preferencia del SO.
 
@@ -225,6 +240,52 @@ Definida en `src/index.css` dentro de `@theme`. **Fuente única de verdad**.
 
 - `animate-[glow_3s...]` requiere `--animate-glow` en `@theme`.
 - Clases con comas dentro de `shadow-[...]` → usar `_`.
+- `min-h-11` = 44px (tamaño táctil mínimo iOS/Android).
+
+### localStorage / assets
+
+- Antes de borrar un asset de `public/`: verificar runtime (DevTools →
+  Network) **y** código (Ctrl+Shift+F en VS Code).
+- Ignorar `node_modules` en búsquedas globales.
+
+---
+
+## 8. HISTORIAL DE CAMBIOS VISUAL (Fase 2)
+
+### 2026-09-24 — Handoffs PWA 1, 3, 4
+
+- `index.html`: título Selah, theme-color #F5B544, metas iOS,
+  `viewport-fit=cover`, `lang="es"`.
+- `favicon.svg`: llama teardrop con gradiente alba→fuego, núcleo interior,
+  glow radial, fondo rounded square.
+- `icons.svg`: eliminado (0 requests runtime + 0 imports de código).
+
+### 2026-09-25 — TapToPlace + fix Button
+
+- `TapToPlace.tsx` nuevo (~200 líneas). Tap-to-place accesible.
+- `VerseScrambleQuestion.tsx` y `TimelineQuestion.tsx` migrados.
+- `SortableList.tsx` marcado `@deprecated`.
+- `Button.tsx`: paleta prohibida → permitida + variante `reino`.
+- Bundle gzip: 181.65 kB → 179.39 kB (−2.26 kB).
+- Precache: 16 → 15 entries.
+
+### 2026-09-25 — Handoff género TapToPlace
+
+- Nueva prop `itemGender?: "f" | "m"` en `TapToPlace`.
+- `TimelineQuestion` pasa `"m"` + hint adaptado ("evento").
+- `VerseScrambleQuestion` sin cambios (usa default `"f"`).
+- Bundle gzip: 179.39 kB → 180.98 kB (+1.59 kB, delta del objeto `pron`).
+
+### Métricas actuales
+
+| Métrica         | Valor                  |
+| --------------- | ---------------------- |
+| Tests unitarios | 66/66 ✅               |
+| Build time      | ~1 s                   |
+| Bundle gzip     | 180.98 kB              |
+| Precache PWA    | 15 entries · 804.10 KB |
+| Favicon         | ✅ llama Selah         |
+| PWA installable | ✅ Chrome              |
 
 ---
 
@@ -232,17 +293,22 @@ Definida en `src/index.css` dentro de `@theme`. **Fuente única de verdad**.
 
 ### Con Admin
 
-- **Recibiendo**: 3 handoffs de PWA (index.html, favicon, icons.svg).
-- Pendiente: íconos PWA ya generados por Admin.
+- ✅ Handoffs PWA 1, 3, 4 cerrados.
+- Pendiente futuro: campo `screenshots` en manifest (warnings opcionales
+  de Chrome para "Richer PWA Install UI").
 
 ### Con UX
 
-- Coordinación de microcopy al cambiar textos en pantallas.
-- Pendiente: UX cambiará "Mente en el Camino" → "Selah".
+- ✅ Handoff TapToPlace cerrado (drag & drop → tap-to-place).
+- ✅ Handoff género cerrado (`itemGender`).
+- ⏳ Pendiente: Test #2 con 5 jóvenes.
+- Pendiente futuro: onboarding primera vez.
 
 ### Con Funcional
 
 - Sin pendientes activos.
+- Contrato `onAnswer(order: number[])` en `TapToPlace` se mantiene igual
+  al de `SortableList`. Índices sobre `items` ya desordenados por el padre.
 - Si hay cambio de tipos, Funcional avisa.
 
 ---
@@ -253,14 +319,18 @@ Definida en `src/index.css` dentro de `@theme`. **Fuente única de verdad**.
 
 1. Leer este documento + `PROJECT.md` + `CHANGELOG.md`.
 2. Verificar `npm run build` (debe estar limpio).
-3. Abrir la app en local (`npm run dev`).
-4. Revisar `index.html`, `public/favicon.svg`, `public/icons.svg`.
+3. Verificar `npm run test` (debe estar en 66/66).
+4. Abrir la app en local (`npm run dev`).
+5. Inspeccionar visualmente:
+   - Home, Game, Results, Profile.
+   - Pregunta `verse-scramble` y `timeline` (TapToPlace).
+   - Verificar `aria-label` de chips (devolverlo/devolverla según tipo).
 
 ### Cuando llegue la primera tarea
 
 1. Confirmar territorio Visual.
 2. Verificar en `CHANGELOG.md` si está pendiente.
-3. Proponer solución con justificación.
+3. Proponer solución con justificación técnica.
 4. Entregar archivo completo.
 5. Actualizar `CHANGELOG.md`.
 
@@ -269,6 +339,7 @@ Definida en `src/index.css` dentro de `@theme`. **Fuente única de verdad**.
 - **PWA/manifest**: coordinar con Admin.
 - **Lógica**: escalar a Funcional.
 - **Microcopy/flujo**: escalar a UX.
+- **Product owner (usuario)**: todo pasa por él.
 
 ---
 
@@ -286,11 +357,14 @@ Definida en `src/index.css` dentro de `@theme`. **Fuente única de verdad**.
 
 ## 12. FRASE PARA EL SUCESOR
 
-> "Fase 2 activa. PWA configurada por Admin con marca 'Selah'. Mi trabajo
-> inmediato: cerrar 3 handoffs visuales de PWA (index.html, favicon.svg,
-> icons.svg). El resto del área está limpio. No tocar lógica. Respetar la
-> paleta. Verificar build. Ser quirúrgico."
+> "Fase 2 activa. PWA configurada, marca 'Selah' consolidada, favicon con
+> llama alba→fuego, TapToPlace implementado (drag & drop eliminado),
+> Button.tsx con paleta arreglada, concordancia de género en aria-labels.
+> Área Visual limpia. Sin pendientes activos hasta Test #2. Cuando llegue
+> Test #2: microinteracciones refinadas + modo claro opcional + retirar
+> `SortableList.tsx` definitivamente. No tocar lógica. Respetar paleta.
+> Motion solo anima transform/opacity. Ser quirúrgico."
 
 ---
 
-**Fin del CONTEXT-VISUAL (Fase 2).**
+**Fin del CONTEXT-VISUAL (Fase 2 · actualizado 2026-10-01).**
