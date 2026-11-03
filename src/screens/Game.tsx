@@ -16,6 +16,7 @@ interface AnswerParams {
   selectedBool?: boolean;
   selectedText?: string;
   hintsUsed?: number;
+  selectedOrder?: number[]; // H-02.1
 }
 
 export function Game({ onFinish, onQuit }: Props) {
