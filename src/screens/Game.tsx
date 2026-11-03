@@ -93,11 +93,13 @@ export function Game({ onFinish, onQuit }: Props) {
     }
   };
 
+  // D4 = Opción 2: si se acaba el tiempo, se envía exactamente timeLimit.
+  // elapsedRef.current solo se usa para respuestas manuales (handleAnswer).
   const handleTimeUp = useCallback(() => {
     if (lastAnswerCorrect === null) {
-      answerQuestion({ timeSpent: elapsedRef.current });
+      answerQuestion({ timeSpent: timeLimit });
     }
-  }, [lastAnswerCorrect, answerQuestion]);
+  }, [lastAnswerCorrect, answerQuestion, timeLimit]);
 
   return (
     <div className="min-h-screen flex flex-col relative">
