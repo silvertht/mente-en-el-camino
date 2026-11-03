@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, memo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useGameStore } from "../store/useGameStore";
 import { QuestionRenderer } from "../components/QuestionRenderer";
@@ -19,6 +19,26 @@ interface AnswerParams {
   selectedOrder?: number[]; // H-02.1
 }
 
+// H-02.2-A: aislar useElapsedTime en hijo memoizado.
+// El estado del tick vive aquí. Al usar memo, el re-render no propaga a Game.
+const ElapsedReporter = memo(function ElapsedReporter({
+  active,
+  onChange,
+}: {
+  active: boolean;
+  onChange: (n: number) => void;
+}) {
+  const elapsed = useElapsedTime(active);
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+  useEffect(() => {
+    onChangeRef.current(elapsed);
+  }, [elapsed]);
+  return null;
+});
+
 export function Game({ onFinish, onQuit }: Props) {
   const game = useGameStore((s) => s.game);
   const lastAnswerCorrect = useGameStore((s) => s.lastAnswerCorrect);
@@ -38,7 +58,13 @@ export function Game({ onFinish, onQuit }: Props) {
   const currentStreak = game?.streak ?? 0;
 
   const isAnswering = lastAnswerCorrect === null && !!currentQuestion;
-  const elapsed = useElapsedTime(isAnswering);
+
+  // H-02.2-A: elapsed vive en ref, no en state. No re-render por tick.
+  const elapsedRef = useRef(0);
+  const handleElapsed = useCallback((n: number) => {
+    elapsedRef.current = n;
+  }, []);
+
   const [timerKey, setTimerKey] = useState(0);
 
   useEffect(() => {
@@ -54,7 +80,7 @@ export function Game({ onFinish, onQuit }: Props) {
   const timeLimit = currentQuestion.timeLimit ?? 30;
 
   const handleAnswer = (params: AnswerParams) => {
-    answerQuestion({ ...params, timeSpent: elapsed });
+    answerQuestion({ ...params, timeSpent: elapsedRef.current });
   };
 
   const handleNext = async () => {
@@ -67,18 +93,16 @@ export function Game({ onFinish, onQuit }: Props) {
     }
   };
 
-  // useCallback: mantiene la misma referencia entre renders.
-  // Aunque el Timer ya usa una ref interna para el callback, esto evita
-  // re-crear la función en cada render del padre (menos garbage + más
-  // predecible para futuras optimizaciones).
   const handleTimeUp = useCallback(() => {
     if (lastAnswerCorrect === null) {
-      answerQuestion({ timeSpent: timeLimit });
+      answerQuestion({ timeSpent: elapsedRef.current });
     }
-  }, [lastAnswerCorrect, answerQuestion, timeLimit]);
+  }, [lastAnswerCorrect, answerQuestion]);
 
   return (
     <div className="min-h-screen flex flex-col relative">
+      <ElapsedReporter active={isAnswering} onChange={handleElapsed} />
+
       {/* ============ HEADER ============ */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -86,7 +110,6 @@ export function Game({ onFinish, onQuit }: Props) {
         transition={{ duration: 0.4 }}
         className="p-4 sm:p-5 max-w-3xl mx-auto w-full"
       >
-        {/* Fila superior: salir + score + racha */}
         <div className="flex items-center justify-between gap-3 mb-4">
           <button
             onClick={onQuit}
@@ -100,7 +123,6 @@ export function Game({ onFinish, onQuit }: Props) {
           </button>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Racha (solo si es 2+) */}
             <AnimatePresence>
               {currentStreak >= 2 && (
                 <motion.div
@@ -117,7 +139,6 @@ export function Game({ onFinish, onQuit }: Props) {
               )}
             </AnimatePresence>
 
-            {/* Score */}
             <div className="bg-noche-800/70 backdrop-blur-sm border border-noche-700/60 rounded-full px-3 py-1">
               <span className="text-xs text-slate-500 font-bold mr-1.5">
                 PTS
@@ -129,7 +150,6 @@ export function Game({ onFinish, onQuit }: Props) {
           </div>
         </div>
 
-        {/* Dots de progreso */}
         <div className="flex items-center gap-1.5 mb-3">
           {Array.from({ length: progressTotal }).map((_, i) => {
             const isDone = i < progressCurrent - 1;
@@ -156,7 +176,6 @@ export function Game({ onFinish, onQuit }: Props) {
           })}
         </div>
 
-        {/* Contador texto */}
         <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-slate-600 font-black">
           <span>
             Pregunta {progressCurrent} de {progressTotal}
