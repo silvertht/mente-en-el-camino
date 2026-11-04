@@ -34,6 +34,13 @@ import {
 } from "../utils/rating";
 
 // ============================================================
+// IN-FLIGHT GUARD (DF-1) — módulo-level
+// ============================================================
+// Evita doble submit concurrente de completeOnboarding.
+// Se resetea en el finally de la acción.
+let isCompletingOnboarding = false; // ← NUEVO (DF-1)
+
+// ============================================================
 // ESTADO DE LA TIENDA
 // ============================================================
 
@@ -68,6 +75,8 @@ interface GameStoreState {
   clearNewBadges: () => void;
   calibrateWithResults: (results: boolean[]) => Promise<void>;
   resetRating: () => Promise<void>;
+  // ← NUEVO (H-04)
+  completeOnboarding: (results: boolean[]) => Promise<void>;
 }
 
 // ============================================================
@@ -335,6 +344,59 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     const rating = await resetUserRating();
     set({ userRating: rating });
   },
+
+  // ============================================================
+  // H-04 — completeOnboarding (Fase 4, Contrato v2)
+  // ============================================================
+  // (a) calibrateWithResults UNA sola vez
+  // (b) onboardingCompleted = true en profile (Dexie)
+  // (c) atomicidad: si (a) falla, (b) no se ejecuta
+  // (d) idempotente: 2ª llamada no recalibra ni re-marca
+  // (e) NO otorga XP, puntos ni insignias
+  // (f) results debe tener exactamente 3 elementos
+  // W1: null-guard de userRating antes de calibrar
+  // DF-1: in-flight guard contra doble submit concurrente
+  // ============================================================
+  completeOnboarding: async (results) => {
+    // (f) Validación estricta de tamaño — no truncar ni rellenar.
+    if (results.length !== 3) {
+      throw new Error(
+        `completeOnboarding: results debe tener exactamente 3 elementos (recibido: ${results.length})`,
+      );
+    }
+
+    // (d) Idempotencia — fast return si ya está completado.
+    const { profile, userRating } = get();
+    if (profile?.onboardingCompleted) return;
+
+    // In-flight guard (DF-1)
+    if (isCompletingOnboarding) {
+      throw new Error("completeOnboarding: ya hay una llamada en curso");
+    }
+
+    // W1: null-guard antes de calibrar. No toca calibrateWithResults (R2 intacto).
+    if (!userRating) {
+      throw new Error("userRating no cargado; abortando calibración");
+    }
+    if (!profile) {
+      throw new Error("profile no cargado; abortando calibración");
+    }
+
+    isCompletingOnboarding = true;
+    try {
+      // (a) Calibrar exactamente 1 vez.
+      await get().calibrateWithResults(results);
+
+      // (b) Marcar flag (atomicidad c: solo si (a) resolvió).
+      const updated: UserProfile = { ...profile, onboardingCompleted: true };
+      await saveProfile(updated);
+      set({ profile: updated });
+
+      // (e) NO se toca xp, level, badges ni game.
+    } finally {
+      isCompletingOnboarding = false;
+    }
+  }, // ← NUEVO (H-04)
 }));
 
 // ============================================================

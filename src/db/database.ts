@@ -65,6 +65,7 @@ export function createDefaultProfile(nickname = "Peregrino"): UserProfile {
     lastPlayedAt: null,
     badges: [],
     graceShieldAvailable: false,
+    // onboardingCompleted se deja undefined → el gate lo tratará como false.
   };
 }
 
@@ -83,6 +84,20 @@ export async function getOrCreateProfile(): Promise<UserProfile> {
 export async function saveProfile(profile: UserProfile): Promise<void> {
   await db.profile.put(profile);
 }
+
+/**
+ * Fase 4 · H-04: lector del gate de onboarding para App.tsx.
+ * Contrato: `Promise<boolean>` (lee Dexie).
+ *
+ * @returns true si `profile.onboardingCompleted === true`; false en cualquier otro caso
+ *          (perfil inexistente, campo undefined, campo false).
+ *
+ * UX (Fase B): el gate es asíncrono → App.tsx debe manejar estado de carga.
+ */
+export async function hasCompletedOnboarding(): Promise<boolean> {
+  const profile = await db.profile.get(DEFAULT_PROFILE_ID);
+  return profile?.onboardingCompleted === true;
+} // ← NUEVO (H-04)
 
 export async function updateProfile(
   updater: (profile: UserProfile) => UserProfile,

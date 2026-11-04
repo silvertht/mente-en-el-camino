@@ -129,6 +129,11 @@ export interface UserProfile {
   lastPlayedAt: number | null;
   badges: string[];
   graceShieldAvailable: boolean;
+  /**
+   * Fase 4 · H-04: indica si el usuario completó el onboarding de calibración.
+   * Opcional, sin `version(3)` de Dexie. `db.profile.put()` lo persiste sin migración.
+   */
+  onboardingCompleted?: boolean; // ← NUEVO (H-04)
 }
 
 // ---------- Progreso ----------
