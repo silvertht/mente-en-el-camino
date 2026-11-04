@@ -1,27 +1,20 @@
-### 2026-11-04 — UX · Fase B entregada · ⚠️ BLOQUEADOR: usuarios existentes perderían rating
+### 2026-11-04 — UX · Fase B COMPLETA · T1-T3 entregados · Merge autorizado técnicamente
 
-- **Fase B ENTREGADA** (rama local, sin push): `Onboarding.tsx` + gate en
-  `App.tsx`. 152/152 tests · build limpio · bundle 184.03 kB (+1.69 kB).
-  C1–C3 resueltos · A1–A3 respetados.
-- **BLOQUEADOR DETECTADO POR EL MAESTRO (falla del contrato v2, no de UX)**:
-  `hasCompletedOnboarding()` devuelve `false` para usuarios existentes (perfil
-  con `userRating` real pero SIN `onboardingCompleted`). Al desplegar, esos
-  usuarios serían forzados al onboarding y `completeOnboarding` recalibraría
-  su ELO real → pérdida de progreso (Regla de Oro 1 y 4).
-- **Fix requerido (Funcional, ~15 min)**:
-  A) Migración de datos en `database.ts`: si `profile.userRating !== undefined`
-  y `onboardingCompleted === undefined` → setear `true` (idempotente, sin
-  subir versión Dexie).
-  B) Guard defensivo en `completeOnboarding`: si usuario existente con rating
-  → marcar flag sin calibrar.
-  C) 3 tests nuevos: existente con rating, existente ya onboardeado, usuario
-  nuevo.
-- **Lección para futuros contratos** (Regla del Maestro): todo contrato que
-  toque datos de usuario debe declarar explícitamente el caso de usuarios
-  pre-migración. El contrato v2 no lo hizo.
-- **Tests del flujo onboarding**: 1 smoke test es insuficiente. Mínimo 3 más
-  (3 correctas → `[T,T,T]`; 3 incorrectas → `[F,F,F]`; error → retry). No
-  bloquea, pero se añaden antes del merge.
-- **H-06**: retirado de Fase B (C1 confirmó Button/Card son clases inline).
-  **Reactivado al backlog de Visual** para futura extracción de componentes.
-- **Merge a main**: NO autorizado hasta fix + tests. Sin push.
+- **Fase B CERRADA**: `Onboarding.tsx` + gate en `App.tsx` + tests de flujo
+  T1-T3 + 1 opcional. 165/165 tests. Build limpio (477 modules).
+  Bundle 184.13 kB (+2.01 kB neto Fase 4).
+- **T1-T3**:
+  - T1: 3 correctas → `completeOnboarding([true, true, true])`.
+  - T2: 3 incorrectas → `completeOnboarding([false, false, false])`.
+  - T3: `completeOnboarding` lanza → error visible + botón retry habilitado.
+  - Opcional: doble click no duplica `completeOnboarding`.
+- **C1–C3 + A1–A3 + B1**: todos confirmados. H-06 retirado de Fase B
+  (reactivado al backlog Visual).
+- **⚠️ Tensión F4-D2**: merge a main = publicación. Los usuarios existentes
+  están protegidos por B1 (self-heal + guard), pero los usuarios NUEVOS
+  verían el onboarding sin Test #2.
+- **Recomendación del Maestro**: Test #2 sobre preview de rama ANTES de
+  merge a main. Si el PO decide mergear primero, asume el riesgo explícito
+  y Test #2 se ejecuta post-producción (validación tardía).
+- **Decisión pendiente del PO**: Escenario A (Test #2 → merge) o
+  Escenario B (merge → Test #2).
