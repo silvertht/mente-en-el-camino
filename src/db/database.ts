@@ -65,7 +65,8 @@ export function createDefaultProfile(nickname = "Peregrino"): UserProfile {
     lastPlayedAt: null,
     badges: [],
     graceShieldAvailable: false,
-    // onboardingCompleted se deja undefined → el gate lo tratará como false.
+    // onboardingCompleted se deja undefined → gate lo tratará como false
+    // salvo que B1 lo migre (usuario con answeredCount > 0).
   };
 }
 
@@ -86,18 +87,58 @@ export async function saveProfile(profile: UserProfile): Promise<void> {
 }
 
 /**
- * Fase 4 · H-04: lector del gate de onboarding para App.tsx.
- * Contrato: `Promise<boolean>` (lee Dexie).
+ * B1 (fix 2026-11-04): decide si un perfil existente debe migrarse
+ * automáticamente a `onboardingCompleted = true`.
  *
- * @returns true si `profile.onboardingCompleted === true`; false en cualquier otro caso
- *          (perfil inexistente, campo undefined, campo false).
+ * Lógica:
+ *  - `profile` inexistente → false (usuario nuevo, sin persistencia).
+ *  - `profile.onboardingCompleted !== undefined` → false (ya decidido).
+ *  - `rating.answeredCount > 0` → true (usuario pre-Fase 4 con progreso real).
  *
- * UX (Fase B): el gate es asíncrono → App.tsx debe manejar estado de carga.
+ * Garantías:
+ *  - Idempotente: solo actúa si el flag aún es `undefined`.
+ *  - No afecta a usuarios nuevos (answeredCount === 0).
+ *  - No afecta a usuarios ya decididos (true/false).
+ */
+export function shouldMigrateOnboarding(
+  profile: UserProfile | undefined,
+  rating: UserRating | undefined,
+): boolean {
+  return (
+    profile !== undefined &&
+    profile.onboardingCompleted === undefined &&
+    rating !== undefined &&
+    rating.answeredCount > 0
+  );
+}
+
+/**
+ * Fase 4 · H-04 · Gate de onboarding para App.tsx.
+ * B1 (2026-11-04): auto-migra usuarios existentes (pre-Fase 4 con progreso
+ * real) para evitar forzarlos al onboarding y recalibrar su rating.
+ *
+ * @returns Promise<boolean> — true si onboarding completado (o migrado).
+ *
+ * Consumo (UX Fase B): el gate es asíncrono → App.tsx debe manejar
+ * estado de carga. Este lector self-healea en la primera llamada.
  */
 export async function hasCompletedOnboarding(): Promise<boolean> {
   const profile = await db.profile.get(DEFAULT_PROFILE_ID);
-  return profile?.onboardingCompleted === true;
-} // ← NUEVO (H-04)
+  if (!profile) return false;
+
+  // Flag ya decidido → devolverlo sin tocar Dexie.
+  if (profile.onboardingCompleted !== undefined) {
+    return profile.onboardingCompleted;
+  }
+
+  // Flag undefined → posible usuario pre-Fase 4 con progreso real.
+  const rating = await db.userRating.get(DEFAULT_PROFILE_ID);
+  if (shouldMigrateOnboarding(profile, rating)) {
+    await db.profile.put({ ...profile, onboardingCompleted: true });
+    return true;
+  }
+  return false;
+}
 
 export async function updateProfile(
   updater: (profile: UserProfile) => UserProfile,

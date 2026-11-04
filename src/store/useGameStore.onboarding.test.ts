@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-// W2: mockeamos `../db/database` para no requerir IndexedDB real en jsdom.
 vi.mock("../db/database", () => ({
   getOrCreateProfile: vi.fn(),
   saveProfile: vi.fn(),
@@ -11,6 +10,7 @@ vi.mock("../db/database", () => ({
   saveUserRating: vi.fn(),
   resetUserRating: vi.fn(),
   hasCompletedOnboarding: vi.fn(),
+  shouldMigrateOnboarding: vi.fn(),
 }));
 
 import * as db from "../db/database";
@@ -38,10 +38,6 @@ const baseRating: UserRating = {
   lastUpdatedAt: 0,
 };
 
-/**
- * Seedea el store con perfil + rating + un spy de `calibrateWithResults`.
- * Devuelve el spy para inspección.
- */
 function seedStore(
   overrides: Partial<{ profile: UserProfile; userRating: UserRating }> = {},
 ): { calibrateSpy: ReturnType<typeof vi.fn> } {
@@ -94,13 +90,11 @@ describe("completeOnboarding (H-04)", () => {
   it("(b) persiste onboardingCompleted=true en el profile", async () => {
     seedStore();
     await useGameStore.getState().completeOnboarding([true, true, true]);
-    // saveProfile fue llamado 1 vez con el flag marcado
     expect(db.saveProfile).toHaveBeenCalledTimes(1);
     const saved = (
       db.saveProfile as unknown as { mock: { calls: [UserProfile][] } }
     ).mock.calls[0][0];
     expect(saved.onboardingCompleted).toBe(true);
-    // El estado del store refleja el flag (equivalente a "recarga simulada" en mock)
     expect(useGameStore.getState().profile?.onboardingCompleted).toBe(true);
   });
 
@@ -108,9 +102,7 @@ describe("completeOnboarding (H-04)", () => {
     const { calibrateSpy } = seedStore();
     await useGameStore.getState().completeOnboarding([true, false, true]);
     const callsAfterFirst = (
-      db.saveProfile as unknown as {
-        mock: { calls: unknown[] };
-      }
+      db.saveProfile as unknown as { mock: { calls: unknown[] } }
     ).mock.calls.length;
 
     await useGameStore.getState().completeOnboarding([false, false, false]);
@@ -175,15 +167,59 @@ describe("completeOnboarding (H-04)", () => {
     expect(useGameStore.getState().profile?.onboardingCompleted).toBe(true);
   });
 
+  // ── B1 (2026-11-04) ─────────────────────────────────────
+  it("B1: usuario existente con answeredCount > 0 → NO calibra, SÍ marca flag", async () => {
+    const existingRating: UserRating = {
+      ...baseRating,
+      answeredCount: 5,
+      global: 1400,
+    };
+    const { calibrateSpy } = seedStore({ userRating: existingRating });
+
+    await useGameStore.getState().completeOnboarding([true, true, true]);
+
+    expect(calibrateSpy).not.toHaveBeenCalled();
+    expect(db.saveProfile).toHaveBeenCalledTimes(1);
+    const saved = (
+      db.saveProfile as unknown as { mock: { calls: [UserProfile][] } }
+    ).mock.calls[0][0];
+    expect(saved.onboardingCompleted).toBe(true);
+    expect(useGameStore.getState().profile?.onboardingCompleted).toBe(true);
+  });
+
+  it("B1: usuario existente con answeredCount > 0 y flag true → no-op total", async () => {
+    const existingProfile: UserProfile = {
+      ...baseProfile,
+      onboardingCompleted: true,
+    };
+    const existingRating: UserRating = {
+      ...baseRating,
+      answeredCount: 5,
+      global: 1400,
+    };
+    const { calibrateSpy } = seedStore({
+      profile: existingProfile,
+      userRating: existingRating,
+    });
+
+    await useGameStore.getState().completeOnboarding([true, true, true]);
+
+    expect(calibrateSpy).not.toHaveBeenCalled();
+    expect(db.saveProfile).not.toHaveBeenCalled();
+  });
+
   it.each([
     [[true, true, true]],
     [[false, false, false]],
     [[true, false, true]],
     [[false, true, false]],
-  ])("caso extremo %j: calibra y marca flag", async (results) => {
-    const { calibrateSpy } = seedStore();
-    await useGameStore.getState().completeOnboarding(results as boolean[]);
-    expect(calibrateSpy).toHaveBeenCalledWith(results);
-    expect(useGameStore.getState().profile?.onboardingCompleted).toBe(true);
-  });
+  ])(
+    "caso extremo %j: usuario nuevo → calibra y marca flag",
+    async (results) => {
+      const { calibrateSpy } = seedStore();
+      await useGameStore.getState().completeOnboarding(results as boolean[]);
+      expect(calibrateSpy).toHaveBeenCalledWith(results);
+      expect(useGameStore.getState().profile?.onboardingCompleted).toBe(true);
+    },
+  );
 });

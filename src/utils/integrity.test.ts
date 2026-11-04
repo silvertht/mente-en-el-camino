@@ -1,13 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { MenteEnElCaminoDB, hasCompletedOnboarding } from "../db/database";
+import {
+  MenteEnElCaminoDB,
+  hasCompletedOnboarding,
+  shouldMigrateOnboarding,
+} from "../db/database";
 import { MAX_STRETCH } from "../utils/rating";
 import { onboardingQuestions } from "../data/onboardingQuestions";
 import { ALL_QUESTIONS } from "../data/questions";
+import type { UserProfile, UserRating } from "../types";
 
 describe("Integridad Fase 4 (H-04/H-05)", () => {
   it("MenteEnElCaminoDB nombre intacto (Regla de Oro 4)", () => {
-    // Instanciar NO abre conexión (Dexie conecta lazy al primer query).
-    // En jsdom sin IndexedDB, `db.name` sigue siendo válido.
     const instance = new MenteEnElCaminoDB();
     expect(instance.name).toBe("MenteEnElCaminoDB");
   });
@@ -25,5 +28,65 @@ describe("Integridad Fase 4 (H-04/H-05)", () => {
 
   it("hasCompletedOnboarding es una función exportada (H-04)", () => {
     expect(typeof hasCompletedOnboarding).toBe("function");
+  });
+
+  it("shouldMigrateOnboarding es una función exportada (B1)", () => {
+    expect(typeof shouldMigrateOnboarding).toBe("function");
+  });
+});
+
+describe("shouldMigrateOnboarding (B1 · 2026-11-04)", () => {
+  const baseProfile: UserProfile = {
+    id: "local-player",
+    nickname: "Peregrino",
+    createdAt: 0,
+    xp: 0,
+    level: 1,
+    streak: 0,
+    lastPlayedAt: null,
+    badges: [],
+    graceShieldAvailable: false,
+  };
+  const baseRating: UserRating = {
+    id: "local-player",
+    global: 1200,
+    answeredCount: 0,
+    lastUpdatedAt: 0,
+  };
+
+  it("perfil undefined → false (usuario nuevo sin persistencia)", () => {
+    expect(shouldMigrateOnboarding(undefined, baseRating)).toBe(false);
+  });
+
+  it("perfil sin flag + answeredCount > 0 → true (usuario pre-Fase 4 con progreso)", () => {
+    expect(
+      shouldMigrateOnboarding(baseProfile, { ...baseRating, answeredCount: 5 }),
+    ).toBe(true);
+  });
+
+  it("perfil sin flag + answeredCount === 0 → false (usuario nuevo con rating default)", () => {
+    expect(shouldMigrateOnboarding(baseProfile, baseRating)).toBe(false);
+  });
+
+  it("perfil sin flag + rating undefined → false", () => {
+    expect(shouldMigrateOnboarding(baseProfile, undefined)).toBe(false);
+  });
+
+  it("perfil con onboardingCompleted === true → false (ya decidido)", () => {
+    expect(
+      shouldMigrateOnboarding(
+        { ...baseProfile, onboardingCompleted: true },
+        { ...baseRating, answeredCount: 5 },
+      ),
+    ).toBe(false);
+  });
+
+  it("perfil con onboardingCompleted === false → false (ya decidido)", () => {
+    expect(
+      shouldMigrateOnboarding(
+        { ...baseProfile, onboardingCompleted: false },
+        { ...baseRating, answeredCount: 5 },
+      ),
+    ).toBe(false);
   });
 });

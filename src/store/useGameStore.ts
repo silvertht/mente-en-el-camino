@@ -17,6 +17,7 @@ import {
   getUserRating,
   saveUserRating,
   resetUserRating,
+  shouldMigrateOnboarding,
 } from "../db/database";
 import {
   calculateQuestionScore,
@@ -36,9 +37,7 @@ import {
 // ============================================================
 // IN-FLIGHT GUARD (DF-1) — módulo-level
 // ============================================================
-// Evita doble submit concurrente de completeOnboarding.
-// Se resetea en el finally de la acción.
-let isCompletingOnboarding = false; // ← NUEVO (DF-1)
+let isCompletingOnboarding = false;
 
 // ============================================================
 // ESTADO DE LA TIENDA
@@ -64,7 +63,7 @@ interface GameStoreState {
     selectedIndex?: number;
     selectedBool?: boolean;
     selectedText?: string;
-    selectedOrder?: number[]; // verse-scramble, timeline
+    selectedOrder?: number[];
     timeSpent: number;
     hintsUsed?: number;
   }) => Promise<void>;
@@ -75,7 +74,6 @@ interface GameStoreState {
   clearNewBadges: () => void;
   calibrateWithResults: (results: boolean[]) => Promise<void>;
   resetRating: () => Promise<void>;
-  // ← NUEVO (H-04)
   completeOnboarding: (results: boolean[]) => Promise<void>;
 }
 
@@ -102,8 +100,17 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         getUserRating(),
       ]);
       const level = calculateLevel(profile.xp);
-      const synced = { ...profile, level };
-      if (level !== profile.level) await saveProfile(synced);
+      let synced: UserProfile = { ...profile, level };
+
+      // B1 fix (2026-11-04): migrar usuarios existentes (pre-Fase 4 con
+      // progreso real) para no forzarlos al onboarding. Idempotente.
+      if (shouldMigrateOnboarding(profile, userRating)) {
+        synced = { ...synced, onboardingCompleted: true };
+        await saveProfile(synced);
+      } else if (level !== profile.level) {
+        await saveProfile(synced);
+      }
+
       set({ profile: synced, userRating, isLoading: false });
     } catch (e) {
       set({ error: (e as Error).message, isLoading: false });
@@ -207,8 +214,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     await saveAnswer(answer);
     await saveProfile(updatedProfile);
 
-    // Actualizar rating adaptativo (Fase 3 · R2).
-    // No altera el flujo visible: solo persiste el rating para R3.
     const currentRating = get().userRating;
     if (currentRating) {
       const questionRating = getQuestionRating(question);
@@ -332,8 +337,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     const updated: UserRating = {
       ...current,
       global: initial,
-      // La calibración NO incrementa answeredCount: es un punto de partida,
-      // no historial de juego. Mantiene K alto en las primeras partidas reales.
       lastUpdatedAt: Date.now(),
     };
     set({ userRating: updated });
@@ -346,35 +349,27 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   // ============================================================
-  // H-04 — completeOnboarding (Fase 4, Contrato v2)
-  // ============================================================
-  // (a) calibrateWithResults UNA sola vez
-  // (b) onboardingCompleted = true en profile (Dexie)
-  // (c) atomicidad: si (a) falla, (b) no se ejecuta
-  // (d) idempotente: 2ª llamada no recalibra ni re-marca
-  // (e) NO otorga XP, puntos ni insignias
-  // (f) results debe tener exactamente 3 elementos
-  // W1: null-guard de userRating antes de calibrar
-  // DF-1: in-flight guard contra doble submit concurrente
+  // H-04 — completeOnboarding
+  // B1 fix (2026-11-04): guard para usuarios existentes.
   // ============================================================
   completeOnboarding: async (results) => {
-    // (f) Validación estricta de tamaño — no truncar ni rellenar.
+    // (f) Validación estricta de tamaño.
     if (results.length !== 3) {
       throw new Error(
         `completeOnboarding: results debe tener exactamente 3 elementos (recibido: ${results.length})`,
       );
     }
 
-    // (d) Idempotencia — fast return si ya está completado.
+    // (d) Idempotencia fast-return (antes del lock).
     const { profile, userRating } = get();
     if (profile?.onboardingCompleted) return;
 
-    // In-flight guard (DF-1)
+    // In-flight guard (DF-1).
     if (isCompletingOnboarding) {
       throw new Error("completeOnboarding: ya hay una llamada en curso");
     }
 
-    // W1: null-guard antes de calibrar. No toca calibrateWithResults (R2 intacto).
+    // W1: null-guards.
     if (!userRating) {
       throw new Error("userRating no cargado; abortando calibración");
     }
@@ -384,6 +379,15 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     isCompletingOnboarding = true;
     try {
+      // B1 fix: usuario existente con progreso real → NO recalibrar, solo marcar.
+      // Usuario nuevo (answeredCount === 0) → calibra normal.
+      if (userRating.answeredCount > 0) {
+        const updated: UserProfile = { ...profile, onboardingCompleted: true };
+        await saveProfile(updated);
+        set({ profile: updated });
+        return;
+      }
+
       // (a) Calibrar exactamente 1 vez.
       await get().calibrateWithResults(results);
 
@@ -391,12 +395,10 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       const updated: UserProfile = { ...profile, onboardingCompleted: true };
       await saveProfile(updated);
       set({ profile: updated });
-
-      // (e) NO se toca xp, level, badges ni game.
     } finally {
       isCompletingOnboarding = false;
     }
-  }, // ← NUEVO (H-04)
+  },
 }));
 
 // ============================================================
@@ -410,12 +412,6 @@ interface AnswerInput {
   selectedOrder?: number[];
 }
 
-/**
- * Normaliza una respuesta de texto libre:
- *  - trim
- *  - minúsculas
- *  - sin tildes (NFD + strip de diacríticos)
- */
 function normalizeAnswer(s: string): string {
   return s
     .trim()
@@ -424,9 +420,6 @@ function normalizeAnswer(s: string): string {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-/**
- * Compara dos arrays de índices por igualdad posicional.
- */
 function ordersMatch(a: number[], b: number[]): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
