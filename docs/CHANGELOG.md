@@ -1,20 +1,42 @@
-### 2026-11-04 — UX · Fase B COMPLETA · T1-T3 entregados · Merge autorizado técnicamente
+### 2026-11-05 — Diagnóstico de estado + corrección de proceso
 
-- **Fase B CERRADA**: `Onboarding.tsx` + gate en `App.tsx` + tests de flujo
-  T1-T3 + 1 opcional. 165/165 tests. Build limpio (477 modules).
-  Bundle 184.13 kB (+2.01 kB neto Fase 4).
-- **T1-T3**:
-  - T1: 3 correctas → `completeOnboarding([true, true, true])`.
-  - T2: 3 incorrectas → `completeOnboarding([false, false, false])`.
-  - T3: `completeOnboarding` lanza → error visible + botón retry habilitado.
-  - Opcional: doble click no duplica `completeOnboarding`.
-- **C1–C3 + A1–A3 + B1**: todos confirmados. H-06 retirado de Fase B
-  (reactivado al backlog Visual).
-- **⚠️ Tensión F4-D2**: merge a main = publicación. Los usuarios existentes
-  están protegidos por B1 (self-heal + guard), pero los usuarios NUEVOS
-  verían el onboarding sin Test #2.
-- **Recomendación del Maestro**: Test #2 sobre preview de rama ANTES de
-  merge a main. Si el PO decide mergear primero, asume el riesgo explícito
-  y Test #2 se ejecuta post-producción (validación tardía).
-- **Decisión pendiente del PO**: Escenario A (Test #2 → merge) o
-  Escenario B (merge → Test #2).
+**Estado real de main** (verificado por el PO con git):
+
+- Onboarding COMPLETO en main y en producción (Vercel ac3e6da).
+- Componente + gate + datos + tests + B1 hotfix, todos en main.
+- La rama `fase4/onboarding-h04-h05` NUNCA se creó. Los commits se hicieron
+  directamente en main (varios con mensaje genérico "Actualizacion").
+- Baseline real de tests: 164 (161 passing, 4 failing en Onboarding.test.tsx).
+
+**B1 confirmado en producción**:
+
+- `shouldMigrateOnboarding` exportado en db/database.ts, usado en init() y
+  hasCompletedOnboarding() (self-heal).
+- Guard `answeredCount > 0` en completeOnboarding.
+- Usuarios existentes protegidos. Sin pérdida de ELO. Crisis descartada.
+
+**Fallos de proceso (lecciones)**:
+
+1. La rama no se creó antes de commitear. Los commits fueron directos a main.
+2. Mensajes de commit genéricos ("Actualizacion") impiden rastrear cambios.
+3. El Maestro no verificó `git branch --show-current` antes de pedir el push.
+4. El PO no verificó la rama antes de cada commit.
+
+**Regla nueva del proyecto**:
+
+- Todo brief que requiera commits incluye paso 0: `git branch --show-current`
+  debe devolver la rama esperada antes de escribir código.
+- Prohibido commit con mensaje genérico. Todo commit sigue Conventional
+  Commits (feat/fix/perf/docs/test/refactor).
+- Antes de cualquier push, el PO verifica `git log --oneline -5` y reporta al
+  Maestro si hay commits inesperados.
+
+**Consecuencias operativas**:
+
+- Test #2 pasa a validación POST-producción (el onboarding ya está visible
+  a usuarios nuevos). Se ejecuta sobre la URL de producción.
+- H-FUN-04 emitido a Funcional para corregir los 4 tests (bug de test, no
+  del componente). No bloquea el uso del onboarding; sí bloquea el CI verde.
+- Admin continúa T2 con datos reales (visualizer + Lighthouse + Speed
+  Insights) y commitea T1 (CONTENT-WORKFLOW.md).
+- Visual queda desbloqueado: no hay rama en vuelo que colisione.

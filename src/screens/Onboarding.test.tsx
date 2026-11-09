@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Onboarding } from "./Onboarding";
 import { onboardingQuestions } from "../data/onboardingQuestions";
+import type { MultipleChoiceQuestion } from "../types";
 
 // Mock de useGameStore (solo completeOnboarding)
 const mockCompleteOnboarding = vi.fn();
@@ -15,21 +16,51 @@ describe("Onboarding Flow", () => {
     vi.clearAllMocks();
   });
 
-  // Helper: Juega una pregunta (selecciona opción y avanza)
-  const playQuestion = (index: number, useCorrect: boolean) => {
-    const q = onboardingQuestions[index] as any;
-    const correctAnswer = q.correctAnswer || q.correct || q.answer;
-    const options = q.options || [];
+  /**
+   * Resuelve la opción correcta de una pregunta MC.
+   * Las preguntas usan `correctIndex: number` (no `correctAnswer`).
+   */
+  const getCorrectAnswer = (index: number): string => {
+    const q = onboardingQuestions[index] as MultipleChoiceQuestion;
+    return q.options[q.correctIndex];
+  };
+
+  /**
+   * Resuelve una opción incorrecta de una pregunta MC.
+   */
+  const getWrongAnswer = (index: number): string => {
+    const q = onboardingQuestions[index] as MultipleChoiceQuestion;
+    const correct = q.options[q.correctIndex];
+    const wrong = q.options.find((o) => o !== correct);
+    if (!wrong) {
+      throw new Error(`No hay opción incorrecta para Q${index + 1}`);
+    }
+    return wrong;
+  };
+
+  /**
+   * Responde una pregunta completa:
+   *  1. Selecciona la opción (correcta o incorrecta).
+   *  2. Espera el feedback visible ("Así es." o "Casi.").
+   *  3. Avanza ("Continuar" o "Comenzar").
+   */
+  const playQuestion = async (index: number, useCorrect: boolean) => {
     const answerToClick = useCorrect
-      ? correctAnswer
-      : options.find((o: string) => o !== correctAnswer);
+      ? getCorrectAnswer(index)
+      : getWrongAnswer(index);
 
     // 1. Seleccionar opción
     fireEvent.click(
       screen.getByLabelText(`Seleccionar opción: ${answerToClick}`),
     );
 
-    // 2. Hacer clic en Continuar (o Comenzar en la P3)
+    // 2. Esperar feedback (antes de avanzar)
+    const feedbackPattern = useCorrect ? /Así es/i : /Casi/i;
+    await waitFor(() =>
+      expect(screen.getByText(feedbackPattern)).toBeInTheDocument(),
+    );
+
+    // 3. Avanzar (Continuar o Comenzar)
     const btnLabel =
       index === 2
         ? "Comenzar tu camino en Selah"
@@ -42,22 +73,10 @@ describe("Onboarding Flow", () => {
     mockCompleteOnboarding.mockResolvedValueOnce(undefined);
     render(<Onboarding onComplete={() => {}} />);
 
-    // Q1
-    playQuestion(0, true);
-    await waitFor(() =>
-      expect(screen.getByText(/Así es/i)).toBeInTheDocument(),
-    );
+    await playQuestion(0, true);
+    await playQuestion(1, true);
+    await playQuestion(2, true);
 
-    // Q2
-    playQuestion(1, true);
-    await waitFor(() =>
-      expect(screen.getByText(/Así es/i)).toBeInTheDocument(),
-    );
-
-    // Q3
-    playQuestion(2, true);
-
-    // Verificación
     await waitFor(() => {
       expect(mockCompleteOnboarding).toHaveBeenCalledTimes(1);
       expect(mockCompleteOnboarding).toHaveBeenCalledWith([true, true, true]);
@@ -69,18 +88,10 @@ describe("Onboarding Flow", () => {
     mockCompleteOnboarding.mockResolvedValueOnce(undefined);
     render(<Onboarding onComplete={() => {}} />);
 
-    // Q1
-    playQuestion(0, false);
-    await waitFor(() => expect(screen.getByText(/Casi/i)).toBeInTheDocument());
+    await playQuestion(0, false);
+    await playQuestion(1, false);
+    await playQuestion(2, false);
 
-    // Q2
-    playQuestion(1, false);
-    await waitFor(() => expect(screen.getByText(/Casi/i)).toBeInTheDocument());
-
-    // Q3
-    playQuestion(2, false);
-
-    // Verificación
     await waitFor(() => {
       expect(mockCompleteOnboarding).toHaveBeenCalledTimes(1);
       expect(mockCompleteOnboarding).toHaveBeenCalledWith([
@@ -93,19 +104,12 @@ describe("Onboarding Flow", () => {
 
   // === T3: Error + Retry ===
   it("T3: error en completeOnboarding muestra mensaje, habilita retry y permite reintentar", async () => {
-    // Mock para que falle la primera vez
     mockCompleteOnboarding.mockRejectedValueOnce(new Error("Fallo de red"));
     render(<Onboarding onComplete={() => {}} />);
 
-    playQuestion(0, true);
-    await waitFor(() =>
-      expect(screen.getByText(/Así es/i)).toBeInTheDocument(),
-    );
-    playQuestion(1, true);
-    await waitFor(() =>
-      expect(screen.getByText(/Así es/i)).toBeInTheDocument(),
-    );
-    playQuestion(2, true);
+    await playQuestion(0, true);
+    await playQuestion(1, true);
+    await playQuestion(2, true); // último paso: click "Comenzar" → completeOnboarding rechaza
 
     // Verificar que aparece el error visible
     await waitFor(() => {
@@ -124,36 +128,35 @@ describe("Onboarding Flow", () => {
     // Hacer retry
     fireEvent.click(retryBtn);
 
-    // Verificar que se llamó 2 veces (la fallida y la exitosa)
     await waitFor(() => {
       expect(mockCompleteOnboarding).toHaveBeenCalledTimes(2);
     });
   });
 
-  // === Opcionales ===
+  // === Opcional: doble clic (in-flight guard a nivel componente) ===
   it("Opcional: doble clic en Comenzar no duplica la llamada (in-flight guard)", async () => {
-    // Mock con promesa pendiente para simular que está guardando
-    let resolvePromise: any;
-    const promise = new Promise((resolve) => {
+    // Mock con promesa pendiente para simular "guardando..."
+    let resolvePromise: () => void = () => {};
+    const promise = new Promise<void>((resolve) => {
       resolvePromise = resolve;
     });
     mockCompleteOnboarding.mockReturnValueOnce(promise);
 
     render(<Onboarding onComplete={() => {}} />);
 
-    playQuestion(0, true);
+    await playQuestion(0, true);
+    await playQuestion(1, true);
+
+    // Q3: controlamos manualmente el flujo para el doble clic
+    const q3Correct = getCorrectAnswer(2);
+    fireEvent.click(screen.getByLabelText(`Seleccionar opción: ${q3Correct}`));
     await waitFor(() =>
       expect(screen.getByText(/Así es/i)).toBeInTheDocument(),
     );
-    playQuestion(1, true);
-    await waitFor(() =>
-      expect(screen.getByText(/Así es/i)).toBeInTheDocument(),
-    );
-    playQuestion(2, true);
 
     const btn = screen.getByLabelText("Comenzar tu camino en Selah");
 
-    // Doble clic
+    // Doble clic (el segundo es no-op porque el botón ya está disabled)
     fireEvent.click(btn);
     fireEvent.click(btn);
 
@@ -162,5 +165,8 @@ describe("Onboarding Flow", () => {
 
     // Limpiar
     resolvePromise();
+    await waitFor(() =>
+      expect(mockCompleteOnboarding).toHaveBeenCalledTimes(1),
+    );
   });
 });

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "motion/react";
 import { useGameStore } from "../store/useGameStore";
 import { onboardingQuestions } from "../data/onboardingQuestions";
+import type { MultipleChoiceQuestion } from "../types"; // ← NUEVO (H-FUN-04)
 
 interface Props {
   onComplete: () => void;
@@ -24,8 +25,9 @@ export function Onboarding({ onComplete }: Props) {
     headingRef.current?.focus();
   }, [step]);
 
-  const q = onboardingQuestions[step] as any; // Tipado seguro para propiedades MC
-  const correctAnswer = q.correctAnswer || q.correct || q.answer;
+  // H-FUN-04: las preguntas son MultipleChoiceQuestion → leer correctIndex.
+  const q = onboardingQuestions[step] as MultipleChoiceQuestion;
+  const correctAnswer = q.options[q.correctIndex];
 
   const handleSelect = (option: string) => {
     if (isFeedback) return;
