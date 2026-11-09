@@ -1,42 +1,24 @@
-### 2026-11-05 — Diagnóstico de estado + corrección de proceso
+### 2026-11-09 — 🔴 B-1 ARREGLADO · H-FUN-04 CERRADO · Onboarding funcional en producción
 
-**Estado real de main** (verificado por el PO con git):
-
-- Onboarding COMPLETO en main y en producción (Vercel ac3e6da).
-- Componente + gate + datos + tests + B1 hotfix, todos en main.
-- La rama `fase4/onboarding-h04-h05` NUNCA se creó. Los commits se hicieron
-  directamente en main (varios con mensaje genérico "Actualizacion").
-- Baseline real de tests: 164 (161 passing, 4 failing en Onboarding.test.tsx).
-
-**B1 confirmado en producción**:
-
-- `shouldMigrateOnboarding` exportado en db/database.ts, usado en init() y
-  hasCompletedOnboarding() (self-heal).
-- Guard `answeredCount > 0` en completeOnboarding.
-- Usuarios existentes protegidos. Sin pérdida de ELO. Crisis descartada.
-
-**Fallos de proceso (lecciones)**:
-
-1. La rama no se creó antes de commitear. Los commits fueron directos a main.
-2. Mensajes de commit genéricos ("Actualizacion") impiden rastrear cambios.
-3. El Maestro no verificó `git branch --show-current` antes de pedir el push.
-4. El PO no verificó la rama antes de cada commit.
-
-**Regla nueva del proyecto**:
-
-- Todo brief que requiera commits incluye paso 0: `git branch --show-current`
-  debe devolver la rama esperada antes de escribir código.
-- Prohibido commit con mensaje genérico. Todo commit sigue Conventional
-  Commits (feat/fix/perf/docs/test/refactor).
-- Antes de cualquier push, el PO verifica `git log --oneline -5` y reporta al
-  Maestro si hay commits inesperados.
-
-**Consecuencias operativas**:
-
-- Test #2 pasa a validación POST-producción (el onboarding ya está visible
-  a usuarios nuevos). Se ejecuta sobre la URL de producción.
-- H-FUN-04 emitido a Funcional para corregir los 4 tests (bug de test, no
-  del componente). No bloquea el uso del onboarding; sí bloquea el CI verde.
-- Admin continúa T2 con datos reales (visualizer + Lighthouse + Speed
-  Insights) y commitea T1 (CONTENT-WORKFLOW.md).
-- Visual queda desbloqueado: no hay rama en vuelo que colisione.
+- **B-1 RESUELTO**: Onboarding.tsx evaluaba `q.correctAnswer || q.correct ||
+q.answer` con preguntas `MultipleChoiceQuestion` (correctIndex). Resultado:
+  correctAnswer === undefined siempre → feedback "Casi." en correctas →
+  completeOnboarding([false,false,false]) → calibración a 1000.
+- **Fix**: `const correctAnswer = q.options[q.correctIndex];` (patrón ya usado
+  en checkAnswer del store). 2 líneas + 1 import + 1 cast.
+- **Verificación**: 164/164 tests · build limpio · bundle 184.12 kB
+  (−0.01 kB) · prueba manual confirmada (3 correctas → ELO ≈1450;
+  3 incorrectas → ELO 1000 mínimo).
+- **Reglas nuevas**:
+  1. Componentes que consuman datos de otra área requieren test de
+     COMPORTAMIENTO real, no solo smoke test.
+  2. Tests no duplican lógica del componente; validan comportamiento
+     observable.
+  3. El Maestro prueba manualmente toda feature nueva antes de aprobar
+     paso a producción.
+  4. Funcional debe confirmar prueba manual propia antes de pasar al PO.
+- **Fallo de proceso reconocido**: el bug estuvo en producción desde
+  682e60e. Smoke test de UX insuficiente + tests T1-T3 replicaron el bug +
+  Maestro aprobó Fase B sin prueba manual. Corregido con las 4 reglas.
+- **Estado**: Fix pusheado a main (autorizado). Vercel deploya. Onboarding
+  funcional en producción.
