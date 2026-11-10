@@ -1,30 +1,23 @@
-### 2026-11-10 · Fase 4 · Ampliación del banco (Sesión 1) — 70 → 80 preguntas
+### 2026-11-10 · Fase 4 · Fix Exploit de Abandono (Test #2)
 
-**Objetivo**: Añadir 10 preguntas nuevas de alta calidad, activando las categorías inactivas.
+**Objetivo**: Cerrar un bug crítico de diseño donde el XP, ELO y las respuestas se guardaban en Dexie inmediatamente después de responder, incluso si el usuario abandonaba la partida. Esto permitía inflar estadísticas saliendo y entrando.
 
-**Preguntas añadidas**:
+**Solución implementada**:
 
-- `gen-001`: Génesis · MC · Fácil (Caín y Abel)
-- `gen-002`: Génesis · TF · Medio (Torre de Babel)
-- `gen-003`: Génesis · Fill-blank · Difícil (Abraham e Isaac)
-- `exo-001`: Éxodo · MC · Fácil (Décima plaga)
-- `exo-002`: Éxodo · TF · Fácil (El maná y el reposo)
-- `exo-003`: Éxodo · Who-said-it · Medio (Moisés en el Mar Rojo)
-- `apo-001`: Apologética · MC · Medio (Primer testigo de la resurrección)
-- `apo-002`: Apologética · Fill-blank · Difícil (1 Pedro 3:15)
-- `his-001`: Historia · MC · Fácil (Martín Lutero)
-- `his-002`: Historia · TF · Fácil (Cristianos en Antioquía)
-
-**Cambios estructurales**:
-
-- Creados: `genesis.ts`, `exodo.ts`, `apologetica.ts`, `historia-iglesia.ts`.
-- Actualizado: `index.ts` (dynamic imports para 9 categorías, nuevos conteos estáticos, `loadQuestionBank`).
-- Actualizado: `index.test.ts` (espera 80 preguntas, valida nuevas categorías).
+- **`src/store/useGameStore.ts`**:
+  - `answerQuestion`: Ahora es una función 100% efímera. Solo calcula los puntos y actualiza el estado local de la partida (`game`). Ya NO escribe en Dexie, NO toca el perfil global (`profile.xp`) ni el rating (`userRating`).
+  - `finishGame`: Ahora es el ÚNICO punto de persistencia. Al completar la última pregunta, guarda en lote todas las respuestas (`saveAnswers`), procesa todo el ELO acumulado de la partida (`saveUserRating`), y aplica el XP final y las insignias (`saveProfile`).
+- **`src/store/useGameStore.antiExploit.test.ts`** (Nuevo): Añadidos 2 tests que garantizan que abandonar una partida no toca la base de datos, pero terminarla sí lo hace.
 
 **Verificación**:
 
-- `npx vitest run` → [PENDIENTE]
-- `npm run build` → [PENDIENTE]
+- `npx vitest run` → **166/166** ✅ (se sumaron los 2 tests del exploit).
+- `npm run build` → limpio ✅.
+- Prueba manual: Abandonar partida verificando en pestaña Application que XP y ELO no han cambiado.
 
-**Commit**: `feat(funcional): añadir 10 preguntas al banco (Fase 4 - Sesión 1)`.
-**Sin push a main**.
+**Commits**:
+
+- `feat(funcional): añadir 10 preguntas al banco (Fase 4 - Sesión 1)`
+- `fix(funcional): evitar guardado de ELO/XP al abandonar partida (Test #2)`
+
+**PUSH AUTORIZADO** por el Maestro.
