@@ -12,10 +12,10 @@ export const QUESTION_COUNTS: Record<CategoryId, number> = {
   versiculos: 20,
   parabolas: 10,
   valores: 10,
-  genesis: 0,
-  exodo: 0,
-  apologetica: 0,
-  "historia-iglesia": 0,
+  genesis: 3,
+  exodo: 3,
+  apologetica: 2,
+  "historia-iglesia": 2,
 };
 
 export const ALL_QUESTIONS: Question[] = [];
@@ -49,20 +49,39 @@ export async function loadQuestionBank(): Promise<void> {
 
   loadingPromise = (async () => {
     // El uso de imports dinámicos permite que Vite cree chunks separados
-    const [ev, pe, ve, pa, va] = await Promise.all([
+    const [ev, pe, ve, pa, va, ge, ex, ap, hi] = await Promise.all([
       import("./evangelios").then((m) => m.EVANGELIOS_QUESTIONS),
       import("./personajes").then((m) => m.PERSONAJES_QUESTIONS),
       import("./versiculos").then((m) => m.VERSICULOS_QUESTIONS),
       import("./parabolas").then((m) => m.PARABOLAS_QUESTIONS),
       import("./valores").then((m) => m.VALORES_QUESTIONS),
+      import("./genesis").then((m) => m.GENESIS_QUESTIONS),
+      import("./exodo").then((m) => m.EXODO_QUESTIONS),
+      import("./apologetica").then((m) => m.APOLOGETICA_QUESTIONS),
+      import("./historia-iglesia").then((m) => m.HISTORIA_IGLESIA_QUESTIONS),
     ]);
 
-    ALL_QUESTIONS.push(...ev, ...pe, ...ve, ...pa, ...va);
+    ALL_QUESTIONS.push(
+      ...ev,
+      ...pe,
+      ...ve,
+      ...pa,
+      ...va,
+      ...ge,
+      ...ex,
+      ...ap,
+      ...hi,
+    );
+
     QUESTIONS_BY_CATEGORY.evangelios.push(...ev);
     QUESTIONS_BY_CATEGORY.personajes.push(...pe);
     QUESTIONS_BY_CATEGORY.versiculos.push(...ve);
     QUESTIONS_BY_CATEGORY.parabolas.push(...pa);
     QUESTIONS_BY_CATEGORY.valores.push(...va);
+    QUESTIONS_BY_CATEGORY.genesis.push(...ge);
+    QUESTIONS_BY_CATEGORY.exodo.push(...ex);
+    QUESTIONS_BY_CATEGORY.apologetica.push(...ap);
+    QUESTIONS_BY_CATEGORY["historia-iglesia"].push(...hi);
 
     isLoaded = true;
   })();

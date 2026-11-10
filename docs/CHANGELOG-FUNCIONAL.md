@@ -1,20 +1,30 @@
-### 2026-11-10 · Fase 4 · H-FUN-03 — Lazy Load del banco de preguntas (Rendimiento)
+### 2026-11-10 · Fase 4 · Ampliación del banco (Sesión 1) — 70 → 80 preguntas
 
-**Objetivo**: Reducir el bundle inicial cargando las 70 preguntas bajo demanda.
+**Objetivo**: Añadir 10 preguntas nuevas de alta calidad, activando las categorías inactivas.
 
-**Implementación**:
+**Preguntas añadidas**:
 
-- `src/data/questions/index.ts`: Imports dinámicos (`import()`) y `loadQuestionBank()`.
-- `src/store/useGameStore.ts`: Nueva acción `loadAndStartGame`.
-  - **[FIX 2026-11-10]**: Se eliminó un delay artificial de 400ms que penalizaba conexiones rápidas. Ahora la carga es inmediata y el spinner se muestra de forma orgánica solo si el componente tarda en resolver.
-- `src/App.tsx` / `Home.tsx` / `main.tsx`: Integración del estado `isLoadingQuestions` (spinner) y adaptación asíncrona de auditorías.
+- `gen-001`: Génesis · MC · Fácil (Caín y Abel)
+- `gen-002`: Génesis · TF · Medio (Torre de Babel)
+- `gen-003`: Génesis · Fill-blank · Difícil (Abraham e Isaac)
+- `exo-001`: Éxodo · MC · Fácil (Décima plaga)
+- `exo-002`: Éxodo · TF · Fácil (El maná y el reposo)
+- `exo-003`: Éxodo · Who-said-it · Medio (Moisés en el Mar Rojo)
+- `apo-001`: Apologética · MC · Medio (Primer testigo de la resurrección)
+- `apo-002`: Apologética · Fill-blank · Difícil (1 Pedro 3:15)
+- `his-001`: Historia · MC · Fácil (Martín Lutero)
+- `his-002`: Historia · TF · Fácil (Cristianos en Antioquía)
+
+**Cambios estructurales**:
+
+- Creados: `genesis.ts`, `exodo.ts`, `apologetica.ts`, `historia-iglesia.ts`.
+- Actualizado: `index.ts` (dynamic imports para 9 categorías, nuevos conteos estáticos, `loadQuestionBank`).
+- Actualizado: `index.test.ts` (espera 80 preguntas, valida nuevas categorías).
 
 **Verificación**:
 
-- `npx vitest run` → **164/164** ✅
-- `npm run build` → limpio ✅
-- **Bundle principal**: **29.49 kB gzip** (antes: 184.12 kB) → Reducción del **~84%** en el payload inicial.
-- **Prueba manual**: Inicio casi instantáneo verificado.
+- `npx vitest run` → [PENDIENTE]
+- `npm run build` → [PENDIENTE]
 
-**Commit**: `fix(funcional): eliminar delay artificial en carga de preguntas`.
+**Commit**: `feat(funcional): añadir 10 preguntas al banco (Fase 4 - Sesión 1)`.
 **Sin push a main**.
