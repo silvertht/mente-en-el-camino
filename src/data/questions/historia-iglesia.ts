@@ -91,4 +91,72 @@ export const HISTORIA_IGLESIA_QUESTIONS: Question[] = [
       "¿Qué enseñanza de Pablo te ha impactado más en tu vida cristiana?",
     // revisado: 2026-11-10
   },
+  {
+    id: "his-005",
+    type: "multiple-choice",
+    category: "historia-iglesia",
+    difficulty: "facil",
+    points: 10,
+    timeLimit: 25,
+    question:
+      "¿Qué apóstol fue martirizado en Roma, según la tradición de la iglesia primitiva?",
+    options: ["Juan", "Pedro", "Santiago", "Andrés"],
+    correctIndex: 1,
+    explanation:
+      "La tradición histórica de la iglesia primitiva registra que Pedro fue crucificado en Roma bajo el emperador Nerón, pidiendo ser crucificado de cabeza por no considerarse digno de morir como su Maestro.",
+    verse: "Juan 21:18",
+    verseText:
+      "De cierto, de cierto te digo: Cuando eras más joven, te ceñías, e ibas a donde querías; mas cuando ya seas viejo, extenderás tus manos, y te ceñirá otro, y te llevará a donde no quieras.",
+    application:
+      "El amor a Cristo no se demuestra solo de palabra, sino con una vida dispuesta a seguirlo hasta el final.",
+    reflection: "¿Qué estarías dispuesto a sacrificar hoy por seguir a Jesús?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "his-006",
+    type: "true-false",
+    category: "historia-iglesia",
+    difficulty: "facil",
+    points: 10,
+    timeLimit: 20,
+    statement:
+      "El Concilio de Nicea (año 325 d.C.) afirmó que Jesucristo es de la misma esencia que el Padre.",
+    correct: true,
+    explanation:
+      "El Concilio de Nicea fue convocado para refutar la herejía de Arrio, quien negaba la deidad de Cristo. La iglesia afirmó que Jesús es verdadero Dios y verdadero hombre.",
+    verse: "Colosenses 2:9",
+    verseText:
+      "Porque en él habita corporalmente toda la plenitud de la Deidad.",
+    application:
+      "La doctrina bíblica no es negociable. La iglesia primitiva defendió la verdad de Cristo con valentía frente a la herejía.",
+    reflection:
+      "¿Por qué es importante saber que Jesús es Dios y no solo un maestro?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "his-007",
+    type: "who-said-it",
+    category: "historia-iglesia",
+    difficulty: "medio",
+    points: 20,
+    timeLimit: 25,
+    quote: "Aquí estoy. No puedo hacer otra cosa. Que Dios me ayude. Amén.",
+    options: [
+      "Juan Calvino",
+      "Martín Lutero",
+      "John Wesley",
+      "Tomás de Aquino",
+    ],
+    correctIndex: 1,
+    explanation:
+      "Estas palabras fueron pronunciadas por Martín Lutero en la Dieta de Worms (1521) cuando le exigieron retractarse de sus enseñanzas. Su conciencia estaba cautiva por la Palabra de Dios.",
+    verse: "Romanos 1:16",
+    verseText:
+      "Porque no me avergüenzo del evangelio, porque es poder de Dios para salvación a todo aquel que cree.",
+    application:
+      "Defender la verdad puede costarnos la comodidad o la aceptación, pero Dios da valentía a quienes se mantienen fieles.",
+    reflection:
+      "¿Te has avergonzado alguna vez de defender tu fe? ¿Qué puedes aprender de Lutero?",
+    // revisado: 2026-11-10
+  },
 ];

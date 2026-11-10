@@ -62,11 +62,11 @@ describe("Questions Index (Lazy Load)", () => {
       expect(getQuestionsByCategory("valores").length).toBeGreaterThan(0);
     });
 
-    it("devuelve los nuevos conteos en las categorías de la Sesión 2", () => {
-      expect(getQuestionsByCategory("genesis").length).toBe(6);
-      expect(getQuestionsByCategory("exodo").length).toBe(6);
-      expect(getQuestionsByCategory("apologetica").length).toBe(4);
-      expect(getQuestionsByCategory("historia-iglesia").length).toBe(4);
+    it("devuelve los nuevos conteos en las categorías de la Sesión 3", () => {
+      expect(getQuestionsByCategory("genesis").length).toBe(8);
+      expect(getQuestionsByCategory("exodo").length).toBe(8);
+      expect(getQuestionsByCategory("apologetica").length).toBe(7);
+      expect(getQuestionsByCategory("historia-iglesia").length).toBe(7);
     });
   });
 
@@ -83,20 +83,20 @@ describe("Questions Index (Lazy Load)", () => {
   });
 
   describe("countQuestionsByCategory", () => {
-    it("incluye los conteos actualizados del banco (90 preguntas)", () => {
+    it("incluye los conteos actualizados del banco (100 preguntas)", () => {
       const counts = countQuestionsByCategory();
       expect(counts.evangelios).toBe(20);
-      expect(counts.genesis).toBe(6);
-      expect(counts.exodo).toBe(6);
-      expect(counts.apologetica).toBe(4);
-      expect(counts["historia-iglesia"]).toBe(4);
+      expect(counts.genesis).toBe(8);
+      expect(counts.exodo).toBe(8);
+      expect(counts.apologetica).toBe(7);
+      expect(counts["historia-iglesia"]).toBe(7);
     });
 
-    it("la suma de conteos equivale a ALL_QUESTIONS.length (90)", () => {
+    it("la suma de conteos equivale a ALL_QUESTIONS.length (100)", () => {
       const counts = countQuestionsByCategory();
       const sum = Object.values(counts).reduce((a, b) => a + b, 0);
-      expect(sum).toBe(90);
-      expect(ALL_QUESTIONS.length).toBe(90);
+      expect(sum).toBe(100);
+      expect(ALL_QUESTIONS.length).toBe(100);
     });
   });
 
@@ -173,11 +173,12 @@ describe("Questions Index (Lazy Load)", () => {
 
     it("categoría con pocas preguntas (apologetica) → devuelve lo disponible (respetando cap)", async () => {
       mockGetUserRating.mockResolvedValue(baseRating); // Rating 1200
-      const questions = await pickAdaptiveQuestions(5, "apologetica");
+      const questions = await pickAdaptiveQuestions(10, "apologetica");
 
-      // apo-001 (medio), apo-003 (facil), apo-004 (facil) pasan el filtro.
-      // apo-002 (dificil) es filtrada por el MAX_STRETCH.
-      expect(questions.length).toBe(3);
+      // Hay 7 preguntas en apologetica. Con rating 1200:
+      // - apo-002 (dificil) y apo-007 (dificil) son filtradas por MAX_STRETCH.
+      // - Quedan 5 disponibles (apo-001, 003, 004, 005, 006).
+      expect(questions.length).toBe(5);
       expect(questions.every((q) => q.category === "apologetica")).toBe(true);
     });
   });

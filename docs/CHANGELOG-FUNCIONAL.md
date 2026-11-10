@@ -1,29 +1,37 @@
-### 2026-11-10 · Fase 4 · Ampliación del banco (Sesión 2) — 80 → 90 preguntas
+### 2026-11-10 · Fase 4 · Fix Timeline + Ampliación Sesión 3 (100 preguntas)
 
-**Objetivo**: Añadir 10 preguntas nuevas, balanceando las categorías con menos contenido.
+**Tarea 1 — Fix Bug Pedagógico (`gen-006` + `ev-013`)**:
 
-**Preguntas añadidas**:
+- El PO detectó que los eventos del timeline incluían "Día 1", "Día 6", lo que hacía la pregunta trivial.
+- Se reescribieron las opciones para eliminar cualquier pista de orden. Ahora el jugador debe razonar el orden bíblico, no leer los números.
+- Aplicado a `gen-006` y `ev-013` (que tenía el mismo problema).
 
-- `gen-004`: Génesis · MC · Fácil (La serpiente en el Edén)
-- `gen-005`: Génesis · Fill-blank · Medio (Creación a imagen de Dios)
-- `gen-006`: Génesis · Timeline · Difícil (Creación → Diluvio → Babel → Abraham)
-- `exo-004`: Éxodo · MC · Fácil (La vara de Moisés)
-- `exo-005`: Éxodo · Who-said-it · Medio (Faraón: "¿Quién es Jehová?")
-- `exo-006`: Éxodo · MC · Difícil (Los 40 años en el desierto)
-- `apo-003`: Apologética · MC · Fácil (Duda de Tomás)
-- `apo-004`: Apologética · TF · Fácil (Fe basada en hechos históricos)
-- `his-003`: Historia · MC · Fácil (Pedro en Pentecostés)
-- `his-004`: Historia · TF · Medio (Pablo y las epístolas)
+**Tarea 2 — Nuevas Reglas Pedagógicas aplicadas**:
 
-**Cambios estructurales**:
+- Distractores plausibles (no rellenos obvios).
+- Explicaciones con el "por qué" teológico/histórico.
+- Reflexiones que conectan con la vida del joven.
 
-- Actualizado: `index.ts` (nuevos conteos estáticos: 90 preguntas en total).
-- Actualizado: `index.test.ts` (espera 90 preguntas, valida los nuevos conteos de las categorías).
+**Tarea 3 — Ampliación (90 → 100 preguntas)**:
 
-**Verificación**:
+- `gen-007`: MC · Fácil (La escalera de Jacob).
+- `gen-008`: Timeline · Difícil (La vida de José).
+- `exo-007`: MC · Fácil (El becerro de oro).
+- `exo-008`: TF · Medio (Los Diez Mandamientos).
+- `apo-005`: MC · Fácil (Unidad de la Biblia).
+- `apo-006`: Fill-blank · Medio (Romanos 1:20).
+- `apo-007`: Timeline · Difícil (Los 4 imperios de Daniel).
+- `his-005`: MC · Fácil (Martirio de Pedro).
+- `his-006`: TF · Fácil (Concilio de Nicea).
+- `his-007`: Who-said-it · Medio (Lutero en Worms).
 
-- `npx vitest run` → [PENDIENTE]
-- `npm run build` → [PENDIENTE]
+**Verificación esperada**:
 
-**Commit**: `feat(funcional): añadir 10 preguntas al banco (Fase 4 - Sesión 2)`.
-**Sin push a main**.
+- `npx vitest run` → **174/174** (se actualizó el test de conteo a 100 y el test de apologetica a 5).
+- `npm run build` → limpio (bundle principal sigue en ~29 kB).
+
+**Commits**:
+
+- `fix(funcional): corregir opciones en pregunta de timeline (gen-006)`
+- `feat(funcional): añadir 10 preguntas de calidad (Fase 4 - Sesión 3)`
+  **Sin push a main**.

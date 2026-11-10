@@ -112,16 +112,73 @@ export const GENESIS_QUESTIONS: Question[] = [
     difficulty: "dificil",
     points: 30,
     timeLimit: 40,
-    events: ["Diluvio", "Creación", "Torre de Babel", "Llamado de Abraham"],
-    correctOrder: [1, 0, 2, 3],
+    events: [
+      "El Diluvio y el arca de Noé",
+      "La Creación de los cielos y la tierra",
+      "El llamado de Abraham a la tierra prometida",
+      "La Torre de Babel y la confusión de lenguas",
+    ],
+    correctOrder: [1, 0, 3, 2],
     explanation:
-      "La historia de Génesis avanza desde la Creación, pasando por el juicio del Diluvio, la rebelión en Babel, hasta el llamado de Abraham para iniciar el pueblo de Dios.",
+      "Génesis narra el plan de Dios: primero crea, luego juzga el pecado con el Diluvio, la humanidad se rebela en Babel, y finalmente Dios llama a Abraham para iniciar el linaje de la redención.",
     verse: "Génesis 1:1",
     verseText: "En el principio creó Dios los cielos y la tierra.",
     application:
-      "Dios tiene un plan que se desarrolla a través de la historia, y tú eres parte de esa historia hoy.",
+      "Dios tiene un plan que se desarrolla a través de la historia. Incluso los juicios y las crisis están dentro de Su propósito redentor.",
     reflection:
-      "¿Cómo ves la mano de Dios guiando los acontecimientos de tu vida?",
+      "¿Cómo te ayuda ver la historia de Génesis a confiar en que Dios tiene un plan incluso en tus momentos difíciles?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "gen-007",
+    type: "multiple-choice",
+    category: "genesis",
+    difficulty: "facil",
+    points: 10,
+    timeLimit: 25,
+    question:
+      "¿Qué vio Jacob en sueños que confirmó la presencia de Dios en su huida?",
+    options: [
+      "Un arca flotando sobre las aguas",
+      "Una escalera con ángeles subiendo y bajando",
+      "Un manto extendido sobre la tierra",
+      "Una zarza que ardía sin consumirse",
+    ],
+    correctIndex: 1,
+    explanation:
+      "Jacob huía por su propio pecado, pero Dios se le apareció en Betel para mostrarle que la gracia divina no depende de nuestros méritos, sino de Su fidelidad y promesa.",
+    verse: "Génesis 28:12",
+    verseText:
+      "Y soñó: y he aquí una escalera que estaba apoyada en tierra, y su extremo tocaba en el cielo; y he aquí ángeles de Dios que subían y descendían por ella.",
+    application:
+      "Dios te busca no porque seas perfecto, sino porque te ama. No importa cuán lejos hayas huido.",
+    reflection:
+      "¿Crees que Dios puede estar contigo incluso cuando has fallado?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "gen-008",
+    type: "timeline",
+    category: "genesis",
+    difficulty: "dificil",
+    points: 30,
+    timeLimit: 40,
+    events: [
+      "José se reencuentra con su padre Jacob",
+      "José es vendido por sus hermanos",
+      "José llega a ser gobernador de Egipto",
+      "José interpreta los sueños en prisión",
+    ],
+    correctOrder: [1, 3, 2, 0],
+    explanation:
+      "La vida de José demuestra la soberanía de Dios: fue vendido, encarcelado, olvidado, exaltado y usado para salvar a su familia de la hambruna. Dios transformó la traición humana en provisión divina.",
+    verse: "Génesis 50:20",
+    verseText:
+      "Vosotros pensasteis mal contra mí, mas Dios lo encaminó a bien, para hacer lo que vemos hoy, para mantener en vida a mucho pueblo.",
+    application:
+      "Dios no desperdicia dolor. Incluso cuando otros te hacen daño, Él puede convertir la situación en un propósito mayor.",
+    reflection:
+      "¿Cómo te ayuda la vida de José a perdonar a alguien que te hizo daño?",
     // revisado: 2026-11-10
   },
 ];

@@ -133,4 +133,51 @@ export const EXODO_QUESTIONS: Question[] = [
       "¿Hay alguna 'tierra prometida' que estás postergando por miedo?",
     // revisado: 2026-11-10
   },
+  {
+    id: "exo-007",
+    type: "multiple-choice",
+    category: "exodo",
+    difficulty: "facil",
+    points: 10,
+    timeLimit: 25,
+    question:
+      "¿Qué construyó el pueblo de Israel mientras Moisés estaba en el monte Sinaí?",
+    options: [
+      "Un altar de piedras para Jehová",
+      "Un becerro de oro para adorar",
+      "Una tienda de reunión",
+      "Una muralla para protegerse",
+    ],
+    correctIndex: 1,
+    explanation:
+      "El pueblo se impacientó por la ausencia de Moisés y exigió a Aarón que hiciera un dios visible. El becerro de oro reveló que su corazón seguía apegado a la idolatría de Egipto, a pesar de haber visto los milagros de Dios.",
+    verse: "Éxodo 32:4",
+    verseText:
+      "Y él los recibió de sus manos, y lo vació con un buril, e hizo un becerro de fundición. Entonces dijeron: Israel, estos son tus dioses, que te sacaron de la tierra de Egipto.",
+    application:
+      "La idolatría no siempre es una estatua; puede ser cualquier cosa que ocupa el lugar de Dios en tu corazón cuando Él parece guardar silencio.",
+    reflection:
+      "¿Qué 'becerro de oro' te fabricas cuando sientes que Dios no responde rápido?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "exo-008",
+    type: "true-false",
+    category: "exodo",
+    difficulty: "medio",
+    points: 20,
+    timeLimit: 20,
+    statement: "Dios le dio a Moisés los Diez Mandamientos en el monte Sinaí.",
+    correct: true,
+    explanation:
+      "Los Diez Mandamientos son la base de la ley moral de Dios. Fueron dados a Moisés en el Sinaí para mostrar al pueblo cómo vivir en relación con Dios y con los demás.",
+    verse: "Éxodo 20:1-2",
+    verseText:
+      "Y habló Dios todas estas palabras, diciendo: Yo soy Jehová tu Dios, que te saqué de la tierra de Egipto, de casa de servidumbre.",
+    application:
+      "La ley no fue dada para esclavizarnos, sino para mostrarnos cómo vivir libres de verdad, en comunión con Dios y con los demás.",
+    reflection:
+      "¿Cuál de los mandamientos sientes que te cuesta más vivir y por qué?",
+    // revisado: 2026-11-10
+  },
 ];
