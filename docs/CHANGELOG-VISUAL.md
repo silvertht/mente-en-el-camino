@@ -1,13 +1,7 @@
-### 2026-11-10 · H-VIS-05: Instalación PWA y flecha de retorno
+### 2026-11-10 · Fix: Mostrar 9 sendas en Home y paleta de colores
 
-**Instalación PWA (Home)**
-
-- Integración del hook `useInstallPrompt` (Admin).
-- Botón "Instalar App" discreto (ghost) al final del scroll, visible solo si `!isStandalone`.
-- Lógica UI: si `isIOS`, abre un Modal custom; si `canInstall` (Android), dispara `installApp()`.
-- Modal iOS: Implementado sobre el componente base `Modal.tsx` (garantiza scroll lock, focus trap y `role="dialog"`). Incluye icono SVG de compartir y texto instructivo. Se añadió un botón "Entendido" vía prop `footer` para cierre visible táctil.
-
-**Game.tsx (Flecha de retorno)**
-
-- Mejora de visibilidad: fondo `bg-noche-800/50`, borde sutil y mayor tamaño de icono (`text-xl`).
-- Accesibilidad: se forzó un área táctil mínima de `min-w-[44px] min-h-[44px]`.
+- **Datos**: Corregido `src/data/categories.ts` para exportar las 9 categorías en `CATEGORY_LIST` (antes solo exportaba las 5 de `MVP_CATEGORIES`).
+- **Deuda de Diseño**: Se actualizaron los colores de fondo de las categorías (`amber`, `emerald`, `red`, etc.) a la paleta oficial (alba, reino, vida, fuego, alerta).
+- **Grid (Home.tsx)**: Se cambiaron las columnas del grid de `grid-cols-1` a `grid-cols-2` en móvil, `sm:grid-cols-3` y `lg:grid-cols-4` para soportar las 9 sendas sin scroll infinito.
+- **Dinamismo**: Se reemplazó el texto hardcodeado "Cinco rutas" por `{CATEGORY_LIST.length} rutas`.
+- **Métricas**: 174/174 tests pasando, build limpio.
