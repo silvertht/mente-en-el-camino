@@ -9,6 +9,8 @@ import { Button } from "../components/Button";
 import { ProgressBar } from "../components/ProgressBar";
 import { StatPill } from "../components/StatPill";
 import { GradientText } from "../components/GradientText";
+import { Modal } from "../components/Modal"; // ← NUEVO
+import { useInstallPrompt } from "../hooks/useInstallPrompt"; // ← NUEVO (H-VIS-05)
 import { getTodayProgress } from "../db/database";
 import { xpProgressInLevel } from "../utils/scoring";
 import { staggerContainer, fadeInUp, popIn } from "../utils/animations";
@@ -21,8 +23,12 @@ interface Props {
 
 export function Home({ onStartGame, onOpenProfile }: Props) {
   const profile = useGameStore((s) => s.profile);
-  const isLoadingQuestions = useGameStore((s) => s.isLoadingQuestions); // <- Store state
-  const loadAndStartGame = useGameStore((s) => s.loadAndStartGame); // <- Nueva acción
+  const isLoadingQuestions = useGameStore((s) => s.isLoadingQuestions);
+  const loadAndStartGame = useGameStore((s) => s.loadAndStartGame);
+
+  // Hook de Admin (asumiendo que devuelve isStandalone)
+  const { canInstall, isIOS, isStandalone, installApp } = useInstallPrompt();
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
 
   const [dailyCompleted, setDailyCompleted] = useState(false);
   const counts = countQuestionsByCategory();
@@ -46,10 +52,17 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
 
   const handleCategory = async (categoryId: CategoryId) => {
     if (isLoadingQuestions) return;
-    // Si la categoría no tiene preguntas, evitamos cargar
     if ((counts[categoryId] ?? 0) === 0) return;
     await loadAndStartGame("campaign", 10, categoryId);
     onStartGame();
+  };
+
+  const handleInstallClick = () => {
+    if (isIOS) {
+      setIsInstallModalOpen(true);
+    } else if (canInstall) {
+      installApp();
+    }
   };
 
   return (
@@ -352,13 +365,89 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
           </motion.div>
         </motion.div>
 
+        {/* ============ 6. INSTALAR APP (Solo si no está instalada) ============ */}
+        {!isStandalone && (
+          <motion.div variants={fadeInUp} className="mb-6 flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleInstallClick}
+              className="text-alba-400/60 hover:text-alba-400"
+            >
+              <span className="inline-flex items-center gap-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Instalar App
+              </span>
+            </Button>
+          </motion.div>
+        )}
+
         <motion.p
           variants={fadeInUp}
-          className="mt-10 text-center text-[9px] uppercase tracking-[0.4em] text-white/20"
+          className="mt-4 text-center text-[9px] uppercase tracking-[0.4em] text-white/20"
         >
           Selah · {new Date().getFullYear()}
         </motion.p>
       </motion.header>
+
+      {/* ============ MODAL DE INSTALACIÓN iOS ============ */}
+      <Modal
+        open={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+        title="Instalar App en iPhone"
+        footer={
+          <Button
+            variant="primary"
+            size="md"
+            fullWidth
+            onClick={() => setIsInstallModalOpen(false)}
+          >
+            Entendido
+          </Button>
+        }
+      >
+        <div className="flex flex-col items-center justify-center space-y-6 py-4 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-noche-700/50">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-alba-400"
+              aria-hidden="true"
+            >
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" y1="2" x2="12" y2="15" />
+            </svg>
+          </div>
+          <p className="text-sm leading-relaxed text-white/80">
+            Para instalar en iPhone: Toca el botón <strong>Compartir</strong>{" "}
+            (icono cuadrado con flecha) y selecciona{" "}
+            <strong>"Añadir a pantalla de inicio"</strong>.
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 }

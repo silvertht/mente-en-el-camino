@@ -16,11 +16,9 @@ interface AnswerParams {
   selectedBool?: boolean;
   selectedText?: string;
   hintsUsed?: number;
-  selectedOrder?: number[]; // H-02.1
+  selectedOrder?: number[];
 }
 
-// H-02.2-A: aislar useElapsedTime en hijo memoizado.
-// El estado del tick vive aquí. Al usar memo, el re-render no propaga a Game.
 const ElapsedReporter = memo(function ElapsedReporter({
   active,
   onChange,
@@ -59,7 +57,6 @@ export function Game({ onFinish, onQuit }: Props) {
 
   const isAnswering = lastAnswerCorrect === null && !!currentQuestion;
 
-  // H-02.2-A: elapsed vive en ref, no en state. No re-render por tick.
   const elapsedRef = useRef(0);
   const handleElapsed = useCallback((n: number) => {
     elapsedRef.current = n;
@@ -93,8 +90,6 @@ export function Game({ onFinish, onQuit }: Props) {
     }
   };
 
-  // D4 = Opción 2: si se acaba el tiempo, se envía exactamente timeLimit.
-  // elapsedRef.current solo se usa para respuestas manuales (handleAnswer).
   const handleTimeUp = useCallback(() => {
     if (lastAnswerCorrect === null) {
       answerQuestion({ timeSpent: timeLimit });
@@ -113,15 +108,18 @@ export function Game({ onFinish, onQuit }: Props) {
         className="p-4 sm:p-5 max-w-3xl mx-auto w-full"
       >
         <div className="flex items-center justify-between gap-3 mb-4">
+          {/* Flecha de retorno mejorada (H-VIS-05) */}
           <button
             onClick={onQuit}
-            className="text-slate-500 hover:text-white text-sm font-medium transition-colors flex items-center gap-1.5 group"
+            className="flex items-center justify-center gap-2 min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl bg-noche-800/50 border border-noche-700/50 text-slate-300 hover:text-white hover:bg-noche-700/50 transition-colors group"
             aria-label="Salir de la partida"
           >
-            <span className="group-hover:-translate-x-0.5 transition-transform">
+            <span className="text-xl leading-none group-hover:-translate-x-0.5 transition-transform">
               ←
             </span>
-            <span className="hidden sm:inline">Salir</span>
+            <span className="hidden sm:inline text-sm font-semibold">
+              Salir
+            </span>
           </button>
 
           <div className="flex items-center gap-2 sm:gap-3">
