@@ -9,8 +9,8 @@ import { Button } from "../components/Button";
 import { ProgressBar } from "../components/ProgressBar";
 import { StatPill } from "../components/StatPill";
 import { GradientText } from "../components/GradientText";
-import { Modal } from "../components/Modal"; // ← NUEVO
-import { useInstallPrompt } from "../hooks/useInstallPrompt"; // ← NUEVO (H-VIS-05)
+import { Modal } from "../components/Modal";
+import { useInstallPrompt } from "../hooks/useInstallPrompt";
 import { getTodayProgress } from "../db/database";
 import { xpProgressInLevel } from "../utils/scoring";
 import { staggerContainer, fadeInUp, popIn } from "../utils/animations";
@@ -26,7 +26,6 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
   const isLoadingQuestions = useGameStore((s) => s.isLoadingQuestions);
   const loadAndStartGame = useGameStore((s) => s.loadAndStartGame);
 
-  // Hook de Admin (asumiendo que devuelve isStandalone)
   const { canInstall, isIOS, isStandalone, installApp } = useInstallPrompt();
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
 
@@ -335,8 +334,9 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
               <h2 className="text-xl font-black text-white sm:text-2xl">
                 Elige tu senda
               </h2>
+              {/* Texto dinámico: ahora refleja el total real (9) */}
               <p className="mt-1 text-sm text-white/50">
-                Cinco rutas para crecer hoy
+                {CATEGORY_LIST.length} rutas para crecer hoy
               </p>
             </div>
             <span className="hidden text-[10px] font-mono uppercase tracking-widest text-white/30 sm:block">
@@ -349,7 +349,8 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
             initial="hidden"
             animate="visible"
             className={[
-              "grid grid-cols-1 gap-4 transition-opacity duration-200 sm:grid-cols-2 lg:grid-cols-3",
+              // Grid optimizado para 9 ítems en móvil
+              "grid grid-cols-2 gap-3 transition-opacity duration-200 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4",
               isLoadingQuestions ? "pointer-events-none opacity-60" : "",
             ].join(" ")}
           >
