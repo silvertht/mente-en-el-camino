@@ -35,14 +35,17 @@ export function Button({
   className = "",
   children,
   disabled,
+  type = "button",
   ...rest
 }: ButtonProps) {
   return (
     <button
       {...rest}
+      type={type}
       disabled={disabled}
       className={[
         "inline-flex items-center justify-center gap-2",
+        "min-h-11", // H-06: touch target 44px
         "transition-all duration-150 ease-out",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-alba-400",
         "focus-visible:ring-offset-2 focus-visible:ring-offset-noche-900",

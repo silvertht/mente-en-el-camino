@@ -212,10 +212,11 @@ export function Profile({ onBack }: Props) {
 
         {/* ── Rating ELO (handoff Funcional → Visual) ──────────── */}
         <motion.div variants={fadeInUp}>
-          <div
+          <Card
             role="group"
             aria-label={`Tu nivel de experiencia: ${rating} puntos, ${ratingLabel}`}
-            className="relative overflow-hidden rounded-2xl border border-white/5 bg-noche-800/60 p-4 sm:p-5"
+            variant="bare"
+            className="relative overflow-hidden border border-white/5 bg-noche-800/60 p-4 sm:p-5"
           >
             <div
               aria-hidden="true"
@@ -262,7 +263,7 @@ export function Profile({ onBack }: Props) {
                 />
               </div>
             </div>
-          </div>
+          </Card>
         </motion.div>
 
         {/* ── Vitrina ────────────────────────────────────────────── */}
@@ -353,9 +354,10 @@ function StatCard({
   muted?: boolean;
 }) {
   return (
-    <div
+    <Card
+      variant="bare"
       className={[
-        "rounded-2xl border border-white/5 bg-noche-800/60 p-3 text-center sm:p-4",
+        "border border-white/5 bg-noche-800/60 p-3 text-center sm:p-4",
         "transition-opacity",
         muted ? "opacity-50" : "",
       ].join(" ")}
@@ -375,6 +377,6 @@ function StatCard({
       >
         {value}
       </p>
-    </div>
+    </Card>
   );
 }
