@@ -5,16 +5,16 @@
 **Implementación**:
 
 - `src/data/questions/index.ts`: Imports dinámicos (`import()`) y `loadQuestionBank()`.
-- `src/store/useGameStore.ts`: Nueva acción `loadAndStartGame` con delay de 400ms para UX.
+- `src/store/useGameStore.ts`: Nueva acción `loadAndStartGame`.
+  - **[FIX 2026-11-10]**: Se eliminó un delay artificial de 400ms que penalizaba conexiones rápidas. Ahora la carga es inmediata y el spinner se muestra de forma orgánica solo si el componente tarda en resolver.
 - `src/App.tsx` / `Home.tsx` / `main.tsx`: Integración del estado `isLoadingQuestions` (spinner) y adaptación asíncrona de auditorías.
-- `motion` y `dexie`: NO tocados. Se aislaron en chunks de vendor (handoff a Visual para lazy load de componentes si se desea en el futuro).
 
 **Verificación**:
 
 - `npx vitest run` → **164/164** ✅
 - `npm run build` → limpio ✅
-- **Bundle principal**: **29.49 kB gzip** (antes: 184.12 kB) → Reducción del **~84%** en el payload inicial. Las preguntas ahora se cargan en chunks de 2.7 a 5 kB.
-- **Prueba manual**: Spinner visible y partida completada [PENDIENTE CONFIRMAR].
+- **Bundle principal**: **29.49 kB gzip** (antes: 184.12 kB) → Reducción del **~84%** en el payload inicial.
+- **Prueba manual**: Inicio casi instantáneo verificado.
 
-**Commit**: `perf(funcional): lazy load de questions (H-FUN-03)`.
+**Commit**: `fix(funcional): eliminar delay artificial en carga de preguntas`.
 **Sin push a main**.

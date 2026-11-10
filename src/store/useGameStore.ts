@@ -2,7 +2,7 @@ import { create } from "zustand";
 import type {
   AnsweredQuestion,
   Badge,
-  CategoryId, // <- NUEVO IMPORT
+  CategoryId,
   GameMode,
   GameState,
   Question,
@@ -34,7 +34,7 @@ import {
   updateRating,
   calibrateInitialRating,
 } from "../utils/rating";
-import { pickAdaptiveQuestions } from "../data/questions"; // <- NUEVO IMPORT
+import { pickAdaptiveQuestions } from "../data/questions";
 
 // ============================================================
 // IN-FLIGHT GUARD (DF-1)
@@ -50,7 +50,7 @@ interface GameStoreState {
   game: GameState | null;
   userRating: UserRating | null;
   isLoading: boolean;
-  isLoadingQuestions: boolean; // <- NUEVO
+  isLoadingQuestions: boolean;
   error: string | null;
 
   lastAnswerCorrect: boolean | null;
@@ -66,7 +66,7 @@ interface GameStoreState {
     mode: GameMode,
     count: number,
     categoryId?: CategoryId,
-  ) => Promise<void>; // <- NUEVO
+  ) => Promise<void>;
   answerQuestion: (params: {
     selectedIndex?: number;
     selectedBool?: boolean;
@@ -94,7 +94,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   game: null,
   userRating: null,
   isLoading: false,
-  isLoadingQuestions: false, // <- NUEVO
+  isLoadingQuestions: false,
   error: null,
   lastAnswerCorrect: null,
   lastAnswerPoints: 0,
@@ -154,20 +154,14 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   // ============================================================
-  // H-FUN-03: Carga asíncrona con delay UX
+  // H-FUN-03: Carga asíncrona SIN delay artificial
   // ============================================================
   loadAndStartGame: async (mode, count, categoryId) => {
     set({ isLoadingQuestions: true, error: null });
     try {
-      const t0 = performance.now();
+      // Carga inmediata: si la red es rápida, el usuario no verá el spinner.
+      // Si la red es lenta, el overlay de App.tsx se encargará de mostrarlo.
       const questions = await pickAdaptiveQuestions(count, categoryId);
-
-      // UX: Evitar parpadeo blanco si la carga es muy rápida
-      const elapsed = performance.now() - t0;
-      if (elapsed < 400) {
-        await new Promise((resolve) => setTimeout(resolve, 400 - elapsed));
-      }
-
       get().startGame(mode, questions);
     } catch (e) {
       set({ error: (e as Error).message });
@@ -412,7 +406,10 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 }));
 
-// ... (helpers internos y selectores se mantienen exactamente igual)
+// ============================================================
+// HELPERS INTERNOS
+// ============================================================
+
 interface AnswerInput {
   selectedIndex?: number;
   selectedBool?: boolean;
