@@ -62,4 +62,66 @@ export const GENESIS_QUESTIONS: Question[] = [
     reflection: "¿En qué área te está Dios pidiendo obediencia a ciegas?",
     // revisado: 2026-11-10
   },
+  {
+    id: "gen-004",
+    type: "multiple-choice",
+    category: "genesis",
+    difficulty: "facil",
+    points: 10,
+    timeLimit: 25,
+    question: "¿Qué animal tentó a Eva en el huerto del Edén?",
+    options: ["Un león", "Una serpiente", "Un águila", "Un dragón"],
+    correctIndex: 1,
+    explanation:
+      "Satanás usó a la serpiente, el más astuto de los animales, para sembrar duda sobre la Palabra de Dios.",
+    verse: "Génesis 3:1",
+    verseText:
+      "Pero la serpiente era astuta, más que todos los animales del campo que Jehová Dios había hecho; la cual dijo a la mujer: ¿Conque Dios os ha dicho: No comáis de todo árbol del huerto?",
+    application:
+      "La duda de la Palabra de Dios es la primera arma del enemigo. Conocer la verdad nos protege.",
+    reflection:
+      "¿En qué áreas de tu vida estás escuchando voces que siembran duda sobre lo que Dios dijo?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "gen-005",
+    type: "fill-blank",
+    category: "genesis",
+    difficulty: "medio",
+    points: 20,
+    timeLimit: 25,
+    verseWithBlank:
+      "Y creó Dios al hombre a su ___, a imagen de Dios lo creó; varón y hembra los creó.",
+    options: ["semejanza", "imagen", "gloria", "forma"],
+    correctIndex: 1,
+    explanation:
+      "El ser humano tiene un valor intrínseco único porque fue creado a la imagen de Dios.",
+    verse: "Génesis 1:27",
+    verseText:
+      "Y creó Dios al hombre a su imagen, a imagen de Dios lo creó; varón y hembra los creó.",
+    application:
+      "Tu valor no depende de lo que haces, sino de quién te creó. Fuiste hecho a Su imagen.",
+    reflection:
+      "¿Cómo cambia tu autoestima el saber que llevas la imagen de Dios?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "gen-006",
+    type: "timeline",
+    category: "genesis",
+    difficulty: "dificil",
+    points: 30,
+    timeLimit: 40,
+    events: ["Diluvio", "Creación", "Torre de Babel", "Llamado de Abraham"],
+    correctOrder: [1, 0, 2, 3],
+    explanation:
+      "La historia de Génesis avanza desde la Creación, pasando por el juicio del Diluvio, la rebelión en Babel, hasta el llamado de Abraham para iniciar el pueblo de Dios.",
+    verse: "Génesis 1:1",
+    verseText: "En el principio creó Dios los cielos y la tierra.",
+    application:
+      "Dios tiene un plan que se desarrolla a través de la historia, y tú eres parte de esa historia hoy.",
+    reflection:
+      "¿Cómo ves la mano de Dios guiando los acontecimientos de tu vida?",
+    // revisado: 2026-11-10
+  },
 ];

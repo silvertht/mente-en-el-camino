@@ -1,13 +1,11 @@
-### 2026-11-10 — Visual · H-06 y SortableList CERRADOS
+### 2026-11-10 — Cierre de Feedback Test #2 · Fase 4 (Hitos Críticos)
 
-- **H-06 CERRADO**: Refactorización de Button (min-h-11, type="button",
-  estado disabled con opacity en vez de slate) y Card (variante bare).
-  Reutilización de componentes existentes (sin ui/ paralela).
-- **SortableList ELIMINADO**: Verificado sin imports activos (solo un
-  comentario en TapToPlace.tsx). Archivo borrado.
-- **Refactor aplicado**: Onboarding.tsx y Profile.tsx ahora consumen los
-  componentes base. A11y intacta.
-- **Métricas**: 164/164 tests · build limpio · bundle 28.59 kB gzip.
-- **Push autorizado**.
-- **Siguiente**: Funcional arranca la ampliación del banco (70 → 110+).
-  PO en paralelo ejecutando Test #2.
+- **PWA (H-VIS-05 CERRADO)**:
+  - Admin: Hook `useInstallPrompt` detecta iOS/Android.
+  - Visual: Modal de instrucciones para iOS + botón nativo para Android.
+  - Flecha de retorno en Game.tsx mejorada (touch target 44px).
+- **Fix Exploit (Test #2)**: `answerQuestion` es efímero; la persistencia
+  de ELO/XP solo ocurre en `finishGame`. Test anti-exploit añadido.
+- **Banco de Preguntas**: Ampliado a 80 (Sesión 1). Categorías Génesis,
+  Éxodo, Apologética e Historia de la Iglesia activadas.
+- **Integración Final**: 170/170 tests · Build limpio · Push a main OK.

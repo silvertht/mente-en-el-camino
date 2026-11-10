@@ -12,10 +12,10 @@ export const QUESTION_COUNTS: Record<CategoryId, number> = {
   versiculos: 20,
   parabolas: 10,
   valores: 10,
-  genesis: 3,
-  exodo: 3,
-  apologetica: 2,
-  "historia-iglesia": 2,
+  genesis: 6,
+  exodo: 6,
+  apologetica: 4,
+  "historia-iglesia": 4,
 };
 
 export const ALL_QUESTIONS: Question[] = [];
@@ -38,17 +38,11 @@ let loadingPromise: Promise<void> | null = null;
 // LAZY LOAD (H-FUN-03)
 // ============================================================
 
-/**
- * Carga el banco de preguntas de forma dinámica.
- * Es idempotente y muta las referencias de ALL_QUESTIONS para
- * mantener compatibilidad con consumidores síncronos.
- */
 export async function loadQuestionBank(): Promise<void> {
   if (isLoaded) return;
   if (loadingPromise) return loadingPromise;
 
   loadingPromise = (async () => {
-    // El uso de imports dinámicos permite que Vite cree chunks separados
     const [ev, pe, ve, pa, va, ge, ex, ap, hi] = await Promise.all([
       import("./evangelios").then((m) => m.EVANGELIOS_QUESTIONS),
       import("./personajes").then((m) => m.PERSONAJES_QUESTIONS),
@@ -141,9 +135,7 @@ export async function pickAdaptiveQuestions(
   count: number,
   categoryId?: CategoryId,
 ): Promise<Question[]> {
-  // Garantizamos que el pool esté cargado antes de seleccionar
   await loadQuestionBank();
-
   const rating = await getUserRating();
   const basePool = categoryId
     ? getQuestionsByCategory(categoryId)

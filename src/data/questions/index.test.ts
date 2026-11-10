@@ -62,11 +62,11 @@ describe("Questions Index (Lazy Load)", () => {
       expect(getQuestionsByCategory("valores").length).toBeGreaterThan(0);
     });
 
-    it("devuelve preguntas en las NUEVAS categorías (Sesión 1)", () => {
-      expect(getQuestionsByCategory("genesis").length).toBe(3);
-      expect(getQuestionsByCategory("exodo").length).toBe(3);
-      expect(getQuestionsByCategory("apologetica").length).toBe(2);
-      expect(getQuestionsByCategory("historia-iglesia").length).toBe(2);
+    it("devuelve los nuevos conteos en las categorías de la Sesión 2", () => {
+      expect(getQuestionsByCategory("genesis").length).toBe(6);
+      expect(getQuestionsByCategory("exodo").length).toBe(6);
+      expect(getQuestionsByCategory("apologetica").length).toBe(4);
+      expect(getQuestionsByCategory("historia-iglesia").length).toBe(4);
     });
   });
 
@@ -83,20 +83,20 @@ describe("Questions Index (Lazy Load)", () => {
   });
 
   describe("countQuestionsByCategory", () => {
-    it("incluye los conteos actualizados del banco", () => {
+    it("incluye los conteos actualizados del banco (90 preguntas)", () => {
       const counts = countQuestionsByCategory();
       expect(counts.evangelios).toBe(20);
-      expect(counts.genesis).toBe(3);
-      expect(counts.exodo).toBe(3);
-      expect(counts.apologetica).toBe(2);
-      expect(counts["historia-iglesia"]).toBe(2);
+      expect(counts.genesis).toBe(6);
+      expect(counts.exodo).toBe(6);
+      expect(counts.apologetica).toBe(4);
+      expect(counts["historia-iglesia"]).toBe(4);
     });
 
-    it("la suma de conteos equivale a ALL_QUESTIONS.length (80)", () => {
+    it("la suma de conteos equivale a ALL_QUESTIONS.length (90)", () => {
       const counts = countQuestionsByCategory();
       const sum = Object.values(counts).reduce((a, b) => a + b, 0);
-      expect(sum).toBe(80);
-      expect(ALL_QUESTIONS.length).toBe(80);
+      expect(sum).toBe(90);
+      expect(ALL_QUESTIONS.length).toBe(90);
     });
   });
 
@@ -154,32 +154,30 @@ describe("Questions Index (Lazy Load)", () => {
 
     it("respeta categoryId si se pasa", async () => {
       mockGetUserRating.mockResolvedValue(baseRating);
-
       const questions = await pickAdaptiveQuestions(3, "genesis");
       expect(questions.every((q) => q.category === "genesis")).toBe(true);
     });
 
     it("no devuelve más preguntas que las pedidas", async () => {
       mockGetUserRating.mockResolvedValue(baseRating);
-
       const questions = await pickAdaptiveQuestions(3);
       expect(questions.length).toBeLessThanOrEqual(3);
     });
 
     it("no repite preguntas dentro de la misma selección", async () => {
       mockGetUserRating.mockResolvedValue(baseRating);
-
       const questions = await pickAdaptiveQuestions(8);
       const ids = questions.map((q) => q.id);
       expect(new Set(ids).size).toBe(ids.length);
     });
 
-    it("categoría con pocas preguntas (apologetica) → devuelve lo disponible (respetando cap de rating)", async () => {
+    it("categoría con pocas preguntas (apologetica) → devuelve lo disponible (respetando cap)", async () => {
       mockGetUserRating.mockResolvedValue(baseRating); // Rating 1200
       const questions = await pickAdaptiveQuestions(5, "apologetica");
 
-      // Solo devuelve 1 porque apo-002 (difícil) supera el MAX_STRETCH de 400 y es filtrada
-      expect(questions.length).toBe(1);
+      // apo-001 (medio), apo-003 (facil), apo-004 (facil) pasan el filtro.
+      // apo-002 (dificil) es filtrada por el MAX_STRETCH.
+      expect(questions.length).toBe(3);
       expect(questions.every((q) => q.category === "apologetica")).toBe(true);
     });
   });

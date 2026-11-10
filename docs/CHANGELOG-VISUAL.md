@@ -1,27 +1,13 @@
-### 2026-11-10 · H-06: Button y Card base + limpieza SortableList
+### 2026-11-10 · H-VIS-05: Instalación PWA y flecha de retorno
 
-**H-06 — Extracción de componentes base**
+**Instalación PWA (Home)**
 
-- `Button.tsx`: añadido `min-h-11` (touch target 44px mobile-first) y `type="button"` por defecto para evitar submits accidentales. Sin cambios en variantes ni tamaños.
-- `Card.tsx`: añadida variante `variant="bare"` (sin bg/padding/border) para que pantallas con estilo propio la consuman sin alterar su apariencia. Las variantes previas conservan su `bg-slate-800` como deuda heredada.
-- `Onboarding.tsx`: contenedor pasa a `<Card variant="bare">`; botón Continuar pasa a `<Button variant="primary" size="md" fullWidth>`. Microcopy, lógica, `onboardingQuestions` y a11y intactos. Botones de opción sin cambios (state-based).
-- `Profile.tsx`: `StatCard` y card de rating usan `<Card variant="bare">` con el mismo `className` actual. **Cero cambio visual.** Deuda `RATING_TIERS` sigue pendiente de `getRatingTiers()` (Funcional).
-- `Home.tsx` y `Game.tsx`: no requirieron cambios (Home ya consumía `Button`; los botones de Game son especializados).
+- Integración del hook `useInstallPrompt` (Admin).
+- Botón "Instalar App" discreto (ghost) al final del scroll, visible solo si `!isStandalone`.
+- Lógica UI: si `isIOS`, abre un Modal custom; si `canInstall` (Android), dispara `installApp()`.
+- Modal iOS: Implementado sobre el componente base `Modal.tsx` (garantiza scroll lock, focus trap y `role="dialog"`). Incluye icono SVG de compartir y texto instructivo. Se añadió un botón "Entendido" vía prop `footer` para cierre visible táctil.
 
-**Deltas visuales aceptados (Onboarding "Continuar")**
+**Game.tsx (Flecha de retorno)**
 
-- `text-noche-900` → `text-noche-950` (más contraste).
-- Disabled: `bg-slate-500 opacity-70` → primary atenuado (`opacity-50`). Elimina slate heredado.
-- Se añade `shadow-lg shadow-alba-500/20`.
-
-**Limpieza**
-
-- `src/components/questions/SortableList.tsx`: eliminado. Confirmado huérfano mediante `findstr` (solo quedaba una mención en un comentario histórico de `TapToPlace.tsx`). Sin tests asociados.
-
-**Métricas finales**
-
-- Tests: **164/164** ✅
-- Build time: **967 ms** ✅
-- Bundle main (`index-*.js`): **28.59 kB gzip**
-- CSS: 10.84 kB → **10.73 kB gzip**
-- Precache PWA: 820.93 KiB → **820.13 KiB**
+- Mejora de visibilidad: fondo `bg-noche-800/50`, borde sutil y mayor tamaño de icono (`text-xl`).
+- Accesibilidad: se forzó un área táctil mínima de `min-w-[44px] min-h-[44px]`.
