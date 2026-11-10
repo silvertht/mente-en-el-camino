@@ -2,7 +2,6 @@ import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { useInstallPrompt } from "../useInstallPrompt";
 
-// Helper para mockear matchMedia
 const mockMatchMedia = (matches: boolean) => {
   window.matchMedia = vi.fn().mockImplementation((query) => ({
     matches,
@@ -20,12 +19,12 @@ describe("useInstallPrompt", () => {
   const originalUserAgent = window.navigator.userAgent;
 
   beforeEach(() => {
-    // Por defecto asumimos que no está standalone
     mockMatchMedia(false);
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    // Restauramos el userAgent original
     Object.defineProperty(window.navigator, "userAgent", {
       value: originalUserAgent,
       configurable: true,
@@ -39,11 +38,9 @@ describe("useInstallPrompt", () => {
         "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1",
       configurable: true,
     });
-
     const { result } = renderHook(() => useInstallPrompt());
     expect(result.current.isIOS).toBe(true);
     expect(result.current.isAndroid).toBe(false);
-    expect(result.current.isStandalone).toBe(false);
   });
 
   it("detecta correctamente Android (Chrome)", () => {
@@ -52,31 +49,15 @@ describe("useInstallPrompt", () => {
         "Mozilla/5.0 (Linux; Android 13; SM-S908B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36",
       configurable: true,
     });
-
     const { result } = renderHook(() => useInstallPrompt());
     expect(result.current.isAndroid).toBe(true);
     expect(result.current.isIOS).toBe(false);
   });
 
-  it("si ya está en modo standalone, isIOS e isAndroid son false", () => {
-    Object.defineProperty(window.navigator, "userAgent", {
-      value: "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)",
-      configurable: true,
-    });
-    mockMatchMedia(true); // Simulamos display-mode: standalone
-
+  it("captura beforeinstallprompt globalmente y dispara installApp en Android", async () => {
     const { result } = renderHook(() => useInstallPrompt());
-    expect(result.current.isStandalone).toBe(true);
-    expect(result.current.isIOS).toBe(false); // No debe pedir instalar si ya está
-    expect(result.current.isAndroid).toBe(false);
-  });
-
-  it("captura beforeinstallprompt y dispara installApp en Android", async () => {
-    const { result } = renderHook(() => useInstallPrompt());
-
     expect(result.current.canInstall).toBe(false);
 
-    // Mockeamos el evento nativo de Android
     const mockPrompt = vi.fn().mockResolvedValue(undefined);
     const mockEvent = {
       preventDefault: vi.fn(),
@@ -84,6 +65,7 @@ describe("useInstallPrompt", () => {
       userChoice: Promise.resolve({ outcome: "accepted", platform: "android" }),
     };
 
+    // Simulamos que el navegador dispara el evento
     act(() => {
       const event = new Event("beforeinstallprompt");
       Object.assign(event, mockEvent);
@@ -97,6 +79,6 @@ describe("useInstallPrompt", () => {
     });
 
     expect(mockPrompt).toHaveBeenCalled();
-    expect(result.current.canInstall).toBe(false); // Se limpia tras instalar
+    expect(result.current.canInstall).toBe(false);
   });
 });

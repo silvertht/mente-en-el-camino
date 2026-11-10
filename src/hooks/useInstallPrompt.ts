@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 
-// Tipado global para el evento de instalación (no viene por defecto en TS)
 export interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
   readonly userChoice: Promise<{
@@ -10,74 +9,108 @@ export interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+// 🚨 VARIABLES GLOBALES (Fuera del hook)
+// Esto asegura que el evento se capture apenas se importe el archivo
+let globalDeferredPrompt: BeforeInstallPromptEvent | null = null;
+let isGlobalListenerAttached = false;
+
+const attachGlobalPwaListener = () => {
+  if (typeof window === "undefined" || isGlobalListenerAttached) return;
+
+  window.addEventListener("beforeinstallprompt", (e: Event) => {
+    e.preventDefault();
+    console.log(
+      "✅ [PWA Debug] Evento 'beforeinstallprompt' capturado globalmente.",
+    );
+    globalDeferredPrompt = e as BeforeInstallPromptEvent;
+    // Disparamos un evento custom para avisar a los componentes montados
+    window.dispatchEvent(new Event("pwa-prompt-captured"));
+  });
+
+  window.addEventListener("appinstalled", () => {
+    console.log(
+      "✅ [PWA Debug] Evento 'appinstalled'. La PWA se ha instalado.",
+    );
+    globalDeferredPrompt = null;
+    window.dispatchEvent(new Event("pwa-installed"));
+  });
+
+  isGlobalListenerAttached = true;
+};
+
+// Ejecutamos esto inmediatamente al importar el hook
+attachGlobalPwaListener();
+
 export function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null);
+    useState<BeforeInstallPromptEvent | null>(globalDeferredPrompt);
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
-    // 1. Detección de Standalone (¿ya está instalada?)
-    const checkStandalone = () => {
-      const isStandaloneMode = window.matchMedia(
-        "(display-mode: standalone)",
-      ).matches;
-      // En iOS, Safari tiene una propiedad no estándar: navigator.standalone
-      const isIOSStandalone = (window.navigator as any).standalone === true;
-      return isStandaloneMode || isIOSStandalone;
-    };
+    // 1. Detección de Standalone
+    const isStandaloneMode = window.matchMedia(
+      "(display-mode: standalone)",
+    ).matches;
+    const isIOSStandalone = (window.navigator as any).standalone === true;
+    const standalone = isStandaloneMode || isIOSStandalone;
 
-    const standalone = checkStandalone();
     setIsStandalone(standalone);
 
     // 2. Detección de OS
     const userAgent = window.navigator.userAgent.toLowerCase();
-
-    // iOS: incluye iPad (que en iOS 13+ se hace pasar por MacIntel)
     const isIOSDevice =
       /ipad|iphone|ipod/.test(userAgent) ||
       (window.navigator.platform === "MacIntel" &&
         window.navigator.maxTouchPoints > 1);
-
     const isAndroidDevice = /android/.test(userAgent);
 
-    // Solo mostramos avisos si NO está instalada
     setIsIOS(isIOSDevice && !standalone);
     setIsAndroid(isAndroidDevice && !standalone);
 
-    // 3. Capturar evento de Android (beforeinstallprompt)
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    // 3. Sincronizar con eventos globales
+    const handlePromptCaptured = () => {
+      console.log(
+        "🔄 [PWA Debug] Sincronizando estado del hook con evento capturado.",
+      );
+      setDeferredPrompt(globalDeferredPrompt);
     };
 
-    // 4. Escuchar si el usuario instala la app
-    const handleAppInstalled = () => {
+    const handleInstalled = () => {
       setDeferredPrompt(null);
       setIsStandalone(true);
     };
 
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    window.addEventListener("appinstalled", handleAppInstalled);
+    window.addEventListener("pwa-prompt-captured", handlePromptCaptured);
+    window.addEventListener("pwa-installed", handleInstalled);
 
     return () => {
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstallPrompt,
-      );
-      window.removeEventListener("appinstalled", handleAppInstalled);
+      window.removeEventListener("pwa-prompt-captured", handlePromptCaptured);
+      window.removeEventListener("pwa-installed", handleInstalled);
     };
   }, []);
 
-  // Función para disparar el prompt nativo en Android
+  // Función para disparar el prompt
   const installApp = useCallback(async () => {
-    if (!deferredPrompt) return false;
+    console.log(
+      "👉 [PWA Debug] Botón presionado. deferredPrompt actual:",
+      !!deferredPrompt,
+    );
+
+    if (!deferredPrompt) {
+      console.warn(
+        "⚠️ [PWA Debug] No hay prompt disponible. El navegador no ha disparado el evento o la app ya está instalada.",
+      );
+      return false;
+    }
 
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
+    console.log(`✅ [PWA Debug] El usuario eligió: ${outcome}`);
 
     if (outcome === "accepted") {
+      globalDeferredPrompt = null;
       setDeferredPrompt(null);
       return true;
     }
@@ -88,7 +121,7 @@ export function useInstallPrompt() {
     isIOS,
     isAndroid,
     isStandalone,
-    canInstall: !!deferredPrompt, // true si es Android y el prompt está listo
+    canInstall: !!deferredPrompt,
     installApp,
   };
 }
