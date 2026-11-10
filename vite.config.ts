@@ -8,18 +8,13 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      // 'autoUpdate': el SW se actualiza solo y toma control en la
-      // siguiente carga. Ideal para un juego con datos offline en Dexie.
       registerType: "autoUpdate",
       injectRegister: "auto",
-
-      // Archivos de public/ que no pasan por el bundler pero deben cachearse.
       includeAssets: [
         "favicon.svg",
         "apple-touch-icon.png",
         "maskable-icon-512x512.png",
       ],
-
       manifest: {
         name: "Selah — Trivia Bíblica",
         short_name: "Selah",
@@ -27,8 +22,8 @@ export default defineConfig({
           "Trivia bíblica interactiva para jóvenes. Aprende la Palabra de Dios con retos mentales reales: cada respuesta enseña, cada versículo transforma.",
         lang: "es",
         dir: "ltr",
-        theme_color: "#F5B544", // alba-500
-        background_color: "#0B0F1A", // noche-900
+        theme_color: "#F5B544",
+        background_color: "#0B0F1A",
         display: "standalone",
         orientation: "portrait",
         scope: "/",
@@ -55,30 +50,32 @@ export default defineConfig({
           },
         ],
       },
-
       workbox: {
-        // Shell de la app: HTML/CSS/JS + SVG + PNG de public/
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
-
-        // Fallback SPA: cualquier ruta desconocida sirve index.html.
-        // (Aunque hoy no usamos rutas, esto blinda si más adelante
-        // se agrega React Router.)
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//],
-
-        // Los datos del juego viven en Dexie/IndexedDB. No necesitamos
-        // runtime caching agresivo en esta fase.
         runtimeCaching: [],
       },
-
-      // En dev el SW queda apagado para evitar cachés fantasma.
-      // Probar PWA SIEMPRE con: npm run build && npm run preview
-      devOptions: {
-        enabled: false,
-      },
+      devOptions: { enabled: false },
     }),
   ],
+  build: {
+    sourcemap: true, // Mantenemos esto para el análisis
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("react")) return "vendor-react";
+            if (id.includes("motion") || id.includes("framer-motion"))
+              return "vendor-motion";
+            if (id.includes("dexie")) return "vendor-dexie";
+            if (id.includes("zustand")) return "vendor-zustand";
+          }
+        },
+      },
+    },
+  },
 });
