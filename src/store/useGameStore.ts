@@ -12,7 +12,7 @@ import type {
 import {
   getOrCreateProfile,
   saveProfile,
-  saveAnswer,
+  saveAnswers,
   getCompletedCategories,
   markDailyCompleted,
   getUserRating,
@@ -27,7 +27,7 @@ import {
   getNewBadges,
   summarizeGame,
   updateStreak,
-  xpForAnswer,
+  // xpForAnswer <- ELIMINADO (ya no se usa aquí)
 } from "../utils/scoring";
 import {
   getQuestionRating,
@@ -153,14 +153,9 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     });
   },
 
-  // ============================================================
-  // H-FUN-03: Carga asíncrona SIN delay artificial
-  // ============================================================
   loadAndStartGame: async (mode, count, categoryId) => {
     set({ isLoadingQuestions: true, error: null });
     try {
-      // Carga inmediata: si la red es rápida, el usuario no verá el spinner.
-      // Si la red es lenta, el overlay de App.tsx se encargará de mostrarlo.
       const questions = await pickAdaptiveQuestions(count, categoryId);
       get().startGame(mode, questions);
     } catch (e) {
@@ -178,8 +173,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     timeSpent,
     hintsUsed = 0,
   }) => {
-    const { game, profile } = get();
-    if (!game || !profile) return;
+    const { game } = get();
+    if (!game) return;
 
     const question = game.questions[game.currentIndex];
     const isCorrect = checkAnswer(question, {
@@ -200,9 +195,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     });
 
     const newStreak = isCorrect ? game.streak + 1 : 0;
-    const xpGained = xpForAnswer(isCorrect);
-    const newXp = profile.xp + xpGained;
-    const newLevel = calculateLevel(newXp);
 
     const answer: AnsweredQuestion = {
       questionId: question.id,
@@ -221,41 +213,12 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       answers: [...game.answers, answer],
     };
 
-    const updatedProfile: UserProfile = {
-      ...profile,
-      xp: newXp,
-      level: newLevel,
-    };
-
     set({
       game: updatedGame,
-      profile: updatedProfile,
       lastAnswerCorrect: isCorrect,
       lastAnswerPoints: points,
       lastAnswerExplanation: question.explanation,
     });
-
-    await saveAnswer(answer);
-    await saveProfile(updatedProfile);
-
-    const currentRating = get().userRating;
-    if (currentRating) {
-      const questionRating = getQuestionRating(question);
-      const newGlobal = updateRating(
-        currentRating.global,
-        questionRating,
-        isCorrect,
-        currentRating.answeredCount,
-      );
-      const updatedRating: UserRating = {
-        ...currentRating,
-        global: newGlobal,
-        answeredCount: currentRating.answeredCount + 1,
-        lastUpdatedAt: Date.now(),
-      };
-      set({ userRating: updatedRating });
-      await saveUserRating(updatedRating);
-    }
   },
 
   nextQuestion: () => {
@@ -274,8 +237,38 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   finishGame: async () => {
-    const { game, profile } = get();
+    const { game, profile, userRating } = get();
     if (!game || !profile) return;
+
+    await saveAnswers(game.answers);
+
+    let updatedRating = userRating;
+    if (updatedRating) {
+      let newGlobal = updatedRating.global;
+      let newAnsweredCount = updatedRating.answeredCount;
+
+      for (const ans of game.answers) {
+        const q = game.questions.find((qq) => qq.id === ans.questionId);
+        if (q) {
+          const questionRating = getQuestionRating(q);
+          newGlobal = updateRating(
+            newGlobal,
+            questionRating,
+            ans.correct,
+            newAnsweredCount,
+          );
+          newAnsweredCount++;
+        }
+      }
+
+      updatedRating = {
+        ...updatedRating,
+        global: newGlobal,
+        answeredCount: newAnsweredCount,
+        lastUpdatedAt: Date.now(),
+      };
+      await saveUserRating(updatedRating);
+    }
 
     const finishedGame: GameState = { ...game, finishedAt: Date.now() };
     const summary = summarizeGame(game.answers);
@@ -324,6 +317,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     set({
       game: finishedGame,
       profile: finalProfile,
+      userRating: updatedRating,
       newlyUnlockedBadges: newBadges,
     });
   },
@@ -407,7 +401,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 }));
 
 // ============================================================
-// HELPERS INTERNOS
+// HELPERS INTERNOS Y SELECTORES (Sin cambios)
 // ============================================================
 
 interface AnswerInput {
