@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type {
   AnsweredQuestion,
   Badge,
+  CategoryId, // <- NUEVO IMPORT
   GameMode,
   GameState,
   Question,
@@ -33,9 +34,10 @@ import {
   updateRating,
   calibrateInitialRating,
 } from "../utils/rating";
+import { pickAdaptiveQuestions } from "../data/questions"; // <- NUEVO IMPORT
 
 // ============================================================
-// IN-FLIGHT GUARD (DF-1) — módulo-level
+// IN-FLIGHT GUARD (DF-1)
 // ============================================================
 let isCompletingOnboarding = false;
 
@@ -48,6 +50,7 @@ interface GameStoreState {
   game: GameState | null;
   userRating: UserRating | null;
   isLoading: boolean;
+  isLoadingQuestions: boolean; // <- NUEVO
   error: string | null;
 
   lastAnswerCorrect: boolean | null;
@@ -59,6 +62,11 @@ interface GameStoreState {
   init: () => Promise<void>;
   setNickname: (nickname: string) => Promise<void>;
   startGame: (mode: GameMode, questions: Question[]) => void;
+  loadAndStartGame: (
+    mode: GameMode,
+    count: number,
+    categoryId?: CategoryId,
+  ) => Promise<void>; // <- NUEVO
   answerQuestion: (params: {
     selectedIndex?: number;
     selectedBool?: boolean;
@@ -86,6 +94,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   game: null,
   userRating: null,
   isLoading: false,
+  isLoadingQuestions: false, // <- NUEVO
   error: null,
   lastAnswerCorrect: null,
   lastAnswerPoints: 0,
@@ -102,8 +111,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       const level = calculateLevel(profile.xp);
       let synced: UserProfile = { ...profile, level };
 
-      // B1 fix (2026-11-04): migrar usuarios existentes (pre-Fase 4 con
-      // progreso real) para no forzarlos al onboarding. Idempotente.
       if (shouldMigrateOnboarding(profile, userRating)) {
         synced = { ...synced, onboardingCompleted: true };
         await saveProfile(synced);
@@ -144,6 +151,29 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       lastAnswerExplanation: null,
       newlyUnlockedBadges: [],
     });
+  },
+
+  // ============================================================
+  // H-FUN-03: Carga asíncrona con delay UX
+  // ============================================================
+  loadAndStartGame: async (mode, count, categoryId) => {
+    set({ isLoadingQuestions: true, error: null });
+    try {
+      const t0 = performance.now();
+      const questions = await pickAdaptiveQuestions(count, categoryId);
+
+      // UX: Evitar parpadeo blanco si la carga es muy rápida
+      const elapsed = performance.now() - t0;
+      if (elapsed < 400) {
+        await new Promise((resolve) => setTimeout(resolve, 400 - elapsed));
+      }
+
+      get().startGame(mode, questions);
+    } catch (e) {
+      set({ error: (e as Error).message });
+    } finally {
+      set({ isLoadingQuestions: false });
+    }
   },
 
   answerQuestion: async ({
@@ -255,12 +285,9 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     const finishedGame: GameState = { ...game, finishedAt: Date.now() };
     const summary = summarizeGame(game.answers);
-
     const withStreak = updateStreak(profile);
-
     const finalXp = withStreak.xp + summary.xpGained;
     const finalLevel = calculateLevel(finalXp);
-
     const completedCategories = await getCompletedCategories();
 
     const fastest = summary.fastestAnswer ?? Infinity;
@@ -280,7 +307,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     });
 
     const newBadges = getNewBadges(withStreak.badges, allBadgeIds);
-
     const mergedBadgeIds = Array.from(
       new Set([...withStreak.badges, ...allBadgeIds]),
     );
@@ -348,39 +374,26 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     set({ userRating: rating });
   },
 
-  // ============================================================
-  // H-04 — completeOnboarding
-  // B1 fix (2026-11-04): guard para usuarios existentes.
-  // ============================================================
   completeOnboarding: async (results) => {
-    // (f) Validación estricta de tamaño.
     if (results.length !== 3) {
       throw new Error(
         `completeOnboarding: results debe tener exactamente 3 elementos (recibido: ${results.length})`,
       );
     }
 
-    // (d) Idempotencia fast-return (antes del lock).
     const { profile, userRating } = get();
     if (profile?.onboardingCompleted) return;
 
-    // In-flight guard (DF-1).
     if (isCompletingOnboarding) {
       throw new Error("completeOnboarding: ya hay una llamada en curso");
     }
 
-    // W1: null-guards.
-    if (!userRating) {
+    if (!userRating)
       throw new Error("userRating no cargado; abortando calibración");
-    }
-    if (!profile) {
-      throw new Error("profile no cargado; abortando calibración");
-    }
+    if (!profile) throw new Error("profile no cargado; abortando calibración");
 
     isCompletingOnboarding = true;
     try {
-      // B1 fix: usuario existente con progreso real → NO recalibrar, solo marcar.
-      // Usuario nuevo (answeredCount === 0) → calibra normal.
       if (userRating.answeredCount > 0) {
         const updated: UserProfile = { ...profile, onboardingCompleted: true };
         await saveProfile(updated);
@@ -388,10 +401,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         return;
       }
 
-      // (a) Calibrar exactamente 1 vez.
       await get().calibrateWithResults(results);
 
-      // (b) Marcar flag (atomicidad c: solo si (a) resolvió).
       const updated: UserProfile = { ...profile, onboardingCompleted: true };
       await saveProfile(updated);
       set({ profile: updated });
@@ -401,10 +412,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 }));
 
-// ============================================================
-// HELPERS INTERNOS
-// ============================================================
-
+// ... (helpers internos y selectores se mantienen exactamente igual)
 interface AnswerInput {
   selectedIndex?: number;
   selectedBool?: boolean;
@@ -434,10 +442,8 @@ function checkAnswer(question: Question, input: AnswerInput): boolean {
     case "who-said-it":
     case "fill-blank":
       return input.selectedIndex === question.correctIndex;
-
     case "true-false":
       return input.selectedBool === question.correct;
-
     case "hint-deduction": {
       if (!input.selectedText) return false;
       const normalized = normalizeAnswer(input.selectedText);
@@ -445,21 +451,15 @@ function checkAnswer(question: Question, input: AnswerInput): boolean {
         (a) => normalizeAnswer(a) === normalized,
       );
     }
-
     case "verse-scramble":
     case "timeline": {
       if (!input.selectedOrder) return false;
       return ordersMatch(input.selectedOrder, question.correctOrder);
     }
-
     default:
       return false;
   }
 }
-
-// ============================================================
-// SELECTORES ÚTILES
-// ============================================================
 
 export const selectCurrentQuestion = (s: GameStoreState): Question | null =>
   s.game ? (s.game.questions[s.game.currentIndex] ?? null) : null;

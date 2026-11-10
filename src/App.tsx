@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useGameStore } from "./store/useGameStore";
-import { hasCompletedOnboarding } from "./db/database"; // A2: Import real
+import { hasCompletedOnboarding } from "./db/database";
 import { AnimatedBackground } from "./components/AnimatedBackground";
 import { HomeSkeleton } from "./components/Skeleton";
-import { GradientText } from "./components/GradientText"; // Para el Splash
+import { GradientText } from "./components/GradientText";
 import { Home } from "./screens/Home";
 import { Game } from "./screens/Game";
 import { Results } from "./screens/Results";
@@ -13,7 +13,6 @@ import { Onboarding } from "./screens/Onboarding";
 
 type Screen = "home" | "game" | "results" | "profile";
 
-// Componente Splash local (A2: NUNCA null/blanco)
 function Splash() {
   return (
     <div className="min-h-screen flex items-center justify-center">
@@ -33,28 +32,25 @@ function App() {
   const init = useGameStore((s) => s.init);
   const profile = useGameStore((s) => s.profile);
   const isLoading = useGameStore((s) => s.isLoading);
+  const isLoadingQuestions = useGameStore((s) => s.isLoadingQuestions); // <- NUEVO
   const resetGame = useGameStore((s) => s.resetGame);
 
   const [screen, setScreen] = useState<Screen>("home");
-
-  // A2: Estado asíncrono del gate
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
   useEffect(() => {
     init();
   }, [init]);
 
-  // A2: Verificación de Dexie con Fail-Open
   useEffect(() => {
     hasCompletedOnboarding()
       .then(setOnboardingDone)
       .catch(() => {
         console.warn("hasCompletedOnboarding falló; fail-open a Home");
-        setOnboardingDone(true); // Fail-open a Home con RATING_INITIAL
+        setOnboardingDone(true);
       });
   }, []);
 
-  // 1. Carga inicial del Store
   if (isLoading || !profile) {
     return (
       <>
@@ -64,7 +60,6 @@ function App() {
     );
   }
 
-  // 2. Espera de la lectura asíncrona de Onboarding
   if (onboardingDone === null) {
     return (
       <>
@@ -74,7 +69,6 @@ function App() {
     );
   }
 
-  // 3. Gate: Si no ha completado el onboarding, se muestra la pantalla
   if (!onboardingDone) {
     return (
       <>
@@ -84,7 +78,6 @@ function App() {
     );
   }
 
-  // 4. Routing normal de la app (intacto)
   const goHome = () => {
     resetGame();
     setScreen("home");
@@ -93,6 +86,19 @@ function App() {
   return (
     <>
       <AnimatedBackground />
+
+      {/* NUEVO: Overlay de carga H-FUN-03 (Noche y Alba) */}
+      {isLoadingQuestions && (
+        <div className="fixed inset-0 z-50 bg-noche-900/80 backdrop-blur-sm flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-alba-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-alba-400 font-bold animate-pulse text-lg">
+              Preparando tu camino...
+            </p>
+          </div>
+        </div>
+      )}
+
       {screen === "game" && (
         <Game onFinish={() => setScreen("results")} onQuit={goHome} />
       )}

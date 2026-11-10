@@ -1,27 +1,20 @@
-### 2026-11-09 · Fase 4 · H-FUN-04 — Fix evaluación de respuestas en Onboarding (B-1 cerrado)
+### 2026-11-10 · Fase 4 · H-FUN-03 — Lazy Load del banco de preguntas (Rendimiento)
 
-**Síntoma reportado** (handoff HANDOFF-ADMIN→FUN-04, verificado en `main`):
-`npx vitest run` mostraba **4 fallos** en `src/screens/Onboarding.test.tsx`
-que a primera vista parecían bugs del test. Tras diagnóstico formal:
+**Objetivo**: Reducir el bundle inicial cargando las 70 preguntas bajo demanda.
 
-- **Bug del test (mitad 1)**: `getCorrectAnswer` usaba
-  `q.correctAnswer || q.correct || q.answer`, todos `undefined` en
-  `onboardingQuestions.ts` (que usa `correctIndex: number`). → fix aplicado.
-- **Bug del componente (B-1, raíz)**: `src/screens/Onboarding.tsx:26-27`
-  hacía exactamente lo mismo: `q.correctAnswer || q.correct || q.answer`.
-  Consecuencia productiva: `correctAnswer === undefined` **siempre** →
-  `option === undefined → false` → **todo feedback era "Casi."**,
-  **todo `results` era `[false, false, false]`**, **todo `rating`
-  calibraba a 1000 (mínimo)**. Bug vivo en producción (`ac3e6da`) desde
-  `682e60e` según el Maestro.
+**Implementación**:
 
-**Fix aplicado (autorizado por el Maestro — Opción A con condiciones)**:
+- `src/data/questions/index.ts`: Imports dinámicos (`import()`) y `loadQuestionBank()`.
+- `src/store/useGameStore.ts`: Nueva acción `loadAndStartGame` con delay de 400ms para UX.
+- `src/App.tsx` / `Home.tsx` / `main.tsx`: Integración del estado `isLoadingQuestions` (spinner) y adaptación asíncrona de auditorías.
+- `motion` y `dexie`: NO tocados. Se aislaron en chunks de vendor (handoff a Visual para lazy load de componentes si se desea en el futuro).
 
-- `src/screens/Onboarding.tsx` (2 líneas + 1 import):
-  ```diff
-  + import type { MultipleChoiceQuestion } from "../types";
-  - const q = onboardingQuestions[step] as any;
-  - const correctAnswer = q.correctAnswer || q.correct || q.answer;
-  + const q = onboardingQuestions[step] as MultipleChoiceQuestion;
-  + const correctAnswer = q.options[q.correctIndex];
-  ```
+**Verificación**:
+
+- `npx vitest run` → **164/164** ✅
+- `npm run build` → limpio ✅
+- **Bundle principal**: **29.49 kB gzip** (antes: 184.12 kB) → Reducción del **~84%** en el payload inicial. Las preguntas ahora se cargan en chunks de 2.7 a 5 kB.
+- **Prueba manual**: Spinner visible y partida completada [PENDIENTE CONFIRMAR].
+
+**Commit**: `perf(funcional): lazy load de questions (H-FUN-03)`.
+**Sin push a main**.

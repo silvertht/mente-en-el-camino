@@ -19,15 +19,35 @@ createRoot(document.getElementById("root")!).render(
 // ============================================================
 if (import.meta.env.DEV) {
   import("./data/questions").then(
-    ({ auditQuestionData, auditAcceptedAnswers, ALL_QUESTIONS }) => {
-      (window as unknown as { audit: typeof auditQuestionData }).audit =
-        auditQuestionData;
-      (window as unknown as { auditAA: typeof auditAcceptedAnswers }).auditAA =
-        auditAcceptedAnswers;
-      (window as unknown as { ALL: typeof ALL_QUESTIONS }).ALL = ALL_QUESTIONS;
+    ({
+      auditQuestionData,
+      auditAcceptedAnswers,
+      ALL_QUESTIONS,
+      loadQuestionBank, // <- Importamos esto para forzar la carga
+    }) => {
+      // H-FUN-03: Como ahora son funciones asíncronas, las envolvemos
+      // para que impriman el resultado directamente en la consola.
+
+      (window as any).audit = async () => {
+        const result = await auditQuestionData();
+        console.table(result);
+        return result;
+      };
+
+      (window as any).auditAA = async () => {
+        const result = await auditAcceptedAnswers();
+        console.table(result.malformed.length > 0 ? result.malformed : result);
+        return result;
+      };
+
+      (window as any).ALL = async () => {
+        await loadQuestionBank();
+        console.table(ALL_QUESTIONS);
+        return ALL_QUESTIONS;
+      };
 
       console.log(
-        "%c📊 audit() · auditAA() · ALL listos",
+        "%c📊 audit() · auditAA() · ALL() listos (asíncronos)",
         "color:#F5B544;font-weight:bold;",
       );
     },

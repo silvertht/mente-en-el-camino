@@ -1,36 +1,74 @@
 import type { CategoryId, Question } from "../../types";
 import { getUserRating } from "../../db/database";
 import { pickQuestionsByRating } from "../../utils/rating";
-import { EVANGELIOS_QUESTIONS } from "./evangelios";
-import { PERSONAJES_QUESTIONS } from "./personajes";
-import { VERSICULOS_QUESTIONS } from "./versiculos";
-import { PARABOLAS_QUESTIONS } from "./parabolas";
-import { VALORES_QUESTIONS } from "./valores";
 
 // ============================================================
-// TODAS LAS PREGUNTAS DEL MVP
+// CONTEO ESTÁTICO (Para renderizado síncrono en Home.tsx)
 // ============================================================
 
-export const ALL_QUESTIONS: Question[] = [
-  ...EVANGELIOS_QUESTIONS,
-  ...PERSONAJES_QUESTIONS,
-  ...VERSICULOS_QUESTIONS,
-  ...PARABOLAS_QUESTIONS,
-  ...VALORES_QUESTIONS,
-];
+export const QUESTION_COUNTS: Record<CategoryId, number> = {
+  evangelios: 20,
+  personajes: 10,
+  versiculos: 20,
+  parabolas: 10,
+  valores: 10,
+  genesis: 0,
+  exodo: 0,
+  apologetica: 0,
+  "historia-iglesia": 0,
+};
 
-// Índice por categoría para acceder rápido
+export const ALL_QUESTIONS: Question[] = [];
 export const QUESTIONS_BY_CATEGORY: Record<CategoryId, Question[]> = {
-  evangelios: EVANGELIOS_QUESTIONS,
-  personajes: PERSONAJES_QUESTIONS,
-  versiculos: VERSICULOS_QUESTIONS,
-  parabolas: PARABOLAS_QUESTIONS,
-  valores: VALORES_QUESTIONS,
+  evangelios: [],
+  personajes: [],
+  versiculos: [],
+  parabolas: [],
+  valores: [],
   genesis: [],
   exodo: [],
   apologetica: [],
   "historia-iglesia": [],
 };
+
+let isLoaded = false;
+let loadingPromise: Promise<void> | null = null;
+
+// ============================================================
+// LAZY LOAD (H-FUN-03)
+// ============================================================
+
+/**
+ * Carga el banco de preguntas de forma dinámica.
+ * Es idempotente y muta las referencias de ALL_QUESTIONS para
+ * mantener compatibilidad con consumidores síncronos.
+ */
+export async function loadQuestionBank(): Promise<void> {
+  if (isLoaded) return;
+  if (loadingPromise) return loadingPromise;
+
+  loadingPromise = (async () => {
+    // El uso de imports dinámicos permite que Vite cree chunks separados
+    const [ev, pe, ve, pa, va] = await Promise.all([
+      import("./evangelios").then((m) => m.EVANGELIOS_QUESTIONS),
+      import("./personajes").then((m) => m.PERSONAJES_QUESTIONS),
+      import("./versiculos").then((m) => m.VERSICULOS_QUESTIONS),
+      import("./parabolas").then((m) => m.PARABOLAS_QUESTIONS),
+      import("./valores").then((m) => m.VALORES_QUESTIONS),
+    ]);
+
+    ALL_QUESTIONS.push(...ev, ...pe, ...ve, ...pa, ...va);
+    QUESTIONS_BY_CATEGORY.evangelios.push(...ev);
+    QUESTIONS_BY_CATEGORY.personajes.push(...pe);
+    QUESTIONS_BY_CATEGORY.versiculos.push(...ve);
+    QUESTIONS_BY_CATEGORY.parabolas.push(...pa);
+    QUESTIONS_BY_CATEGORY.valores.push(...va);
+
+    isLoaded = true;
+  })();
+
+  return loadingPromise;
+}
 
 // ============================================================
 // HELPERS
@@ -51,9 +89,6 @@ export function getQuestionById(id: string): Question | undefined {
   return ALL_QUESTIONS.find((q) => q.id === id);
 }
 
-/**
- * Mezcla aleatoriamente un array (algoritmo Fisher-Yates).
- */
 export function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -63,18 +98,10 @@ export function shuffle<T>(arr: T[]): T[] {
   return copy;
 }
 
-/**
- * Selecciona N preguntas al azar de todas las categorías.
- * Ideal para el desafío diario.
- */
 export function pickRandomQuestions(count: number): Question[] {
   return shuffle(ALL_QUESTIONS).slice(0, count);
 }
 
-/**
- * Selecciona N preguntas al azar de una categoría específica.
- * Ideal para el modo campaña.
- */
 export function pickRandomFromCategory(
   categoryId: CategoryId,
   count: number,
@@ -83,45 +110,21 @@ export function pickRandomFromCategory(
   return shuffle(pool).slice(0, count);
 }
 
-/**
- * Devuelve cuántas preguntas hay por categoría (útil para la UI).
- */
 export function countQuestionsByCategory(): Record<CategoryId, number> {
-  const result = {} as Record<CategoryId, number>;
-  for (const [cat, list] of Object.entries(QUESTIONS_BY_CATEGORY)) {
-    result[cat as CategoryId] = list.length;
-  }
-  return result;
+  return { ...QUESTION_COUNTS };
 }
 
 // ============================================================
-// SELECCIÓN ADAPTATIVA POR RATING (Fase 3 · R3)
-// ============================================================
-// Reemplaza la lógica anterior basada en `getRecentAccuracy`. Ahora lee
-// el rating persistente del usuario y delega la selección a
-// `pickQuestionsByRating`, que aplica banda ±(150/100) y cap +400.
-//
-// Firma pública sin cambios: `pickAdaptiveQuestions(count, categoryId?)`.
+// SELECCIÓN ADAPTATIVA POR RATING
 // ============================================================
 
-/**
- * Selecciona `count` preguntas adaptadas al rating actual del usuario.
- *
- * Reglas (R3):
- *  - Lee `getUserRating().global` (persistido en Dexie).
- *  - Delega en `pickQuestionsByRating` (rating ELO, cap +400, mezcla 60/20/20).
- *  - Sin puerta explícita de "trampas": el rating ya filtra naturalmente.
- *  - Si `categoryId` se pasa, restringe el pool a esa categoría.
- *  - Puede devolver menos de `count` si el cap deja el pool corto
- *    (regla estricta: mejor pocas que frustrar).
- *
- * @param count       número deseado de preguntas.
- * @param categoryId  si se pasa, limita a esa categoría (campaña).
- */
 export async function pickAdaptiveQuestions(
   count: number,
   categoryId?: CategoryId,
 ): Promise<Question[]> {
+  // Garantizamos que el pool esté cargado antes de seleccionar
+  await loadQuestionBank();
+
   const rating = await getUserRating();
   const basePool = categoryId
     ? getQuestionsByCategory(categoryId)
@@ -130,7 +133,7 @@ export async function pickAdaptiveQuestions(
 }
 
 // ============================================================
-// AUDITORÍA DE DATA (útil para UX y contenido)
+// AUDITORÍAS (Convertidas a async)
 // ============================================================
 
 export interface QuestionDataAudit {
@@ -147,14 +150,8 @@ export interface QuestionDataAudit {
   };
 }
 
-/**
- * Reporta qué preguntas les falta cada campo educativo opcional.
- * Sirve para planificar ampliación de contenido y para que UX
- * sepa qué puede esperar en el bloque post-respuesta.
- *
- * Uso en dev: console.table(auditQuestionData())
- */
-export function auditQuestionData(): QuestionDataAudit {
+export async function auditQuestionData(): Promise<QuestionDataAudit> {
+  await loadQuestionBank();
   const missing = {
     verse: [] as string[],
     verseText: [] as string[],
@@ -180,10 +177,6 @@ export function auditQuestionData(): QuestionDataAudit {
   };
 }
 
-// ============================================================
-// AUDITORÍA DE acceptedAnswers (hint-deduction)
-// ============================================================
-
 export interface AcceptedAnswersAudit {
   total: number;
   malformed: {
@@ -197,18 +190,9 @@ function stripDiacritics(s: string): string {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-/**
- * Verifica que las hint-deduction cumplan las reglas del proyecto:
- *  - acceptedAnswers en minúsculas.
- *  - acceptedAnswers sin tildes.
- *  - answer (normalizada) incluida en acceptedAnswers (normalizadas).
- *  - Al menos una variante.
- *
- * Uso en dev: console.table(auditAcceptedAnswers().malformed)
- */
-export function auditAcceptedAnswers(): AcceptedAnswersAudit {
+export async function auditAcceptedAnswers(): Promise<AcceptedAnswersAudit> {
+  await loadQuestionBank();
   const malformed: AcceptedAnswersAudit["malformed"] = [];
-
   const hintQuestions = ALL_QUESTIONS.filter(
     (q) => q.type === "hint-deduction",
   );

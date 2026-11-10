@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import {
   MenteEnElCaminoDB,
   hasCompletedOnboarding,
@@ -6,10 +6,15 @@ import {
 } from "../db/database";
 import { MAX_STRETCH } from "../utils/rating";
 import { onboardingQuestions } from "../data/onboardingQuestions";
-import { ALL_QUESTIONS } from "../data/questions";
+import { ALL_QUESTIONS, loadQuestionBank } from "../data/questions"; // <- IMPORT NUEVO
 import type { UserProfile, UserRating } from "../types";
 
 describe("Integridad Fase 4 (H-04/H-05)", () => {
+  // H-FUN-03: Necesitamos cargar el banco para validar que onboardingQuestions NO está dentro
+  beforeAll(async () => {
+    await loadQuestionBank();
+  });
+
   it("MenteEnElCaminoDB nombre intacto (Regla de Oro 4)", () => {
     const instance = new MenteEnElCaminoDB();
     expect(instance.name).toBe("MenteEnElCaminoDB");

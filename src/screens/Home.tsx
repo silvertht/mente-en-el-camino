@@ -2,10 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useGameStore } from "../store/useGameStore";
 import { CATEGORY_LIST } from "../data/categories";
-import {
-  countQuestionsByCategory,
-  pickAdaptiveQuestions,
-} from "../data/questions";
+import { countQuestionsByCategory } from "../data/questions";
 import { getTodayPrinciple } from "../data/dailyPrinciples";
 import { CategoryCard } from "../components/CategoryCard";
 import { Button } from "../components/Button";
@@ -24,12 +21,12 @@ interface Props {
 
 export function Home({ onStartGame, onOpenProfile }: Props) {
   const profile = useGameStore((s) => s.profile);
-  const startGame = useGameStore((s) => s.startGame);
+  const isLoadingQuestions = useGameStore((s) => s.isLoadingQuestions); // <- Store state
+  const loadAndStartGame = useGameStore((s) => s.loadAndStartGame); // <- Nueva acción
+
   const [dailyCompleted, setDailyCompleted] = useState(false);
-  const [loadingGame, setLoadingGame] = useState(false);
   const counts = countQuestionsByCategory();
 
-  // Principio del día (rotación determinística por fecha — ver dailyPrinciples.ts)
   const principle = getTodayPrinciple();
 
   useEffect(() => {
@@ -42,28 +39,17 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
   const totalBadges = profile.badges.length;
 
   const handleDaily = async () => {
-    if (loadingGame || dailyCompleted) return;
-    setLoadingGame(true);
-    try {
-      const questions = await pickAdaptiveQuestions(10);
-      startGame("daily", questions);
-      onStartGame();
-    } finally {
-      setLoadingGame(false);
-    }
+    if (isLoadingQuestions || dailyCompleted) return;
+    await loadAndStartGame("daily", 10);
+    onStartGame();
   };
 
   const handleCategory = async (categoryId: CategoryId) => {
-    if (loadingGame) return;
-    setLoadingGame(true);
-    try {
-      const questions = await pickAdaptiveQuestions(10, categoryId);
-      if (questions.length === 0) return;
-      startGame("campaign", questions);
-      onStartGame();
-    } finally {
-      setLoadingGame(false);
-    }
+    if (isLoadingQuestions) return;
+    // Si la categoría no tiene preguntas, evitamos cargar
+    if ((counts[categoryId] ?? 0) === 0) return;
+    await loadAndStartGame("campaign", 10, categoryId);
+    onStartGame();
   };
 
   return (
@@ -121,7 +107,6 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
             </p>
           </div>
 
-          {/* Avatar — glow sin blur-lg (radial-gradient nativo) */}
           <motion.button
             whileHover={{ scale: 1.08, rotate: 4 }}
             whileTap={{ scale: 0.92 }}
@@ -159,13 +144,10 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
           </div>
 
           <div className="relative overflow-hidden rounded-2xl border border-noche-700/60 bg-noche-800/60 p-6 sm:p-7">
-            {/* Línea dorada superior */}
             <div
               aria-hidden="true"
               className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-alba-500/60 to-transparent"
             />
-
-            {/* Comilla decorativa */}
             <div
               aria-hidden="true"
               className="absolute -top-6 left-5 select-none font-serif text-8xl leading-none text-alba-500/10"
@@ -173,20 +155,14 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
               "
             </div>
 
-            {/* Versículo (jerarquía principal) */}
             <p className="relative mb-3 text-center text-sm italic leading-relaxed text-white/90 sm:text-base">
               {principle.text}
             </p>
-
-            {/* Referencia (acento) */}
             <p className="relative mb-6 text-center text-[10px] font-black uppercase tracking-[0.3em] text-alba-500">
               — {principle.ref}
             </p>
-
-            {/* Divider sutil */}
             <div className="relative mb-5 h-px bg-gradient-to-r from-transparent via-noche-700 to-transparent" />
 
-            {/* Aplicación y reflexión (jerarquía descendente) */}
             <div className="relative space-y-5">
               <div>
                 <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.25em] text-alba-500/80">
@@ -212,12 +188,8 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
         {/* ============ 3. RETO DE HOY ============ */}
         <motion.div variants={fadeInUp} className="mb-8">
           <div className="relative overflow-hidden rounded-3xl border border-alba-500/40 shadow-2xl shadow-alba-500/20">
-            {/* Fondo dorado (gradient estático) */}
             <div className="absolute inset-0 bg-gradient-to-br from-alba-600 via-alba-500 to-alba-400" />
             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-60" />
-
-            {/* Rayos de sol — conic-gradient ESTÁTICO, sin blur, sin animación
-                (antes: 500×500px con blur-lg + animate-rays → carísimo en móvil) */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute -right-40 -top-40 h-[500px] w-[500px] opacity-15"
@@ -251,7 +223,7 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
                 size="lg"
                 fullWidth
                 onClick={handleDaily}
-                disabled={dailyCompleted || loadingGame}
+                disabled={dailyCompleted || isLoadingQuestions}
                 className={[
                   "!text-sm !font-black uppercase tracking-widest",
                   dailyCompleted
@@ -260,7 +232,7 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
                 ].join(" ")}
               >
                 <span className="inline-flex items-center justify-center gap-2">
-                  {loadingGame && (
+                  {isLoadingQuestions && (
                     <svg
                       className="h-4 w-4 animate-spin motion-reduce:animate-none"
                       viewBox="0 0 24 24"
@@ -286,7 +258,7 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
                   <span>
                     {dailyCompleted
                       ? "✓ Completado hoy"
-                      : loadingGame
+                      : isLoadingQuestions
                         ? "Preparando…"
                         : "→ Comenzar travesía"}
                   </span>
@@ -365,7 +337,7 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
             animate="visible"
             className={[
               "grid grid-cols-1 gap-4 transition-opacity duration-200 sm:grid-cols-2 lg:grid-cols-3",
-              loadingGame ? "pointer-events-none opacity-60" : "",
+              isLoadingQuestions ? "pointer-events-none opacity-60" : "",
             ].join(" ")}
           >
             {CATEGORY_LIST.map((cat) => (
@@ -374,13 +346,12 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
                 category={cat}
                 questionCount={counts[cat.id] ?? 0}
                 onClick={handleCategory}
-                disabled={(counts[cat.id] ?? 0) === 0 || loadingGame}
+                disabled={(counts[cat.id] ?? 0) === 0 || isLoadingQuestions}
               />
             ))}
           </motion.div>
         </motion.div>
 
-        {/* Footer */}
         <motion.p
           variants={fadeInUp}
           className="mt-10 text-center text-[9px] uppercase tracking-[0.4em] text-white/20"
