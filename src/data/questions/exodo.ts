@@ -1,6 +1,7 @@
 import type { Question } from "../../types";
 
 export const EXODO_QUESTIONS: Question[] = [
+  // ... (exo-001 a exo-008 se mantienen exactamente igual)
   {
     id: "exo-001",
     type: "multiple-choice",
@@ -178,6 +179,47 @@ export const EXODO_QUESTIONS: Question[] = [
       "La ley no fue dada para esclavizarnos, sino para mostrarnos cómo vivir libres de verdad, en comunión con Dios y con los demás.",
     reflection:
       "¿Cuál de los mandamientos sientes que te cuesta más vivir y por qué?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "exo-009",
+    type: "true-false",
+    category: "exodo",
+    difficulty: "facil",
+    points: 10,
+    timeLimit: 20,
+    statement:
+      "Los israelitas cruzaron el Mar Rojo, pero los egipcios se ahogaron al intentar seguirlos.",
+    correct: true,
+    explanation:
+      "Dios abrió un camino en seco para Israel, pero cuando los egipcios intentaron cruzar, las aguas se cerraron sobre ellos. Esto demostró que la salvación de Israel fue obra exclusiva de Dios.",
+    verse: "Éxodo 14:28",
+    verseText:
+      "Y volvieron las aguas, y cubrieron los carros y la caballería, y todo el ejército de Faraón que había entrado tras ellos en el mar; no quedó de ellos ni uno.",
+    application:
+      "Dios no solo nos saca de la esclavitud, también destruye aquello que nos perseguía para que no volvamos atrás.",
+    reflection:
+      "¿Qué 'ejército' del pasado intenta hacerte creer que no puedes avanzar?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "exo-010",
+    type: "who-said-it",
+    category: "exodo",
+    difficulty: "dificil",
+    points: 30,
+    timeLimit: 30,
+    quote: "Oíd ahora, rebeldes; ¿os hemos de hacer salir aguas de esta peña?",
+    options: ["Moisés", "Aarón", "Josué", "Caleb"],
+    correctIndex: 0,
+    explanation:
+      "Moisés habló con ira e impaciencia, tomando para sí la gloria del milagro. Aunque Dios sacó agua, Moisés fue reprendido porque no santificó a Dios delante del pueblo.",
+    verse: "Números 20:10",
+    verseText:
+      "Y reunieron Moisés y Aarón a la congregación delante de la peña, y les dijo: Oíd ahora, rebeldes; ¿os hemos de hacer salir aguas de esta peña?",
+    application:
+      "Incluso los grandes líderes pueden fallar por ira. Debemos cuidar nuestro corazón para no robarle la gloria a Dios.",
+    reflection: "¿Cómo manejas la frustración cuando lideras o ayudas a otros?",
     // revisado: 2026-11-10
   },
 ];

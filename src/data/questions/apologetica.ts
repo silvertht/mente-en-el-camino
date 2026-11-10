@@ -1,6 +1,7 @@
 import type { Question } from "../../types";
 
 export const APOLOGETICA_QUESTIONS: Question[] = [
+  // ... (apo-001 a apo-007 se mantienen exactamente igual)
   {
     id: "apo-001",
     type: "multiple-choice",
@@ -158,6 +159,72 @@ export const APOLOGETICA_QUESTIONS: Question[] = [
       "Dios está por encima de la política y los imperios. Ningún poder humano escapa a Su soberanía.",
     reflection:
       "¿Cómo te ayuda saber que Dios controla la historia a no temer a los cambios del mundo?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "apo-008",
+    type: "multiple-choice",
+    category: "apologetica",
+    difficulty: "facil",
+    points: 10,
+    timeLimit: 25,
+    question:
+      "¿Qué rey de Israel es conocido por haber escrito la mayoría de los Salmos?",
+    options: ["Salomón", "David", "Ezequías", "Josías"],
+    correctIndex: 1,
+    explanation:
+      "David, un hombre conforme al corazón de Dios, nos dejó un legado de adoración. Los Salmos reflejan la gama completa de emociones humanas, demostrando que podemos hablar con Dios con total honestidad.",
+    verse: "Salmos 23:1",
+    verseText: "Jehová es mi pastor; nada me faltará.",
+    application:
+      "La adoración no es solo cantar, es expresar tu corazón a Dios en cualquier situación.",
+    reflection:
+      "¿Has usado los Salmos para expresar tu tristeza o alegría a Dios?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "apo-009",
+    type: "fill-blank",
+    category: "apologetica",
+    difficulty: "medio",
+    points: 20,
+    timeLimit: 25,
+    verseWithBlank:
+      "Estad siempre preparados para presentar defensa con mansedumbre y ___ a todo el que os demande razón de la esperanza que hay en vosotros.",
+    options: ["reverencia", "sabiduría", "valentía", "gracia"],
+    correctIndex: 0,
+    explanation:
+      "Pedro nos recuerda que la defensa de la fe debe ir acompañada de reverencia y respeto. No se trata de ganar debates, sino de reflejar el carácter de Cristo.",
+    verse: "1 Pedro 3:15",
+    verseText:
+      "sino santificad a Dios el Señor en vuestros corazones, y estad siempre preparados para presentar defensa con mansedumbre y reverencia ante todo el que os demande razón de la esperanza que hay en vosotros;",
+    application:
+      "La forma en que defiendes tu fe puede atraer o alejar a las personas de Dios.",
+    reflection: "¿Estás listo para defender tu fe con respeto y amor?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "apo-010",
+    type: "timeline",
+    category: "apologetica",
+    difficulty: "dificil",
+    points: 30,
+    timeLimit: 40,
+    events: [
+      "El martirio de Esteban",
+      "La conversión de Saulo de Tarso",
+      "El Concilio de Jerusalén",
+      "Pablo escribe la Epístola a los Romanos",
+    ],
+    correctOrder: [0, 1, 2, 3],
+    explanation:
+      "El libro de Hechos registra la expansión de la iglesia: comenzó con el martirio de Esteban, siguió con la conversión de Pablo, luego el Concilio de Jerusalén, y culminó con la escritura de Romanos, la carta más teológica de Pablo.",
+    verse: "Hechos 1:8",
+    verseText:
+      "Pero recibiréis poder, cuando haya venido sobre vosotros el Espíritu Santo, y me seréis testigos en Jerusalén, en toda Judea, en Samaria, y hasta lo último de la tierra.",
+    application:
+      "La iglesia creció a través de la persecución y el testimonio. Dios usa incluso las dificultades para expandir Su Reino.",
+    reflection: "¿Cómo puedes ser testigo de Cristo en tu entorno hoy?",
     // revisado: 2026-11-10
   },
 ];

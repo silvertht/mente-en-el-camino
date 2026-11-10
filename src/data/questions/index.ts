@@ -12,10 +12,10 @@ export const QUESTION_COUNTS: Record<CategoryId, number> = {
   versiculos: 20,
   parabolas: 10,
   valores: 10,
-  genesis: 8,
-  exodo: 8,
-  apologetica: 7,
-  "historia-iglesia": 7,
+  genesis: 10,
+  exodo: 10,
+  apologetica: 10,
+  "historia-iglesia": 10,
 };
 
 export const ALL_QUESTIONS: Question[] = [];
@@ -33,6 +33,10 @@ export const QUESTIONS_BY_CATEGORY: Record<CategoryId, Question[]> = {
 
 let isLoaded = false;
 let loadingPromise: Promise<void> | null = null;
+
+// ============================================================
+// LAZY LOAD (H-FUN-03)
+// ============================================================
 
 export async function loadQuestionBank(): Promise<void> {
   if (isLoaded) return;
@@ -79,19 +83,25 @@ export async function loadQuestionBank(): Promise<void> {
   return loadingPromise;
 }
 
-// ... (helpers y selección adaptativa se mantienen igual)
+// ============================================================
+// HELPERS
+// ============================================================
+
 export function getQuestionsByCategory(categoryId: CategoryId): Question[] {
   return QUESTIONS_BY_CATEGORY[categoryId] ?? [];
 }
+
 export function getQuestionsByIds(ids: string[]): Question[] {
   const map = new Map(ALL_QUESTIONS.map((q) => [q.id, q]));
   return ids
     .map((id) => map.get(id))
     .filter((q): q is Question => q !== undefined);
 }
+
 export function getQuestionById(id: string): Question | undefined {
   return ALL_QUESTIONS.find((q) => q.id === id);
 }
+
 export function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -100,9 +110,11 @@ export function shuffle<T>(arr: T[]): T[] {
   }
   return copy;
 }
+
 export function pickRandomQuestions(count: number): Question[] {
   return shuffle(ALL_QUESTIONS).slice(0, count);
 }
+
 export function pickRandomFromCategory(
   categoryId: CategoryId,
   count: number,
@@ -110,9 +122,15 @@ export function pickRandomFromCategory(
   const pool = getQuestionsByCategory(categoryId);
   return shuffle(pool).slice(0, count);
 }
+
 export function countQuestionsByCategory(): Record<CategoryId, number> {
   return { ...QUESTION_COUNTS };
 }
+
+// ============================================================
+// SELECCIÓN ADAPTATIVA POR RATING
+// ============================================================
+
 export async function pickAdaptiveQuestions(
   count: number,
   categoryId?: CategoryId,
@@ -125,7 +143,10 @@ export async function pickAdaptiveQuestions(
   return pickQuestionsByRating(basePool, rating.global, count);
 }
 
-// ... (auditorías se mantienen igual)
+// ============================================================
+// AUDITORÍAS (Convertidas a async)
+// ============================================================
+
 export interface QuestionDataAudit {
   total: number;
   withVerse: number;
@@ -139,6 +160,7 @@ export interface QuestionDataAudit {
     reflection: string[];
   };
 }
+
 export async function auditQuestionData(): Promise<QuestionDataAudit> {
   await loadQuestionBank();
   const missing = {
@@ -163,13 +185,16 @@ export async function auditQuestionData(): Promise<QuestionDataAudit> {
     missing,
   };
 }
+
 export interface AcceptedAnswersAudit {
   total: number;
   malformed: { id: string; issue: string; answers: string[] }[];
 }
+
 function stripDiacritics(s: string): string {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
+
 export async function auditAcceptedAnswers(): Promise<AcceptedAnswersAudit> {
   await loadQuestionBank();
   const malformed: AcceptedAnswersAudit["malformed"] = [];

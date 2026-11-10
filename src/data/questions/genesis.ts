@@ -1,6 +1,7 @@
 import type { Question } from "../../types";
 
 export const GENESIS_QUESTIONS: Question[] = [
+  // ... (gen-001 a gen-008 se mantienen exactamente igual que en la Sesión 3)
   {
     id: "gen-001",
     type: "multiple-choice",
@@ -179,6 +180,55 @@ export const GENESIS_QUESTIONS: Question[] = [
       "Dios no desperdicia dolor. Incluso cuando otros te hacen daño, Él puede convertir la situación en un propósito mayor.",
     reflection:
       "¿Cómo te ayuda la vida de José a perdonar a alguien que te hizo daño?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "gen-009",
+    type: "multiple-choice",
+    category: "genesis",
+    difficulty: "facil",
+    points: 10,
+    timeLimit: 25,
+    question:
+      "¿Qué hizo Dios en el séptimo día después de terminar la creación?",
+    options: [
+      "Creó a los animales",
+      "Descansó de toda su obra",
+      "Hizo llover sobre la tierra",
+      "Creó al hombre y a la mujer",
+    ],
+    correctIndex: 1,
+    explanation:
+      "El descanso de Dios en el séptimo día no fue por cansancio, sino para establecer un ritmo de vida: el ser humano necesita trabajar, pero también necesita detenerse para adorar y confiar en Dios.",
+    verse: "Génesis 2:2",
+    verseText:
+      "Y acabó Dios en el día séptimo la obra que hizo; y reposó el día séptimo de toda la obra que hizo.",
+    application:
+      "El descanso no es pereza, es un acto de fe. Descansar es reconocer que Dios sostiene el mundo aunque nosotros paremos.",
+    reflection:
+      "¿Te cuesta descansar? ¿Qué te impide confiar en que Dios tiene el control cuando no trabajas?",
+    // revisado: 2026-11-10
+  },
+  {
+    id: "gen-010",
+    type: "fill-blank",
+    category: "genesis",
+    difficulty: "medio",
+    points: 20,
+    timeLimit: 25,
+    verseWithBlank:
+      "E Isaac la amó, y se consoló después de la muerte de su madre. Y ella respondió: Yo soy ___ tu sierva.",
+    options: ["Sara", "Raquel", "Rebeca", "Lea"],
+    correctIndex: 2,
+    explanation:
+      "Rebeca aceptó el llamado a dejar su tierra para casarse con Isaac. Su disposición a servir fue lo que la distinguió, mostrando que la humildad y el servicio son atractivos a los ojos de Dios.",
+    verse: "Génesis 24:58",
+    verseText:
+      "Y llamaron a Rebeca, y le dijeron: ¿Irás tú con este varón? Y ella respondió: Sí, iré.",
+    application:
+      "La disposición a servir a los demás es una de las características más hermosas de una persona que ama a Dios.",
+    reflection:
+      "¿Estás dispuesto(a) a servir donde Dios te necesite, incluso si implica salir de tu zona de confort?",
     // revisado: 2026-11-10
   },
 ];
