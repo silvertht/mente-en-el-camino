@@ -7,6 +7,13 @@ import type {
   UserProfile,
   UserRating,
 } from "../types";
+import type {
+  ProgresoLeccion,
+  RachaDiscipulado,
+  LocalSession,
+  LocalPlayer,
+  LocalRound,
+} from "../types/discipleship";
 import { RATING_INITIAL } from "../utils/rating";
 
 // ============================================================
@@ -20,6 +27,12 @@ export class MenteEnElCaminoDB extends Dexie {
   campaignProgress!: Table<CampaignProgress & { id?: string }, string>;
   sessions!: Table<GameSession, string>;
   userRating!: Table<UserRating, string>;
+  // --- v3 · Fase 5 ---
+  progresoLeccion!: Table<ProgresoLeccion, string>;
+  rachaDiscipulado!: Table<RachaDiscipulado, string>;
+  localSessions!: Table<LocalSession, number>;
+  localPlayers!: Table<LocalPlayer, number>;
+  localRounds!: Table<LocalRound, number>;
 
   constructor() {
     super("MenteEnElCaminoDB");
@@ -41,6 +54,29 @@ export class MenteEnElCaminoDB extends Dexie {
       campaignProgress: "id, categoryId, completed",
       sessions: "id, code, status, createdAt",
       userRating: "id",
+    });
+
+    // v3 — Fase 5 · Discipulado + Multijugador local.
+    // Aditivo puro: re-declara v2 + añade tablas nuevas.
+    // Cero delete, cero rename. Regla de Oro 4 intacta.
+    this.version(3).stores({
+      // 1) Re-declaración EXACTA de v2 (requisito Dexie)
+      profile: "id, nickname, level, streak, lastPlayedAt",
+      answers: "++id, questionId, correct, answeredAt",
+      dailyProgress: "date, completed",
+      campaignProgress: "id, categoryId, completed",
+      sessions: "id, code, status, createdAt",
+      userRating: "id",
+
+      // 2) Discipulado (B5 = separada)
+      progreso_leccion:
+        "id, estado, sendaId, primeraRecorridaAt, ultimaActividadAt",
+      racha_discipulado: "id, lastDay",
+
+      // 3) Multijugador local (P7: separado de Discipulado)
+      local_sessions: "++id, status, startedAt",
+      local_players: "++id, sessionId, [sessionId+order]",
+      local_rounds: "++id, sessionId, [sessionId+roundNumber]",
     });
   }
 }
@@ -65,18 +101,12 @@ export function createDefaultProfile(nickname = "Peregrino"): UserProfile {
     lastPlayedAt: null,
     badges: [],
     graceShieldAvailable: false,
-    // onboardingCompleted se deja undefined → gate lo tratará como false
-    // salvo que B1 lo migre (usuario con answeredCount > 0).
   };
 }
 
-/**
- * Obtiene el perfil local. Si no existe, lo crea.
- */
 export async function getOrCreateProfile(): Promise<UserProfile> {
   const existing = await db.profile.get(DEFAULT_PROFILE_ID);
   if (existing) return existing;
-
   const profile = createDefaultProfile();
   await db.profile.put(profile);
   return profile;
@@ -86,20 +116,6 @@ export async function saveProfile(profile: UserProfile): Promise<void> {
   await db.profile.put(profile);
 }
 
-/**
- * B1 (fix 2026-11-04): decide si un perfil existente debe migrarse
- * automáticamente a `onboardingCompleted = true`.
- *
- * Lógica:
- *  - `profile` inexistente → false (usuario nuevo, sin persistencia).
- *  - `profile.onboardingCompleted !== undefined` → false (ya decidido).
- *  - `rating.answeredCount > 0` → true (usuario pre-Fase 4 con progreso real).
- *
- * Garantías:
- *  - Idempotente: solo actúa si el flag aún es `undefined`.
- *  - No afecta a usuarios nuevos (answeredCount === 0).
- *  - No afecta a usuarios ya decididos (true/false).
- */
 export function shouldMigrateOnboarding(
   profile: UserProfile | undefined,
   rating: UserRating | undefined,
@@ -117,7 +133,7 @@ export function shouldMigrateOnboarding(
  * B1 (2026-11-04): auto-migra usuarios existentes (pre-Fase 4 con progreso
  * real) para evitar forzarlos al onboarding y recalibrar su rating.
  *
- * @returns Promise<boolean> — true si onboarding completado (o migrado).
+ * @returns Promise<boolean> — true si onboarding recorrido (o migrado).
  *
  * Consumo (UX Fase B): el gate es asíncrono → App.tsx debe manejar
  * estado de carga. Este lector self-healea en la primera llamada.
@@ -126,12 +142,10 @@ export async function hasCompletedOnboarding(): Promise<boolean> {
   const profile = await db.profile.get(DEFAULT_PROFILE_ID);
   if (!profile) return false;
 
-  // Flag ya decidido → devolverlo sin tocar Dexie.
   if (profile.onboardingCompleted !== undefined) {
     return profile.onboardingCompleted;
   }
 
-  // Flag undefined → posible usuario pre-Fase 4 con progreso real.
   const rating = await db.userRating.get(DEFAULT_PROFILE_ID);
   if (shouldMigrateOnboarding(profile, rating)) {
     await db.profile.put({ ...profile, onboardingCompleted: true });
@@ -155,6 +169,11 @@ export async function resetProfile(): Promise<UserProfile> {
   await db.dailyProgress.clear();
   await db.campaignProgress.clear();
   await db.userRating.clear();
+  await db.progresoLeccion.clear();
+  await db.rachaDiscipulado.clear();
+  await db.localSessions.clear();
+  await db.localPlayers.clear();
+  await db.localRounds.clear();
   const profile = createDefaultProfile();
   await db.profile.put(profile);
   return profile;
@@ -185,12 +204,11 @@ export async function getAnswersByQuestion(
 export async function getRecentAnswers(
   limit = 50,
 ): Promise<AnsweredQuestion[]> {
-  const all = await db.answers
+  return await db.answers
     .orderBy("answeredAt")
     .reverse()
     .limit(limit)
     .toArray();
-  return all;
 }
 
 export async function countAnswers(): Promise<{
@@ -216,9 +234,6 @@ export function createDefaultUserRating(): UserRating {
   };
 }
 
-/**
- * Obtiene el rating local. Si no existe, lo crea con valores por defecto.
- */
 export async function getUserRating(): Promise<UserRating> {
   const existing = await db.userRating.get(DEFAULT_PROFILE_ID);
   if (existing) return existing;
@@ -239,18 +254,9 @@ export async function resetUserRating(): Promise<UserRating> {
 
 // ============================================================
 // DIFICULTAD ADAPTATIVA — accuracy reciente
-// ============================================================
-// @deprecated desde Fase 3 · R2. Se retirará en R5 cuando el selector
-// de preguntas migre a `pickQuestionsByRating`. Se mantiene mientras
-// `pickAdaptiveQuestions` siga activo.
+// @deprecated desde Fase 3 · R2. Se retirará en R5.
 // ============================================================
 
-/**
- * Proporción de aciertos en las últimas `limit` respuestas.
- * Reutiliza `getRecentAnswers` (ya ordena por answeredAt desc).
- *
- * @returns número en [0, 1]. Sin historial → 0.5 (neutro).
- */
 export async function getRecentAccuracy(limit = 20): Promise<number> {
   const recent = await getRecentAnswers(limit);
   if (recent.length === 0) return 0.5;
@@ -388,34 +394,57 @@ export interface BackupData {
   dailyProgress: DailyChallengeProgress[];
   campaignProgress: CampaignProgress[];
   userRating: UserRating | undefined;
+  // --- v3 (opcionales para retrocompat con backups v2) ---
+  progresoLeccion?: ProgresoLeccion[];
+  rachaDiscipulado?: RachaDiscipulado | undefined;
+  localSessions?: LocalSession[];
+  localPlayers?: LocalPlayer[];
+  localRounds?: LocalRound[];
 }
 
 export async function exportBackup(): Promise<BackupData> {
   return {
-    version: 2,
+    version: 3,
     exportedAt: Date.now(),
     profile: await db.profile.get(DEFAULT_PROFILE_ID),
     answers: await db.answers.toArray(),
     dailyProgress: await db.dailyProgress.toArray(),
     campaignProgress: await db.campaignProgress.toArray(),
     userRating: await db.userRating.get(DEFAULT_PROFILE_ID),
+    progresoLeccion: await db.progresoLeccion.toArray(),
+    rachaDiscipulado: await db.rachaDiscipulado.get("global"),
+    localSessions: await db.localSessions.toArray(),
+    localPlayers: await db.localPlayers.toArray(),
+    localRounds: await db.localRounds.toArray(),
   };
 }
 
 export async function importBackup(data: BackupData): Promise<void> {
   await db.transaction(
     "rw",
-    db.profile,
-    db.answers,
-    db.dailyProgress,
-    db.campaignProgress,
-    db.userRating,
+    [
+      db.profile,
+      db.answers,
+      db.dailyProgress,
+      db.campaignProgress,
+      db.userRating,
+      db.progresoLeccion,
+      db.rachaDiscipulado,
+      db.localSessions,
+      db.localPlayers,
+      db.localRounds,
+    ],
     async () => {
       await db.profile.clear();
       await db.answers.clear();
       await db.dailyProgress.clear();
       await db.campaignProgress.clear();
       await db.userRating.clear();
+      await db.progresoLeccion.clear();
+      await db.rachaDiscipulado.clear();
+      await db.localSessions.clear();
+      await db.localPlayers.clear();
+      await db.localRounds.clear();
 
       if (data.profile) await db.profile.put(data.profile);
       if (data.answers.length) await db.answers.bulkAdd(data.answers);
@@ -424,6 +453,18 @@ export async function importBackup(data: BackupData): Promise<void> {
       if (data.campaignProgress.length)
         await db.campaignProgress.bulkPut(data.campaignProgress);
       if (data.userRating) await db.userRating.put(data.userRating);
+
+      // v3 opcional (backups v2 no traen estos campos → no-op)
+      if (data.progresoLeccion?.length)
+        await db.progresoLeccion.bulkPut(data.progresoLeccion);
+      if (data.rachaDiscipulado)
+        await db.rachaDiscipulado.put(data.rachaDiscipulado);
+      if (data.localSessions?.length)
+        await db.localSessions.bulkPut(data.localSessions);
+      if (data.localPlayers?.length)
+        await db.localPlayers.bulkPut(data.localPlayers);
+      if (data.localRounds?.length)
+        await db.localRounds.bulkPut(data.localRounds);
     },
   );
 }

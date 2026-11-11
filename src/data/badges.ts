@@ -5,7 +5,7 @@ export const BADGES: Badge[] = [
   {
     id: "primer-paso",
     name: "Primer Paso",
-    description: "Completaste tu primera pregunta.",
+    description: "Respondiste tu primera pregunta.",
     emoji: "👣",
     condition: "Responder 1 pregunta",
     verse: {
@@ -27,9 +27,9 @@ export const BADGES: Badge[] = [
   {
     id: "primer-desafio",
     name: "Primer Desafío",
-    description: "Completaste tu primer desafío diario.",
+    description: "Recorriste tu primer desafío diario.",
     emoji: "🌅",
-    condition: "Completar un desafío diario",
+    condition: "Recorrer un desafío diario",
     verse: {
       ref: "Lamentaciones 3:22-23",
       text: "Por la misericordia de Jehová no hemos sido consumidos, porque nunca decayeron sus misericordias. Nuevas son cada mañana; grande es tu fidelidad.",
@@ -75,7 +75,7 @@ export const BADGES: Badge[] = [
   {
     id: "perfecto-10",
     name: "Perfecto",
-    description: "Completaste un desafío diario sin fallar.",
+    description: "Recorriste un desafío diario sin fallar.",
     emoji: "💎",
     condition: "10/10 en un desafío diario",
     verse: {
@@ -111,9 +111,9 @@ export const BADGES: Badge[] = [
   {
     id: "evangelista",
     name: "Evangelista",
-    description: "Completaste la categoría de Evangelios.",
+    description: "Recorriste la categoría de Evangelios.",
     emoji: "✝️",
-    condition: "Completar categoría evangelios",
+    condition: "Recorrer categoría evangelios",
     verse: {
       ref: "Mateo 28:19-20",
       text: "Por tanto, id, y haced discípulos a todas las naciones, bautizándolos en el nombre del Padre, y del Hijo, y del Espíritu Santo; enseñándoles que guarden todas las cosas que os he mandado.",
@@ -122,9 +122,9 @@ export const BADGES: Badge[] = [
   {
     id: "conoce-personajes",
     name: "Conoce Personajes",
-    description: "Completaste la categoría de Personajes Bíblicos.",
+    description: "Recorriste la categoría de Personajes Bíblicos.",
     emoji: "👤",
-    condition: "Completar categoría personajes",
+    condition: "Recorrer categoría personajes",
     verse: {
       ref: "Romanos 15:4",
       text: "Porque las cosas que se escribieron antes, para nuestra enseñanza se escribieron, a fin de que por la paciencia y la consolación de las Escrituras, tengamos esperanza.",
@@ -133,9 +133,9 @@ export const BADGES: Badge[] = [
   {
     id: "memoriza-versiculos",
     name: "Memoriza",
-    description: "Completaste la categoría de Versículos.",
+    description: "Recorriste la categoría de Versículos.",
     emoji: "📖",
-    condition: "Completar categoría versiculos",
+    condition: "Recorrer categoría versiculos",
     verse: {
       ref: "Salmos 119:11",
       text: "En mi corazón he guardado tus dichos, para no pecar contra ti.",
@@ -144,9 +144,9 @@ export const BADGES: Badge[] = [
   {
     id: "cuentacuentos",
     name: "Cuentacuentos",
-    description: "Completaste la categoría de Parábolas.",
+    description: "Recorriste la categoría de Parábolas.",
     emoji: "🌾",
-    condition: "Completar categoría parabolas",
+    condition: "Recorrer categoría parabolas",
     verse: {
       ref: "Salmos 78:2",
       text: "Abriré en parábola mi boca; recitaré los misterios de lo antiguo.",
@@ -155,9 +155,9 @@ export const BADGES: Badge[] = [
   {
     id: "vida-en-valores",
     name: "Vida en Valores",
-    description: "Completaste la categoría de Valores y Vida.",
+    description: "Recorriste la categoría de Valores y Vida.",
     emoji: "💛",
-    condition: "Completar categoría valores",
+    condition: "Recorrer categoría valores",
     verse: {
       ref: "Gálatas 5:22-23",
       text: "Mas el fruto del Espíritu es amor, gozo, paz, paciencia, benignidad, bondad, fe, mansedumbre, templanza; contra tales cosas no hay ley.",

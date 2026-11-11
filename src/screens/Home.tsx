@@ -221,7 +221,7 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
 
               <h2 className="mb-2 text-2xl font-black leading-tight text-noche-900 sm:text-3xl">
                 {dailyCompleted
-                  ? "¡Ya completaste el día!"
+                  ? "¡Ya recorriste el día!"
                   : "Recorre 10 preguntas"}
               </h2>
               <p className="mb-6 text-sm font-semibold text-noche-900/80">
@@ -269,7 +269,7 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
                   )}
                   <span>
                     {dailyCompleted
-                      ? "✓ Completado hoy"
+                      ? "✓ Recorrido hoy"
                       : isLoadingQuestions
                         ? "Preparando…"
                         : "→ Comenzar travesía"}

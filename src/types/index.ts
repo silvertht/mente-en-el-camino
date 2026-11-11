@@ -64,11 +64,6 @@ export interface TrueFalseQuestion extends BaseQuestion {
   correct: boolean;
 }
 
-/**
- * Ordenar palabras de un versículo.
- * `words` = palabras en orden de presentación (desordenadas).
- * `correctOrder` = índices en `words` que forman el orden correcto.
- */
 export interface VerseScrambleQuestion extends BaseQuestion {
   type: "verse-scramble";
   words: string[];
@@ -82,11 +77,6 @@ export interface WhoSaidItQuestion extends BaseQuestion {
   correctIndex: number;
 }
 
-/**
- * Ordenar eventos cronológicamente.
- * `events` = eventos en orden de presentación (desordenados).
- * `correctOrder` = índices en `events` que forman el orden cronológico.
- */
 export interface TimelineQuestion extends BaseQuestion {
   type: "timeline";
   events: string[];
@@ -129,11 +119,7 @@ export interface UserProfile {
   lastPlayedAt: number | null;
   badges: string[];
   graceShieldAvailable: boolean;
-  /**
-   * Fase 4 · H-04: indica si el usuario completó el onboarding de calibración.
-   * Opcional, sin `version(3)` de Dexie. `db.profile.put()` lo persiste sin migración.
-   */
-  onboardingCompleted?: boolean; // ← NUEVO (H-04)
+  onboardingCompleted?: boolean;
 }
 
 // ---------- Progreso ----------
@@ -198,15 +184,10 @@ export interface GameState {
 
 // ---------- Rating adaptativo (Fase 3 · R1 + R2) ----------
 export interface UserRating {
-  /** Clave primaria Dexie (misma que el perfil: `local-player`). */
   id: string;
-  /** Rating global actual. */
   global: number;
-  /** Rating por categoría (Fase 3.5, opcional). */
   byCategory?: Partial<Record<CategoryId, number>>;
-  /** Total de respuestas contabilizadas. */
   answeredCount: number;
-  /** Timestamp de última actualización. */
   lastUpdatedAt: number;
 }
 
@@ -228,3 +209,23 @@ export interface RatingConfig {
   reinforceRatio: number;
   stretchRatio: number;
 }
+
+// ============================================================
+// Re-export Fase 5 · Discipulado + Multijugador local
+// ============================================================
+export type {
+  ProgresoLeccion,
+  EstadoLeccion,
+  RachaDiscipulado,
+  SendaDiscipulado,
+  LeccionDiscipulado,
+  NivelDiscipulado,
+  PreguntaReflexion,
+  FeedbackCorrecto,
+  LocalSession,
+  LocalPlayer,
+  LocalRound,
+  EstadoPartidaLocal,
+  NivelNumber,
+  LeccionNumber,
+} from "./discipleship";
