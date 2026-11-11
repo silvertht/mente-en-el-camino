@@ -1,56 +1,49 @@
-# VISUAL-INTERFACES — Contratos y Deudas entre Áreas · Mente en el Camino (Fase 3)
+# VISUAL-INTERFACES — Contratos y Deudas entre Áreas · Mente en el Camino (Fase 4)
 
-Este documento detalla cómo el **Área Visual** se conecta con las otras áreas del proyecto (Funcional, UX, Admin).
-Sirve para que el Chat Maestro sepa exactamente qué está bloqueando a quién y qué APIs/componentes se están compartiendo.
-
----
-
-## 1. VISUAL ↔ FUNCIONAL
-
-### 1.1 Deuda Técnica Activa (Visual → Funcional)
-
-- **Problema**: En `src/screens/Profile.tsx`, para poder pintar la barra de progreso del rating, el Área Visual ha tenido que duplicar los umbrales de los tiers en una constante local (`RATING_TIERS`). Actualmente hace espejo de los umbrales que viven en `src/utils/rating.ts` (función `getRatingLabel`).
-- **Riesgo**: Si Funcional cambia los umbrales en el futuro (ej. de 1100 a 1050), la barra visual se romperá o desincronizará porque la constante local no se actualizará sola.
-- **Solución requerida**: Funcional debe exponer una función `getRatingTiers()` o similar en `rating.ts` que devuelva los límites exactos. Visual eliminará la constante duplicada y consumirá esa función.
-- **Estado**: Pendiente de que Funcional abra chat para implementarlo. Marcado con `TODO(handoff Funcional)` en el código.
-
-### 1.2 Contratos de Componentes
-
-- **TapToPlace**: Visual expone este componente. El contrato es `items: string[]`, `onAnswer: (order: number[]) => void`, `hint: string`, `submitLabel: string`, `itemGender?: "f" | "m"`. Funcional NO debe modificar esta interfaz sin avisar a Visual.
-- **Consumo del Store**: Visual consume `useGameStore((s) => s.userRating?.global)` y `getRatingLabel()`. Visual NO modifica la lógica ELO.
+Este documento detalla cómo el **Área Visual** se conecta con las otras áreas.
 
 ---
 
-## 2. VISUAL ↔ UX
+## 1. CONTRATOS DE COMPONENTES BASE
 
-### 2.1 Observación Abierta (UX → Visual)
+### 1.1 `Button.tsx`
 
-- **Problema**: En un perfil virgen (0 partidas), el rating inicial es `1200` ("Explorador"). Mostrar 1200 puede ser confuso para el usuario (no entiende por qué no empieza en 0).
-- **Solución requerida**: UX debe decidir si prefiere que se muestre "—", "Sin calibrar", u ocultar el número hasta la primera partida.
-- **Estado**: Si UX aprueba el cambio, Visual implementa el ajuste visual en `Profile.tsx` en 5 minutos.
+- **Props**: `variant` ("primary" | "secondary" | "ghost" | "danger" | "reino"), `size` ("sm" | "md" | "lg"), `fullWidth` (boolean), `children`, `onClick`, `disabled`.
+- **Reglas**: Renderiza un `<button>` con `min-h-11` (44px) garantizado. `type="button"` por defecto para evitar submits.
+- **Uso**: Obligatorio para todos los CTAs.
 
-### 2.2 Bloqueo Actual
+### 1.2 `Card.tsx`
 
-- Visual está bloqueado para microinteracciones y refinamientos hasta que UX realice el **Test #2** con los 5 jóvenes.
+- **Props**: `variant` ("default" | "elevated" | "outlined" | "bare"), `children`, `className`.
+- **Reglas**: La variante `bare` no tiene fondo, padding ni borde (solo `rounded-2xl`). El caller inyecta las clases visuales vía `className`.
+- **Deuda**: `default`, `elevated` y `outlined` usan `bg-slate-800` heredado. No cambiar sin coordinar con Profile.
 
-### 2.3 Microcopy
+### 1.3 `Modal.tsx`
 
-- **Regla**: Visual no inventa microcopy. Todos los textos en pantalla (labels, mensajes de error, textos de botones) son definidos por UX y Visual solo los estiliza.
-
----
-
-## 3. VISUAL ↔ ADMIN
-
-### 3.1 Configuración Pendiente (Visual → Admin)
-
-- **Problema**: Falta añadir capturas de pantalla (`screenshots`) en el `manifest.json` de la PWA para habilitar la "Richer PWA Install UI" de Chrome.
-- **Solución**: Admin debe configurar `vite-plugin-pwa` para incluirlas.
-- **Estado**: Prioridad baja.
-
-### 3.2 Colaboración Futura (Fase 3.5)
-
-- Cuando Admin migre a Supabase (auth, ranking, multijugador), Visual necesitará diseñar las pantallas de Login, Registro y Leaderboard. Visual esperará el diseño del esquema por parte de Admin/Funcional.
+- **Props**: `open`, `onClose`, `title`, `subtitle`, `children`, `footer`, `disableOverlayClose`, `initialFocusRef`.
+- **Reglas**: Único componente autorizado para diálogos. Garantiza focus trap, scroll lock, `role="dialog"` y `aria-modal`. En móvil se comporta como bottom-sheet.
 
 ---
 
-**Fin del VISUAL-INTERFACES.md.**
+## 2. VISUAL ↔ FUNCIONAL
+
+### 2.1 Deuda Técnica Activa
+
+- **Rating Tiers (Profile.tsx)**: Visual duplica los umbrales de `getRatingLabel` en una constante `RATING_TIERS`. **Solución requerida**: Funcional debe exponer `getRatingTiers()` en `utils/rating.ts`. Estado: Pendiente.
+
+### 2.2 Contratos de Datos
+
+- **Home (9 Sendas)**: Visual consume `CATEGORY_LIST` desde `src/data/categories.ts`. Funcional/UX debe asegurar que las 9 categorías tengan sus propiedades (`id`, `name`, `emoji`, `color`) y que la paleta de colores en `color` use los tokens `bg-alba-*`, `bg-vida-*`, etc.
+
+---
+
+## 3. VISUAL ↔ UX
+
+- **Regla de Microcopy**: Visual no inventa textos. Todo texto en pantalla (labels, modales, botones) es definido por UX.
+- **Modal de Instalación (iOS)**: El texto instructivo fue proporcionado por el PO/UX. Visual solo lo maquetó en el `Modal`.
+
+---
+
+## 4. VISUAL ↔ ADMIN
+
+- **PWA**: Visual construyó la UI del botón "Instalar App" y el modal iOS. Admin administra el hook `useInstallPrompt` y la configuración de `vite-plugin-pwa`.
