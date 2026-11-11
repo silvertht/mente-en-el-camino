@@ -1,11 +1,8 @@
-### 2026-11-11 — 🏆 CIERRE OFICIAL DE LA FASE 4: "CIMIENTOS SÓLIDOS"
+### 2026-11-11 — Fase 5 · Discipulado · Contrato UX cerrado (v0.1)
 
-- **Onboarding de Calibración**: Implementado, corregido el bug crítico B-1
-  y validado con 5 usuarios reales (Test #2). Calibración perfecta.
-- **Core Web Vitals**: LCP reducido a 2.0s (Zona Verde). Bundle inicial
-  optimizado de 184 kB a 29 kB gracias a Lazy Load y manualChunks.
-- **Refinamiento de UI**: Design System base (Button/Card), 9 Sendas visibles
-  en Home, flecha de retorno (44px), modal PWA instalable (iOS/Android).
-- **Seguridad**: Erradicado el exploit de ELO (abandono de partida a mitad).
-- **Banco de Preguntas**: Ampliado de 70 a 110. Balance perfecto.
-- **Calidad**: 175/175 tests en verde. Reglas pedagógicas aplicadas a todo el contenido.
+- UX entregó MICROCOPY-DISCIPULADO.md v0.1, 3 handoffs (FUN/VIS/ADM),
+  16 criterios de aceptación y nota de riesgo a Funcional.
+- Decisiones D1–D6, P1–P10 e I1–I5 resueltas y aplicadas.
+- FEEDBACK.md sigue vacío (no bloqueante, validación de tono en pausa).
+- Handoff H-FUN-05 desbloqueado con precondición: auditoría de strings
+  "Completado" por Funcional antes de integración.
