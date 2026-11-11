@@ -1,35 +1,63 @@
-### 2026-11-10 · Fase 4 · Ampliación del banco (Sesión 4 - FINAL) — 100 → 110 preguntas
+---
 
-**Objetivo**: Añadir las últimas 10 preguntas de la Fase 4, consolidando el banco en 110 preguntas y balanceando las 4 categorías nuevas.
+### 3. `docs/CHANGELOG-FUNCIONAL.md` (REEMPLAZAR COMPLETO)
 
-**Preguntas añadidas**:
+```markdown
+# CHANGELOG FUNCIONAL — Mente en el Camino (Selah)
 
-- `gen-009`: Génesis · MC · Fácil (El descanso en el séptimo día).
-- `gen-010`: Génesis · Fill-blank · Medio (Rebeca, esposa de Isaac).
-- `exo-009`: Éxodo · TF · Fácil (El cruce del Mar Rojo).
-- `exo-010`: Éxodo · Who-said-it · Difícil (Moisés golpeando la peña).
-- `apo-008`: Apologética · MC · Fácil (David, autor de los Salmos).
-- `apo-009`: Apologética · Fill-blank · Medio (Defensa con mansedumbre).
-- `apo-010`: Apologética · Timeline · Difícil (Cronología de la iglesia primitiva).
-- `his-008`: Historia · TF · Fácil (La imprenta de Gutenberg).
-- `his-009`: Historia · MC · Fácil (El Edicto de Milán y Constantino).
-- `his-010`: Historia · MC · Medio (San Agustín de Hipona).
+**Última actualización**: 2026-11-10 (Cierre Fase 4).
+**Estado del área**: ✅ 110 preguntas, 175/175 tests, ELO protegido, Anti-Exploit.
 
-**Reglas pedagógicas aplicadas (Sesión 3 y 4)**:
+---
 
-- Cero pistas en enunciados de Timeline (eliminados los "Día 1", "Día 6").
-- Explicaciones centradas en el "por qué" teológico/histórico.
-- Reflexiones prácticas para la vida del joven.
+## 📅 HISTORIAL FUNCIONAL
 
-**Cambios estructurales**:
+### 2026-11-10 · Fase 4 · CIERRE DOCUMENTAL
 
-- Actualizado: `index.ts` (conteo estático: 110 preguntas, 10 en cada una de las 4 nuevas categorías).
-- Actualizado: `index.test.ts` (espera 110 preguntas; test de apologética ajustado a 7 tras el filtro del ELO).
+- Sincronización de los 3 documentos para el arranque de la Fase 5.
+- 175/175 tests verdes.
 
-**Verificación**:
+### 2026-11-10 · Fase 4 · Sesión 4 (Banco 110) + Fix Timeline
 
-- `npx vitest run` → **175/175** ✅ (incluye el bloque `getQuestionById` restaurado).
-- `npm run build` → limpio ✅.
+- Banco ampliado a 110 preguntas (Génesis, Éxodo, Apologética e Historia llegan a 10 cada una).
+- **Fix Timeline**: Se eliminaron pistas de orden ("Día 1", "Día 6") en `gen-006` y `ev-013`.
+- **Reglas pedagógicas aplicadas**: Cero pistas en enunciados, explicaciones con el "por qué", reflexiones aplicables.
 
-**Commit**: `feat(funcional): añadir 10 preguntas finales al banco (Fase 4 - Sesión 4)`.
-**Sin push a main**.
+### 2026-11-10 · Fase 4 · Fix Exploit (Test #2)
+
+- **Bug crítico**: El XP y el ELO se guardaban al responder (permitía inflar estadísticas abandonando).
+- **Solución**: `answerQuestion` se volvió efímero. La persistencia se centralizó en `finishGame`.
+- Añadidos tests de anti-exploit (`useGameStore.antiExploit.test.ts`).
+
+### 2026-11-10 · Fase 4 · Sesión 3 (Banco 100)
+
+- Banco ampliado a 100 preguntas.
+
+### 2026-11-10 · Fase 4 · Sesión 2 (Banco 90)
+
+- Banco ampliado a 90 preguntas.
+
+### 2026-11-10 · Fase 4 · Sesión 1 (Banco 80)
+
+- Banco ampliado a 80 preguntas.
+- Activación de las 4 categorías inactivas.
+- Lazy Load adaptado a 9 categorías.
+
+### 2026-11-10 · Fase 4 · H-FUN-03 (Lazy Load)
+
+- Implementación de `loadQuestionBank()`.
+- El bundle principal bajó de 184 kB a 29 kB (gzip).
+- Se eliminó el delay artificial de 400ms en `loadAndStartGame`.
+
+### 2026-11-04 · Fase 4 · H-04/H-05 + B1 (Onboarding)
+
+- 3 preguntas de onboarding creadas.
+- `completeOnboarding` implementado (atómico).
+- **Fix B1**: Protección de usuarios preexistentes (`hasCompletedOnboarding` auto-migra si `answeredCount > 0`).
+
+### 2026-10-02 · Fase 3 · R1-R3 (Rating ELO)
+
+- Implementación del sistema ELO con `MAX_STRETCH = 400`.
+- Persistencia de la tabla `userRating` en Dexie v2.
+
+_(Historial anterior de Fase 1 y 2 se mantiene igual)_
