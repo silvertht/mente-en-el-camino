@@ -2,43 +2,25 @@
 
 **Fecha**: 2026-11-10
 **Área**: Admin
-**Herramientas**: Lighthouse (Mobile, 4G), Vite-Bundle-Analyzer, Vitest.
+**Estado**: CERRADO
 
-## 1. Estado Actual (Baseline)
-- **Build**: 184.12 kB gzip (592.06 kB minified). 477 módulos.
-- **Tests**: 164/164 pasando.
-- **Lighthouse Local**: Performance Score **96/100**.
-- **Métricas Lighthouse**:
-  - LCP: **2.5 s** (Límite amarillo, cerca del verde).
-  - CLS: **0** (Perfecto).
-  - TBT (INP aproximado): **140 ms** (Verde).
-  - FCP: 1.0 s (Verde).
+## 1. Tabla Comparativa Final (Antes vs. Después)
 
-## 2. Diagnóstico (El problema)
-Lighthouse reporta **"Reduce unused JavaScript: Est. savings of 94 KiB"**. 
-El análisis del Treemap confirma que el bundle inicial incluye código que no se usa en la primera pantalla (Home):
-- `react-dom` (Bloque mayor).
-- `dexie` (Base de datos, no se usa en el primer render).
-- `motion` (Framer Motion, animaciones).
-- `src/data/questions` (Banco de preguntas).
+| Métrica                   | Baseline Original | Después (M1+M3)  | **Final (H-FUN-03 en prod)** |
+| :------------------------ | :---------------- | :--------------- | :--------------------------- |
+| **Bundle Inicial (gzip)** | 184.12 kB         | 184.12 kB        | **29.49 kB** (¡-84%!)        |
+| **LCP**                   | 2.5 s (Amarillo)  | 2.7 s (Amarillo) | **2.0 s (Verde 🟢)**         |
+| **CLS**                   | 0                 | 0                | **0** (Perfecto)             |
+| **Performance Score**     | 96                | 95               | **92** (Verde)               |
+| **JS sin usar**           | 94 KiB            | 59 KiB           | 82 KiB (mejor LCP neto)      |
 
-## 3. Propuestas de Mejora (Admin)
+## 2. Diagnóstico y Acciones Aplicadas
 
-### M1 — Code Splitting (manualChunks) en `vite.config.ts`
-- **Qué**: Separar `react-dom`, `motion` y `dexie` en chunks independientes usando `manualChunks` (o `codeSplitting` en Rolldown/Vite 8).
-- **Por qué**: El bundle principal bajará drásticamente. El navegador cacheará React y Motion por separado. 
-- **Impacto estimado**: LCP bajará a verde (< 2.5s) y se eliminará el warning de chunk >500 kB.
-- **Territorio**: Admin (config).
+1. **El Problema**: El bundle inicial era de 184 kB gzip. Lighthouse reportó 94 KiB de JS sin usar. El Treemap reveló que `react-dom`, `dexie` y `motion` se cargaban en el primer render innecesariamente.
+2. **M1 (`manualChunks`)**: Aplicado en `vite.config.ts`. Separó vendors, permitiendo el cacheo a largo plazo.
+3. **M3 (`vercel.json`)**: Cabeceras de caché inmutable para los assets (`/assets/*`).
+4. **H-FUN-03 (Lazy Load)**: `data/questions` se carga asíncronamente al pulsar "Jugar", reduciendo el bundle inicial drásticamente a 29.49 kB.
 
-### M3 — Cache Inmutable en `vercel.json`
-- **Qué**: Crear `vercel.json` para añadir cabeceras `Cache-Control: public, max-age=31536000, immutable` a la carpeta `/assets/*`.
-- **Por qué**: Mejora el TTFB en visitas recurrentes. Actualmente no existe el archivo.
-- **Territorio**: Admin (config).
+## 3. Conclusión
 
-### Handoff a Funcional (H-FUN-03)
-- **Qué**: `React.lazy` para el componente `Game` y carga diferida de `dexie` y `data/questions`.
-- **Por qué**: Son los 94 KiB que Lighthouse marca como "unused JS".
-- **Territorio**: Funcional (src).
-
-## 4. Conclusión
-El proyecto tiene una base sólida (Score 96, CLS 0). Las mejoras M1 y M3 son de bajo riesgo, alto impacto y entran 100% en el territorio de Admin.
+El LCP entró en zona verde (2.0s) y el peso inicial se redujo en un 84%. La experiencia en móviles (especialmente iOS) es ahora instantánea en la carga de la pantalla principal (Home).

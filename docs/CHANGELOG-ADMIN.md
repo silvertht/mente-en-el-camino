@@ -1,23 +1,50 @@
-### 2026-11-10 — Fase 4: T3 CERRADO (Medición Final Post H-FUN-03)
+# CHANGELOG ADMIN — Mente en el Camino (Selah)
 
-- **Estado**: T3 cerrado formalmente. 164/164 tests + Build limpio + M1/M3 aplicados + H-FUN-03 desplegado y verificado en producción.
+> Documento exclusivo del área Admin. Registra solo cambios, decisiones, handoffs emitidos y pendientes internos.
 
-- **H-FUN-03 (Lazy Load)**: APLICADO por Funcional. Verificado manualmente en producción: los chunks de `data/questions` se descargan SOLO al pulsar "Jugar" (0 requests en Home). El bundle inicial bajó de 184.12 kB a **29.49 kB (gzip)**.
+**Última actualización**: 2026-11-10
+**Estado**: Fase 4 Cerrada.
 
-- **Lighthouse Producción (Post H-FUN-03)**:
-  - Score: **92/100**.
-  - LCP: **2.0 s (Verde 🟢)**.
-  - CLS: **0** (Perfecto).
-  - TBT: 310 ms (Amarillo, trade-off normal por code-splitting).
-  - JS sin usar: 82 KiB (Aumento leve por preloads de Vite, pero LCP mejoró drásticamente).
+---
 
-- **Tabla Comparativa (Antes vs. Después)**:
-  | Métrica | Baseline Original | Después (M1+M3) | **Ahora (H-FUN-03 en prod)** |
-  | :--- | :--- | :--- | :--- |
-  | **Bundle Gzip** | 184.12 kB | 184.12 kB | **29.49 kB** (¡-84%!) |
-  | **Performance Score** | 96 | 95 | **92** |
-  | **LCP** | 2.5 s (Amarillo) | 2.7 s (Amarillo) | **2.0 s (Verde 🟢)** |
-  | **CLS** | 0 | 0 | **0** |
-  | **JS sin usar** | 94 KiB | 59 KiB | 82 KiB (mejor LCP neto) |
+## FASE 4 (Cerrada)
 
-- **Conclusión**: El peso inicial se redujo en un 84%. El LCP entró en zona verde. **T3 CERRADO.**
+### 2026-11-10 — Cierre de Fase 4 y Optimización de Rendimiento
+
+- **T1 (Documentación)**: Creado `docs/CONTENT-WORKFLOW.md` (guía de contenido). Commit `706a298`.
+- **T2 (Diagnóstico CWV)**:
+  - Lighthouse inicial: Score 96, LCP 2.5s.
+  - Identificados 94 KiB de JS sin usar (`react-dom`, `dexie`, `motion`) mediante Treemap.
+- **M1 (Code Splitting)**: Aplicado `manualChunks` en `vite.config.ts` separando vendors (react, motion, dexie, zustand). Mejora del cacheo y reducción del hilo principal.
+- **M3 (Caché Vercel)**: Creado `vercel.json` con cabeceras `Cache-Control: public, max-age=31536000, immutable` para `/assets/*`.
+- **H-FUN-03 (Lazy Load)**: Emitido a Funcional y aplicado. Carga diferida de `data/questions`.
+- **T3 (Cierre CWV)**:
+  - Bundle inicial: **29.49 kB** (gzip) (¡-84%!).
+  - LCP final: **2.0 s** (Verde).
+  - Score Lighthouse: 92.
+  - Tests: 164/164.
+- **PWA Instalación (Fix Android)**:
+  - Creado `src/hooks/useInstallPrompt.ts`.
+  - Fix aplicado: `beforeinstallprompt` se captura a nivel global (fuera de React) para evitar que Chrome Android lo pierda.
+  - Añadidos 4 tests unitarios para la detección de OS (iOS/Android/Standalone).
+  - Tests totales del proyecto: **168/168**.
+
+---
+
+## FASE 3 (Cerrada)
+
+### 2026-10-02 — Sesión: Tarea 3 (guía CWV) + Tarea 4 (workflow redactado)
+
+- Tarea 3: Guía CWV entregada. Pendiente muestra de producción.
+- Tarea 4: `docs/CONTENT-WORKFLOW.md` redactado.
+
+### 2026-09-25 — Tarea 2 CERRADA: Analytics
+
+- Deps: `@vercel/analytics` + `@vercel/speed-insights`.
+- `<Analytics />` y `<SpeedInsights />` en `main.tsx`.
+- Doc creado: `docs/ANALYTICS.md`.
+
+### 2026-09-24 — Tarea 1 CERRADA: PWA + rebrand Selah
+
+- `vite.config.ts`: configurado `VitePWA`.
+- Generados 4 íconos en `public/`.

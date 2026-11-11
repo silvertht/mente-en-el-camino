@@ -1,72 +1,43 @@
 # ADMIN-INTERFACES — Cómo Admin se liga con los otros chats
 
-> Documento de referencia operativa. Define canales, protocolos y fronteras
-> entre el chat Admin y los otros chats (Maestro, Funcional, Visual, UX).
-> NO describe contenido de trabajo — solo cómo se transporta y a quién
-> corresponde cada archivo.
-
-**Owner**: Admin · **Última actualización**: 2026-10-02
+> Define canales, protocolos y fronteras entre el chat Admin y los otros chats.
+> **Owner**: Admin · **Última actualización**: 2026-11-10
 
 ---
 
 ## 1. Principio transversal
 
-- **Cero comunicación directa** entre chats.
-- Todo mensaje viaja por el **product owner (chat maestro)**.
-- El chat Admin **emite handoffs escritos**, no aplica cambios fuera de su territorio.
-- Toda aceptación vuelve vía PO como "handoff cerrado".
+Cero comunicación directa. Todo pasa por el PO (chat maestro).
 
----
+## 2. Frontera de archivos
 
-## 2. Canales (qué entrego / qué recibo por chat)
+| Archivo                         |     Admin     | Funcional  |   Visual    |       UX       |
+| :------------------------------ | :-----------: | :--------: | :---------: | :------------: |
+| `vite.config.ts`                |      ✅       |     ❌     |     ❌      |       ❌       |
+| `vercel.json`                   |      ✅       |     ❌     |     ❌      |       ❌       |
+| `package.json` (deps)           |      ✅       |     ✅     |     ❌      |       ❌       |
+| `public/*`                      |      ✅       |     ❌     |     ❌      |       ❌       |
+| `docs/`                         |  ✅ (admin)   | ✅ (suyos) |     ❌      |       ❌       |
+| `src/hooks/useInstallPrompt.ts` | ✅ (asignado) |     ❌     |     ❌      |       ❌       |
+| `src/**` (resto)                |      ❌       |     ✅     | ✅ (visual) |    ✅ (UX)     |
+| `index.html`                    |      ❌       |     ❌     |     ✅      | ✅ (microcopy) |
 
-### Chat Maestro
+## 3. Protocolo de Handoff
 
-| Dirección       | Contenido                                                                                                         | Formato         |
-| --------------- | ----------------------------------------------------------------------------------------------------------------- | --------------- |
-| Admin → Maestro | Bloque propuesto para `CHANGELOG.md` global · reporte ejecutivo · lista de pendientes · propuesta de priorización | Bloque markdown |
-| Maestro → Admin | Tareas nuevas · decisiones · confirmaciones "handoff aplicado" · cambios de prioridad                             | Mensaje directo |
+Formato único de Admin hacia otras áreas:
 
-### Chat Funcional
+## 4. Handoffs Históricos y APIs entregadas a otras áreas
 
-| Dirección                  | Contenido                                                                                                                       | Formato                 |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| Admin → Funcional          | Handoffs técnicos que tocan `src/**` (lazy load, dynamic import, cambios de schema) · `CONTENT-WORKFLOW.md` como guía operativa | `HANDOFF-ADMIN→FUN-NNN` |
-| Funcional → Admin (vía PO) | Confirmación de aplicación · tests pasando · build sin warnings nuevos                                                          | Mensaje                 |
+### Handoffs Activos/Cerrados en Fase 4:
 
-### Chat Visual
+- `H-FUN-03` (Cerrado): Lazy load de `data/questions` para reducir el bundle inicial.
 
-| Dirección               | Contenido                                                                                                 | Formato                 |
-| ----------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------- |
-| Admin → Visual          | Handoffs que tocan `index.html`, `public/favicon.svg`, `src/components/**` (metas, preload, CLS, favicon) | `HANDOFF-ADMIN→VIS-NNN` |
-| Visual → Admin (vía PO) | Confirmación de aplicación                                                                                | Mensaje                 |
+### APIs y Hooks entregados a otras áreas:
 
-### Chat UX
-
-| Dirección           | Contenido                                                               | Formato                |
-| ------------------- | ----------------------------------------------------------------------- | ---------------------- |
-| Admin → UX          | Handoffs de microcopy y textos visibles (rebrand, terminología, flujos) | `HANDOFF-ADMIN→UX-NNN` |
-| UX → Admin (vía PO) | Confirmación de aplicación                                              | Mensaje                |
-
----
-
-## 3. Frontera de archivos
-
-| Archivo                            |     Admin      | Funcional  |   Visual    |       UX       |
-| ---------------------------------- | :------------: | :--------: | :---------: | :------------: |
-| `vite.config.ts`                   |       ✅       |     ❌     |     ❌      |       ❌       |
-| `package.json` (deps)              |       ✅       |     ✅     |     ❌      |       ❌       |
-| `vercel.json`                      |       ✅       |     ❌     |     ❌      |       ❌       |
-| `docs/`                            |   ✅ (admin)   | ✅ (suyos) |     ❌      |       ❌       |
-| `.gitignore` · `README.md`         |       ✅       |     ❌     |     ❌      |       ❌       |
-| `public/pwa-*.png` · `manifest`    |       ✅       |     ❌     |     ❌      |       ❌       |
-| `public/favicon.svg`               |       ❌       |     ❌     |     ✅      |       ❌       |
-| `index.html`                       |       ❌       |     ❌     |     ✅      | ✅ (microcopy) |
-| `src/**`                           |       ❌       |     ✅     | ✅ (visual) |    ✅ (UX)     |
-| `MenteEnElCaminoDB` (schema Dexie) | ❌ (prohibido) |     ✅     |     ❌      |       ❌       |
-
----
-
-## 4. Protocolo de handoff
-
-Formato único (Admin emite, otras áreas reciben):
+- **`useInstallPrompt` (Admin → Visual)**
+  - **Ubicación**: `src/hooks/useInstallPrompt.ts`
+  - **Firma**: `const { isIOS, isAndroid, isStandalone, canInstall, installApp } = useInstallPrompt();`
+  - **Uso por Visual**:
+    - Si `isIOS` es `true`: Mostrar modal instructivo de "Añadir a pantalla de inicio".
+    - Si `canInstall` es `true` (Android): El botón debe llamar a `installApp()`.
+    - El listener de `beforeinstallprompt` está a nivel global (fuera de React) para evitar pérdida del evento.
