@@ -101,9 +101,7 @@ export function Onboarding({ onComplete }: Props) {
               <>
                 Te damos la bienvenida al camino.
                 <span className="block text-sm font-medium text-slate-300 mt-2">
-                  No es un examen. Es tu punto de partida.
-                  <br />
-                  Tus respuestas ajustan el reto a tu nivel.
+                  No es una prueba. Es tu punto de partida.
                 </span>
               </>
             ) : (

@@ -269,9 +269,6 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
   },
 }));
 
-// ==========================================
-// SELECTORES
-// ==========================================
 export const selectEstadoLeccion = (
   state: DiscipleshipStore,
   id: string,
