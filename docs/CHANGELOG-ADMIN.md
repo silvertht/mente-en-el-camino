@@ -1,9 +1,31 @@
+---
+
+## 📄 6. `docs/CHANGELOG-ADMIN.md` — reemplazo completo
+
+```markdown
 # CHANGELOG ADMIN — Mente en el Camino (Selah)
 
 > Documento exclusivo del área Admin. Registra solo cambios, decisiones, handoffs emitidos y pendientes internos.
 
-**Última actualización**: 2026-11-10
-**Estado**: Fase 4 Cerrada.
+**Última actualización**: 2026-11-12
+**Estado**: Fase 5 — H-ADM-01 cerrado condicional (pendiente build verificado).
+
+---
+
+## FASE 5 (En curso)
+
+### 2026-11-12 — H-ADM-01: Estrategia de caché PWA para Discipulado
+
+- **Migración `generateSW` → `injectManifest`**: creado `src/sw.ts` custom con `precacheAndRoute`, `cleanupOutdatedCaches`, `NavigationRoute` (SPA fallback) y runtime `StaleWhileRevalidate` para `evangelios-*`.
+- **Fix crítico de seguridad de datos**: `registerType` cambiado de `"autoUpdate"` a `"prompt"`. Eliminados `skipWaiting: true` y `clientsClaim: true` de HEAD af7ad91. Motivo: `autoUpdate` podía recargar mid-lección → violación directa del requisito "nunca borrar progreso local sin aviso".
+- **Precache**: 5 chunks lazy Discipulado + shell + vendors + iconos. **Runtime**: `evangelios-*` (4.32 kB gzip) con `cacheName: "evangelios-v1"`, expiración 30 días.
+- **`manualChunks`**: sin cambios (regla vendors react/motion/dexie/zustand intacta). Nombres semánticos de chunks descartados: Workbox matchea por hash, no por nombre.
+- **`vendor-motion` 44 kB**: diferido. No bloquea LCP (precache corre post-paint). Reevaluar solo si Speed Insights post-deploy > 2.5 s.
+- **`useOnlineStatus` de Visual**: validado. Solo `navigator.onLine` + eventos, sin probe. Sin cambios.
+- **devDeps añadidos**: `workbox-core`, `workbox-expiration`, `workbox-precaching`, `workbox-routing`, `workbox-strategies` (`^7.3.0`).
+- **Documentación**: creado `docs/OFFLINE-STRATEGY.md`; sección de bump `evangelios-v*` en `docs/CONTENT-WORKFLOW.md`.
+- **Handoffs emitidos**: H-ADM-01a (→ Funcional: verificar no import de `src/sw.ts` desde eager), H-ADM-01b (→ Contenido: bump `cacheName`), H-ADM-01c (→ Visual: UI "Nueva versión disponible" — no bloqueante).
+- **Pendiente de verificación**: output literal `npm run build` post-cambios. Criterios de aceptación: `index-*.js` gzip ≤ 35 kB, `dist/sw.js` presente, precache excluye `evangelios-*`.
 
 ---
 

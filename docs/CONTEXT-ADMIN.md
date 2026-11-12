@@ -1,8 +1,8 @@
 # CONTEXT ADMIN — Mente en el Camino (Selah)
 
 **Área**: Administración
-**Última actualización**: 2026-11-10
-**Estado**: Fase 4 cerrada. Fase 5 próxima (Notificaciones PWA / Supabase).
+**Última actualización**: 2026-11-12
+**Estado**: Fase 5 en curso. H-ADM-01 (caché PWA Discipulado) cerrado condicional. Pendiente: verificación build.
 
 ---
 
@@ -22,10 +22,11 @@ Asistente especializado en **administración del proyecto**: PWA, deploy, analí
 - `public/*` — íconos PWA, manifest.
 - `docs/*` — documentación administrativa.
 - `src/hooks/useInstallPrompt.ts` — Lógica de instalación PWA (asignada por el Maestro).
+- `src/sw.ts` — Service Worker custom (`injectManifest`, asignado en Fase 5).
 
 ### Archivos que NO toco
 
-- `src/**` (excepto hooks autorizados explícitamente por el Maestro como `useInstallPrompt`).
+- `src/**` (excepto hooks autorizados explícitamente por el Maestro como `useInstallPrompt` y `src/sw.ts`).
 - `index.html`, `public/favicon.svg` — Visual.
 
 ---
@@ -36,25 +37,27 @@ Asistente especializado en **administración del proyecto**: PWA, deploy, analí
 
 ---
 
-## 4. Estado Actual de Infraestructura (Post Fase 4)
+## 4. Estado Actual de Infraestructura (Fase 5 en curso)
 
-- **Repo**: `github.com/silverth/mente-en-el-camino` (rama `main`).
+- **Repo**: `github.com/silverth/mente-en-el-camino` (rama `main`). HEAD af7ad91 al arranque Fase 5.
 - **URL**: https://mente-en-el-camino.vercel.app
 - **Deploy**: Vercel auto desde `main`.
-- **Core Web Vitals (Producción)**:
+- **Core Web Vitals (Producción, baseline Fase 4)**:
   - **LCP**: 2.0 s (Verde).
   - **CLS**: 0 (Perfecto).
   - **Performance Score**: 92/100.
-- **Bundle Inicial**: 29.49 kB (gzip) — Reducción del 84% tras aplicar H-FUN-03.
-- **PWA**: Instalable en iOS y Android. Hook `useInstallPrompt` implementado para manejar la lógica de instalación (Android captura global de `beforeinstallprompt`, iOS expone estado para modal).
+- **Bundle Inicial (baseline Fase 4)**: 29.49 kB (gzip). Post-H-FUN-05: 33.49 kB gzip. Objetivo H-ADM-01: ≤ 35 kB.
+- **PWA**: Instalable iOS/Android. Hook `useInstallPrompt` implementado. **Fase 5**: migrado a `injectManifest` con `src/sw.ts` custom; `registerType: "prompt"` (sin auto-reload).
+- **Caché**: precache (5 chunks Discipulado + shell + vendors + iconos) + runtime SWR (`evangelios-*`, `cacheName: "evangelios-v1"`).
 - **Costo**: $0/mes (Plan Hobby).
 
 ---
 
-## 5. Tareas Fase 5 — Próximos Pasos
+## 5. Tareas Fase 5 — Estado
 
-1. **Notificaciones Push / Rachas (PWA)**: Evaluar migración a `injectManifest` en `vite-plugin-pwa` y configurar Vercel Cron Jobs + VAPID.
-2. **Supabase**: Migración para Multijugador y persistencia de rachas.
+1. **H-ADM-01 (caché PWA Discipulado)**: ✅ cerrado condicional. Pendiente verificación build post-aplicación.
+2. **Notificaciones Push / Rachas (PWA)**: pendiente. Plan técnico: `injectManifest` (ya en su sitio) + VAPID + Supabase `push_subscriptions` + Vercel Cron diario. Ver H-ADM-01 §3 del handoff.
+3. **Supabase**: pendiente. Migración para multijugador y persistencia de rachas.
 
 ---
 

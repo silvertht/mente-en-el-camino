@@ -8,7 +8,10 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: "autoUpdate",
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
+      registerType: "prompt",
       injectRegister: "auto",
       includeAssets: [
         "favicon.svg",
@@ -50,20 +53,15 @@ export default defineConfig({
           },
         ],
       },
-      workbox: {
+      injectManifest: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
-        cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [],
+        globIgnores: ["**/evangelios-*.js"],
       },
       devOptions: { enabled: false },
     }),
   ],
   build: {
-    sourcemap: true, // Mantenemos esto para el análisis
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
