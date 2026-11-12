@@ -54,16 +54,11 @@ describe("useMultiplayerStore", () => {
 
   it("#25 iniciarPartida: guarda en Dexie y lee el rating sin modificarlo (B7)", async () => {
     await useMultiplayerStore.getState().iniciarPartida(["A", "B"], 2);
-
-    // B7: verifica que lee el rating pero no lo modifica
     expect(getUserRating).toHaveBeenCalled();
-
-    // Verifica la persistencia inicial
     expect(db.localSessions.add).toHaveBeenCalled();
     expect(db.localPlayers.bulkAdd).toHaveBeenCalled();
     expect(pickQuestionsByRating).toHaveBeenCalled();
 
-    // Los jugadores en el estado deben tener el ID asignado por la DB
     const players = useMultiplayerStore.getState().players;
     expect(players[0].id).toBe(1);
     expect(players[1].id).toBe(2);
@@ -71,15 +66,11 @@ describe("useMultiplayerStore", () => {
 
   it("#26 responderTurno: es efímero, no toca Dexie (B7)", () => {
     useMultiplayerStore.getState().responderTurno(0);
-
-    // B7: Anti-exploit. No debe haber escrituras en DB por responder un turno
     expect(db.localRounds.bulkAdd).not.toHaveBeenCalled();
     expect(db.localPlayers.put).not.toHaveBeenCalled();
   });
 
   it("#27 finalizarPartida: aplica desempate por menos fallos (B10)", async () => {
-    // Escenario: A (id:1) y B (id:2) empatan en 10 puntos.
-    // A falló 1 pregunta, B falló 0. B debería ganar por menos fallos.
     const rounds: LocalRound[] = [
       {
         id: 1,
@@ -116,7 +107,6 @@ describe("useMultiplayerStore", () => {
 
     await useMultiplayerStore.getState().finalizarPartida();
 
-    // El ganador debe ser el jugador 2 (B)
     expect(emitSpy).toHaveBeenCalledWith("partida_finalizada", {
       sessionId: 123,
       winnerId: 2,

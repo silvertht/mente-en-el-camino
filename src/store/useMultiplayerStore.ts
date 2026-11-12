@@ -39,16 +39,13 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
   iniciarPartida: async (playerNames, roundsPerPlayer) => {
     set({ isLoading: true });
     try {
-      // B7: Solo LEEMOS el rating para seleccionar preguntas. No lo modificamos.
       const rating = await getUserRating();
-      // Nota: Usamos el pool completo simulado (vacío aquí) para la selección
       const questions = await pickQuestionsByRating(
         [],
         rating.global,
         playerNames.length * roundsPerPlayer,
       );
 
-      // 1. Crear y guardar la sesión en Dexie
       const sessionData: LocalSession = {
         status: "activa",
         startedAt: Date.now(),
@@ -57,14 +54,12 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
       };
       const sessionId = await db.localSessions.add(sessionData);
 
-      // 2. Crear y guardar los jugadores en Dexie
       const newPlayers = playerNames.map((name, i) => ({
         sessionId,
         displayName: name,
         order: i,
         finalScore: 0,
       }));
-      // bulkAdd con { allKeys: true } nos devuelve los IDs generados
       const playerIds = await db.localPlayers.bulkAdd(newPlayers, {
         allKeys: true,
       });
@@ -83,7 +78,6 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
         currentPlayerIndex: 0,
         isLoading: false,
       });
-
       eventBus.emit("partida_iniciada", {
         sessionId,
         playerCount: playerNames.length,
@@ -103,40 +97,32 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     const q = questions[qIndex];
     if (!q) return;
 
-    // Lógica simple de correcto (asume multiple-choice)
     const isCorrect =
       q.type === "multiple-choice" && selectedIndex === q.correctIndex;
-    const points = isCorrect ? 10 : 0;
-
     const newRound: LocalRound = {
-      id: undefined, // Se asigna en DB al finalizar
+      id: undefined,
       sessionId: get().sessionId!,
       roundNumber: currentRound,
       playerId: players[currentPlayerIndex].id!,
       questionId: q.id,
       selectedIndex,
       isCorrect,
-      points,
+      points: isCorrect ? 10 : 0,
     };
-
-    // EFÍMERO (Anti-exploit): Solo memoria
     set({ rounds: [...rounds, newRound] });
   },
 
   avanzarTurno: () => {
     const { currentPlayerIndex, players, currentRound } = get();
-    if (currentPlayerIndex < players.length - 1) {
+    if (currentPlayerIndex < players.length - 1)
       set({ currentPlayerIndex: currentPlayerIndex + 1 });
-    } else {
-      set({ currentPlayerIndex: 0, currentRound: currentRound + 1 });
-    }
+    else set({ currentPlayerIndex: 0, currentRound: currentRound + 1 });
   },
 
   finalizarPartida: async () => {
     const { sessionId, players, rounds } = get();
     if (!sessionId) return;
 
-    // Calcular puntajes finales y fallos
     const updatedPlayers = players.map((p) => {
       const pRounds = rounds.filter((r) => r.playerId === p.id);
       const score = pRounds.reduce((sum, r) => sum + r.points, 0);
@@ -144,7 +130,6 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
       return { ...p, finalScore: score, wrongs };
     });
 
-    // B10: Desempate por menos fallos
     const maxScore = Math.max(...updatedPlayers.map((p) => p.finalScore));
     let winners = updatedPlayers.filter((p) => p.finalScore === maxScore);
     if (winners.length > 1) {
@@ -153,23 +138,17 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     }
     const winnerId = winners.length === 1 ? winners[0].id! : null;
 
-    // Transacción atómica
     await db.transaction(
       "rw",
       db.localPlayers,
       db.localRounds,
       db.localSessions,
       async () => {
-        // Actualizar puntajes de jugadores
         for (const p of updatedPlayers) {
-          const { wrongs, ...playerToSave } = p; // Quitamos 'wrongs' antes de guardar
+          const { wrongs, ...playerToSave } = p;
           await db.localPlayers.put(playerToSave);
         }
-
-        // Guardar todas las rondas
         await db.localRounds.bulkAdd(rounds);
-
-        // Marcar sesión como finalizada
         const currentSession = await db.localSessions.get(sessionId);
         if (currentSession) {
           await db.localSessions.put({

@@ -1,31 +1,65 @@
 import type { CategoryId } from "./index";
 
 // ============================================================
-// CONTENIDO EDITORIAL (content layer, lazy-loaded)
+// CONTRATO VISUAL (Fase 5 · H-VIS-06)
+// ============================================================
+export type EstadoLeccion =
+  | "sin_empezar"
+  | "en_curso"
+  | "recorrida"
+  | "bloqueado"
+  | "repaso";
+export type EstadoNivel =
+  | "sin_empezar"
+  | "en_curso"
+  | "recorrido"
+  | "bloqueado"
+  | "repaso";
+export type EstadoSenda =
+  | "sin_empezar"
+  | "en_curso"
+  | "recorrida"
+  | "bloqueado"
+  | "repaso";
+
+export interface PosicionReanudar {
+  tarjetaIdx: number;
+  preguntaIdx: number;
+}
+
+export interface ResultadoCheck {
+  correcto: boolean;
+  feedback: string;
+  pista?: string;
+  referencia: string;
+}
+
+// ============================================================
+// CONTENIDO EDITORIAL (Content layer)
 // ============================================================
 export type NivelNumber = 1 | 2 | 3;
 export type LeccionNumber = 1 | 2 | 3;
 
 export interface FeedbackCorrecto {
-  afirmacion: string; // D2: prefijo "Así es." obligatorio
+  afirmacion: string;
   dato: string;
-  referenciaRVR1960: string; // P10 — obligatorio
+  referenciaRVR1960: string;
   reflexion: string;
 }
 
 export interface PreguntaReflexion {
-  id: string; // `${sendaId}:${n}:${l}:${q}`
+  id: string;
   enunciado: string;
   opciones: string[];
   correctIndex: number;
   feedbackCorrecto: FeedbackCorrecto;
-  pistaReintento: string; // ≤12 palabras + referencia RVR1960
-  referenciaRVR1960: string; // P10 — obligatorio
+  pistaReintento: string;
+  referenciaRVR1960: string;
 }
 
 export interface LeccionDiscipulado {
-  id: string; // `${sendaId}:${n}:${l}`
-  sendaId: CategoryId; // P3: reutiliza taxonomía de trivia
+  id: string;
+  sendaId: CategoryId;
   nivelNumber: NivelNumber;
   leccionNumber: LeccionNumber;
   titulo: string;
@@ -37,25 +71,22 @@ export interface NivelDiscipulado {
   sendaId: CategoryId;
   nivelNumber: NivelNumber;
   titulo: string;
-  lecciones: LeccionDiscipulado[]; // siempre 3
+  lecciones: LeccionDiscipulado[];
 }
 
 export interface SendaDiscipulado {
   sendaId: CategoryId;
   titulo: string;
   descripcion: string;
-  niveles: NivelDiscipulado[]; // siempre 3 (MVP)
+  niveles: NivelDiscipulado[];
   esPiloto: boolean;
 }
 
 // ============================================================
 // PROGRESO PERSISTIDO (Dexie v3)
 // ============================================================
-export type EstadoLeccion = "sin_empezar" | "en_curso" | "recorrida" | "repaso";
-// "bloqueada" es DERIVADA (selector), no se persiste.
-
 export interface ProgresoLeccion {
-  id: string; // PK `${sendaId}:${n}:${l}`
+  id: string;
   sendaId: CategoryId;
   nivelNumber: NivelNumber;
   leccionNumber: LeccionNumber;
@@ -72,11 +103,11 @@ export interface RachaDiscipulado {
   id: "global";
   current: number;
   best: number;
-  lastDay: string | null; // "YYYY-MM-DD"
+  lastDay: string | null;
 }
 
 // ============================================================
-// MULTIJUGADOR LOCAL (P7: modelo separado)
+// MULTIJUGADOR LOCAL (Modelo separado P7)
 // ============================================================
 export type EstadoPartidaLocal = "activa" | "finalizada";
 

@@ -1,23 +1,23 @@
 import { create } from "zustand";
 import { db } from "../db/database";
 import { eventBus } from "./eventBus";
-import type { CategoryId } from "../types";
-import type {
-  ProgresoLeccion,
-  RachaDiscipulado,
-  EstadoLeccion,
-} from "../types/discipleship";
 import {
   getLeccion,
   loadDiscipleshipContent,
   isDiscipleshipContentLoaded,
 } from "../data/discipleship";
+import type { CategoryId } from "../types";
+import type {
+  ProgresoLeccion,
+  RachaDiscipulado,
+  EstadoLeccion,
+  PosicionReanudar,
+  ResultadoCheck,
+} from "../types/discipleship";
 
-// Helper para fecha YYYY-MM-DD
 const todayKey = () => new Date().toISOString().split("T")[0];
 
 interface DiscipleshipStore {
-  // Estado
   contenidoCargado: boolean;
   isLoadingDiscipleship: boolean;
   progresoLecciones: Record<string, ProgresoLeccion>;
@@ -31,7 +31,6 @@ interface DiscipleshipStore {
     enRepaso: boolean;
   } | null;
 
-  // Acciones
   loadDiscipleshipContent: () => Promise<void>;
   initProgreso: () => Promise<void>;
   iniciarLeccion: (
@@ -40,18 +39,12 @@ interface DiscipleshipStore {
     l: 1 | 2 | 3,
   ) => Promise<void>;
   guardarPosicion: (tarjetaIdx: number, preguntaIdx: number) => Promise<void>;
-  responderCheck: (
-    preguntaIdx: number,
-    selected: number,
-  ) => { correct: boolean; feedback?: any };
-  reintentarCheck: (preguntaIdx: number) => void;
+  responderCheck: (preguntaIdx: number, selected: number) => ResultadoCheck;
+  reintentarCheck: (leccionId: string, preguntaIdx: number) => void;
   finalizarLeccion: () => Promise<void>;
+  abrirRepaso: (leccionId: string) => Promise<void>;
+  reabrirLeccion: (sendaId: string, n: number, l: number) => Promise<void>;
   abandonarLeccion: () => Promise<void>;
-  reabrirLeccion: (
-    sendaId: CategoryId,
-    n: 1 | 2 | 3,
-    l: 1 | 2 | 3,
-  ) => Promise<void>;
 }
 
 export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
@@ -77,20 +70,17 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
     allProgress.forEach((p) => {
       map[p.id] = p;
     });
-
     let racha = await db.rachaDiscipulado.get("global");
     if (!racha) {
       racha = { id: "global", current: 0, best: 0, lastDay: null };
       await db.rachaDiscipulado.put(racha);
     }
-
     set({ progresoLecciones: map, racha });
   },
 
   iniciarLeccion: async (sendaId, n, l) => {
     const id = `${sendaId}:${n}:${l}`;
     const existing = get().progresoLecciones[id];
-
     let nuevoEstado: EstadoLeccion = "en_curso";
     let tarjetaIdx = 0;
     let preguntaIdx = 0;
@@ -131,7 +121,6 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
         enRepaso,
       },
     }));
-
     eventBus.emit("leccion_iniciada", { leccionId: id, enRepaso });
   },
 
@@ -148,14 +137,10 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
       preguntaIdx,
       ultimaActividadAt: Date.now(),
     };
-
-    // Actualizamos el estado local inmediatamente para UI fluida
     set((state) => ({
       progresoLecciones: { ...state.progresoLecciones, [id]: updated },
       leccionActiva: { ...leccionActiva, tarjetaIdx, preguntaIdx },
     }));
-
-    // Persistencia
     await db.progresoLeccion.put(updated);
     eventBus.emit("posicion_guardada", {
       leccionId: id,
@@ -165,34 +150,38 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
   },
 
   responderCheck: (preguntaIdx, selected) => {
-    // EFÍMERO: No toca Dexie. Patrón anti-exploit.
     const { leccionActiva } = get();
-    if (!leccionActiva) return { correct: false };
+    if (!leccionActiva)
+      return { correcto: false, feedback: "", referencia: "" };
 
     const leccion = getLeccion(
       leccionActiva.sendaId,
       leccionActiva.nivelNumber,
       leccionActiva.leccionNumber,
     );
-    if (!leccion) return { correct: false };
+    if (!leccion) return { correcto: false, feedback: "", referencia: "" };
 
     const p = leccion.preguntas[preguntaIdx];
-    const correct = p.correctIndex === selected;
+    const correcto = p.correctIndex === selected;
 
     eventBus.emit("check_respondido", {
       leccionId: leccion.id,
       preguntaIdx,
-      correct,
+      correcto,
     });
 
-    return { correct, feedback: correct ? p.feedbackCorrecto : null };
+    return {
+      correcto,
+      feedback: correcto
+        ? p.feedbackCorrecto.afirmacion
+        : "Inténtalo de nuevo.",
+      pista: p.pistaReintento,
+      referencia: p.referenciaRVR1960,
+    };
   },
 
-  reintentarCheck: (preguntaIdx) => {
-    const { leccionActiva } = get();
-    if (!leccionActiva) return;
-    const id = `${leccionActiva.sendaId}:${leccionActiva.nivelNumber}:${leccionActiva.leccionNumber}`;
-    eventBus.emit("check_reintentado", { leccionId: id, preguntaIdx });
+  reintentarCheck: (leccionId, preguntaIdx) => {
+    eventBus.emit("check_reintentado", { leccionId, preguntaIdx });
   },
 
   finalizarLeccion: async () => {
@@ -207,17 +196,15 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
     const now = Date.now();
     const today = todayKey();
 
-    // Transacción atómica
     await db.transaction(
       "rw",
       db.progresoLeccion,
       db.rachaDiscipulado,
       async () => {
-        // 1. Actualizar Lección
         const updatedProgreso: ProgresoLeccion = {
           ...existing,
           estado: "recorrida",
-          primeraRecorridaAt: existing.primeraRecorridaAt ?? now, // Anti-farming
+          primeraRecorridaAt: existing.primeraRecorridaAt ?? now,
           ultimoRepasoAt: isRepaso ? now : existing.ultimoRepasoAt,
           vecesRepasada: isRepaso
             ? existing.vecesRepasada + 1
@@ -226,7 +213,6 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
         };
         await db.progresoLeccion.put(updatedProgreso);
 
-        // 2. Actualizar Racha (B5 separada)
         let newRacha = { ...racha! };
         if (newRacha.lastDay !== today) {
           const yesterday = new Date(Date.now() - 86400000)
@@ -238,60 +224,36 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
           newRacha.lastDay = today;
           await db.rachaDiscipulado.put(newRacha);
         }
-
-        // 3. Emitir eventos (post-commit exitoso)
-        eventBus.emit("leccion_recorrida", {
-          leccionId: id,
-          enRepaso: isRepaso,
-        });
-
-        // Lógica de desbloqueo
-        if (!isRepaso) {
-          const nivelPrefix = `${leccionActiva.sendaId}:${leccionActiva.nivelNumber}:`;
-          const nivelProgreso = Object.values(progresoLecciones).filter((p) =>
-            p.id.startsWith(nivelPrefix),
-          );
-          const todasRecorridas = [1, 2, 3].every(
-            (l) =>
-              l === leccionActiva.leccionNumber ||
-              nivelProgreso.find((p) => p.leccionNumber === l)?.estado ===
-                "recorrida",
-          );
-          if (todasRecorridas) {
-            eventBus.emit("nivel_recorrido", {
-              sendaId: leccionActiva.sendaId,
-              nivelNumber: leccionActiva.nivelNumber,
-            });
-            if (leccionActiva.nivelNumber === 3) {
-              eventBus.emit("senda_recorrida", {
-                sendaId: leccionActiva.sendaId,
-              });
-            } else {
-              eventBus.emit("nivel_desbloqueado", {
-                sendaId: leccionActiva.sendaId,
-                nivelNumber: leccionActiva.nivelNumber + 1,
-              });
-            }
-          }
-        }
       },
     );
 
-    // Actualizar estado local (CORREGIDO: await fuera de set)
     const updatedRacha = await db.rachaDiscipulado.get("global");
-
     set((state) => ({
       progresoLecciones: {
         ...state.progresoLecciones,
-        [id]: {
-          ...existing,
-          estado: "recorrida",
-          primeraRecorridaAt: existing.primeraRecorridaAt ?? now,
-        },
+        [id]: { ...existing, estado: "recorrida" },
       },
       racha: updatedRacha ?? state.racha,
       leccionActiva: null,
     }));
+    eventBus.emit("leccion_recorrida", { leccionId: id, enRepaso: isRepaso });
+  },
+
+  abrirRepaso: async (leccionId: string) => {
+    const [sendaId, n, l] = leccionId.split(":");
+    await get().iniciarLeccion(
+      sendaId as CategoryId,
+      Number(n) as 1 | 2 | 3,
+      Number(l) as 1 | 2 | 3,
+    );
+  },
+
+  reabrirLeccion: async (sendaId: string, n: number, l: number) => {
+    await get().iniciarLeccion(
+      sendaId as CategoryId,
+      n as 1 | 2 | 3,
+      l as 1 | 2 | 3,
+    );
   },
 
   abandonarLeccion: async () => {
@@ -305,20 +267,15 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
     });
     set({ leccionActiva: null });
   },
-
-  reabrirLeccion: async (sendaId, n, l) => {
-    await get().iniciarLeccion(sendaId, n, l);
-  },
 }));
 
 // ==========================================
-// SELECTORES (Derivados)
+// SELECTORES
 // ==========================================
-
 export const selectEstadoLeccion = (
   state: DiscipleshipStore,
   id: string,
-): EstadoLeccion | "bloqueada" => {
+): EstadoLeccion => {
   const p = state.progresoLecciones[id];
   if (p) return p.estado;
 
@@ -340,12 +297,11 @@ export const selectEstadoLeccion = (
     );
     const allRecorridas = [1, 2, 3].every(
       (l) =>
-        prevNivel.find((p) => p.leccionNumber === l)?.estado === "recorrida" ||
-        prevNivel.find((p) => p.leccionNumber === l)?.estado === "repaso",
+        prevNivel.find((p) => p.leccionNumber === l)?.estado === "recorrida",
     );
     if (allRecorridas) return "sin_empezar";
   }
-  return "bloqueada";
+  return "bloqueado";
 };
 
 export const selectProximoPaso = (state: DiscipleshipStore) => {
@@ -355,12 +311,7 @@ export const selectProximoPaso = (state: DiscipleshipStore) => {
       const id = `${sendaId}:${n}:${l}`;
       const estado = selectEstadoLeccion(state, id);
       if (estado !== "recorrida") {
-        return {
-          sendaId,
-          nivelNumber: n as 1 | 2 | 3,
-          leccionNumber: l as 1 | 2 | 3,
-          estado,
-        };
+        return { sendaId, nivelNumber: n, leccionNumber: l, estado };
       }
     }
   }
@@ -370,12 +321,8 @@ export const selectProximoPaso = (state: DiscipleshipStore) => {
 export const selectPosicionAReanudar = (
   state: DiscipleshipStore,
   id: string,
-) => {
+): PosicionReanudar | null => {
   const p = state.progresoLecciones[id];
   if (!p) return null;
-  return {
-    tarjetaIdx: p.tarjetaIdx,
-    preguntaIdx: p.preguntaIdx,
-    enRepaso: p.estado === "repaso",
-  };
+  return { tarjetaIdx: p.tarjetaIdx, preguntaIdx: p.preguntaIdx };
 };

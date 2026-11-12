@@ -92,7 +92,7 @@ describe("useDiscipleshipStore", () => {
       },
     });
     const res = useDiscipleshipStore.getState().responderCheck(0, 0);
-    expect(res.correct).toBe(true);
+    expect(res.correcto).toBe(true);
     expect(db.progresoLeccion.put).not.toHaveBeenCalled();
     expect(emitSpy).toHaveBeenCalledWith(
       "check_respondido",
@@ -169,10 +169,10 @@ describe("useDiscipleshipStore", () => {
     ).toBe("sin_empezar");
   });
 
-  it("#10 selectEstadoLeccion: retorna 'bloqueada' si el hermano anterior no está recorrido", () => {
+  it("#10 selectEstadoLeccion: retorna 'bloqueado' si el hermano anterior no está recorrido", () => {
     expect(
       selectEstadoLeccion(useDiscipleshipStore.getState(), "evangelios:1:2"),
-    ).toBe("bloqueada");
+    ).toBe("bloqueado");
   });
 
   it("#11 selectEstadoLeccion: retorna 'sin_empezar' si el hermano anterior está recorrido", () => {
@@ -276,6 +276,6 @@ describe("useDiscipleshipStore", () => {
     });
     expect(
       selectEstadoLeccion(useDiscipleshipStore.getState(), "evangelios:2:1"),
-    ).toBe("bloqueada");
+    ).toBe("bloqueado");
   });
 });
