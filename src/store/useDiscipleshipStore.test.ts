@@ -3,21 +3,15 @@ import {
   useDiscipleshipStore,
   selectEstadoLeccion,
   selectProximoPaso,
+  selectPosicionAReanudar,
 } from "./useDiscipleshipStore";
 import { db } from "../db/database";
 import { eventBus } from "./eventBus";
 import type { ProgresoLeccion } from "../types/discipleship";
 
-// ============================================================
-// MOCKS
-// ============================================================
-
 vi.mock("../db/database", () => ({
   db: {
-    progresoLeccion: {
-      put: vi.fn(),
-      toArray: vi.fn().mockResolvedValue([]),
-    },
+    progresoLeccion: { put: vi.fn(), toArray: vi.fn().mockResolvedValue([]) },
     rachaDiscipulado: {
       put: vi.fn(),
       get: vi
@@ -29,7 +23,6 @@ vi.mock("../db/database", () => ({
           lastDay: null,
         }),
     },
-    // Captura el callback (siempre el último argumento) sin importar cuántas tablas se le pasen
     transaction: vi.fn((...args: any[]) => {
       const callback = args[args.length - 1];
       if (typeof callback === "function") return callback();
@@ -52,11 +45,6 @@ vi.mock("../data/discipleship", () => ({
   })),
 }));
 
-// ============================================================
-// HELPERS
-// ============================================================
-
-// Helper para crear un objeto ProgresoLeccion válido sin repetir código
 const mockProgreso = (estado: any, extra = {}): ProgresoLeccion =>
   ({
     id: "evangelios:1:1",
@@ -71,13 +59,8 @@ const mockProgreso = (estado: any, extra = {}): ProgresoLeccion =>
     ...extra,
   }) as ProgresoLeccion;
 
-// ============================================================
-// TESTS
-// ============================================================
-
 describe("useDiscipleshipStore", () => {
   let emitSpy: any;
-
   beforeEach(() => {
     vi.clearAllMocks();
     useDiscipleshipStore.setState({
@@ -88,7 +71,6 @@ describe("useDiscipleshipStore", () => {
     emitSpy = vi.spyOn(eventBus, "emit");
   });
 
-  // --- Acciones ---
   it("#4 iniciarLeccion: crea registro y emite evento", async () => {
     await useDiscipleshipStore.getState().iniciarLeccion("evangelios", 1, 1);
     expect(db.progresoLeccion.put).toHaveBeenCalled();
@@ -131,7 +113,6 @@ describe("useDiscipleshipStore", () => {
       progresoLecciones: { "evangelios:1:1": mockProgreso("en_curso") },
       racha: { id: "global", current: 0, best: 0, lastDay: null },
     });
-
     await useDiscipleshipStore.getState().finalizarLeccion();
     expect(db.transaction).toHaveBeenCalled();
     expect(emitSpy).toHaveBeenCalledWith(
@@ -156,12 +137,11 @@ describe("useDiscipleshipStore", () => {
       },
       racha: { id: "global", current: 0, best: 0, lastDay: null },
     });
-
     await useDiscipleshipStore.getState().finalizarLeccion();
     const saved = vi.mocked(db.progresoLeccion.put).mock
       .calls[0][0] as ProgresoLeccion;
-    expect(saved.primeraRecorridaAt).toBe(12345); // No cambió
-    expect(saved.vecesRepasada).toBe(1); // Sumó repaso
+    expect(saved.primeraRecorridaAt).toBe(12345);
+    expect(saved.vecesRepasada).toBe(1);
   });
 
   it("#8 abandonarLeccion: guarda posición y limpia sesión", async () => {
@@ -183,15 +163,16 @@ describe("useDiscipleshipStore", () => {
     expect(useDiscipleshipStore.getState().leccionActiva).toBeNull();
   });
 
-  // --- Selectores ---
   it("#9 selectEstadoLeccion: retorna 'sin_empezar' para la primera lección", () => {
-    const state = useDiscipleshipStore.getState();
-    expect(selectEstadoLeccion(state, "evangelios:1:1")).toBe("sin_empezar");
+    expect(
+      selectEstadoLeccion(useDiscipleshipStore.getState(), "evangelios:1:1"),
+    ).toBe("sin_empezar");
   });
 
   it("#10 selectEstadoLeccion: retorna 'bloqueada' si el hermano anterior no está recorrido", () => {
-    const state = useDiscipleshipStore.getState();
-    expect(selectEstadoLeccion(state, "evangelios:1:2")).toBe("bloqueada");
+    expect(
+      selectEstadoLeccion(useDiscipleshipStore.getState(), "evangelios:1:2"),
+    ).toBe("bloqueada");
   });
 
   it("#11 selectEstadoLeccion: retorna 'sin_empezar' si el hermano anterior está recorrido", () => {
@@ -207,11 +188,11 @@ describe("useDiscipleshipStore", () => {
     useDiscipleshipStore.setState({
       progresoLecciones: { "evangelios:1:1": mockProgreso("recorrida") },
     });
-    const step = selectProximoPaso(useDiscipleshipStore.getState());
-    expect(step?.leccionNumber).toBe(2);
+    expect(
+      selectProximoPaso(useDiscipleshipStore.getState())?.leccionNumber,
+    ).toBe(2);
   });
 
-  // --- EventBus ---
   it("#13 eventBus: emite y recibe eventos", () => {
     const listener = vi.fn();
     const unsub = eventBus.on(listener);
@@ -222,7 +203,6 @@ describe("useDiscipleshipStore", () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  // --- Lógica de negocio extra ---
   it("#14 iniciarLeccion: si ya estaba 'recorrida', entra como 'repaso'", async () => {
     useDiscipleshipStore.setState({
       progresoLecciones: { "evangelios:1:1": mockProgreso("recorrida") },
@@ -257,5 +237,45 @@ describe("useDiscipleshipStore", () => {
       expect.anything(),
       expect.any(Function),
     );
+  });
+
+  it("#17 selectPosicionAReanudar: retorna tarjeta y pregunta exactas", () => {
+    useDiscipleshipStore.setState({
+      progresoLecciones: {
+        "evangelios:1:1": mockProgreso("en_curso", {
+          tarjetaIdx: 2,
+          preguntaIdx: 1,
+        }),
+      },
+    });
+    const pos = selectPosicionAReanudar(
+      useDiscipleshipStore.getState(),
+      "evangelios:1:1",
+    );
+    expect(pos?.tarjetaIdx).toBe(2);
+    expect(pos?.preguntaIdx).toBe(1);
+  });
+
+  it("#18 selectProximoPaso: retorna null si todo está recorrido", () => {
+    const allRecorridas: Record<string, ProgresoLeccion> = {};
+    for (let n = 1; n <= 3; n++) {
+      for (let l = 1; l <= 3; l++) {
+        allRecorridas[`evangelios:${n}:${l}`] = mockProgreso("recorrida", {
+          nivelNumber: n,
+          leccionNumber: l,
+        });
+      }
+    }
+    useDiscipleshipStore.setState({ progresoLecciones: allRecorridas });
+    expect(selectProximoPaso(useDiscipleshipStore.getState())).toBeNull();
+  });
+
+  it("#19 selectEstadoLeccion: nivel 2 bloqueado hasta completar nivel 1", () => {
+    useDiscipleshipStore.setState({
+      progresoLecciones: { "evangelios:1:1": mockProgreso("recorrida") },
+    });
+    expect(
+      selectEstadoLeccion(useDiscipleshipStore.getState(), "evangelios:2:1"),
+    ).toBe("bloqueada");
   });
 });
