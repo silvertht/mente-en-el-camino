@@ -1,12 +1,13 @@
 import { motion, useReducedMotion } from "motion/react";
-import { Button } from "../Button";
-import { useMultiplayerStore } from "../../store/useMultiplayerStore";
 
-export function IntersticialPasa({ children }: { children: React.ReactNode }) {
+export function IntersticialPasa({
+  nombreJugador,
+  onContinuar,
+}: {
+  nombreJugador: string;
+  onContinuar: () => void;
+}) {
   const reduce = useReducedMotion();
-  const jugadores = useMultiplayerStore((s: any) => s.jugadores as any[]);
-  const turnoId = useMultiplayerStore((s: any) => s.turnoActualId);
-  const actual = jugadores.find((j: any) => j.id === turnoId);
 
   return (
     <motion.div
@@ -17,13 +18,15 @@ export function IntersticialPasa({ children }: { children: React.ReactNode }) {
     >
       <p className="text-noche-100 text-lg text-center">
         Pasa el dispositivo a{" "}
-        <strong className="text-alba-400">{actual?.nombre ?? "Jugador"}</strong>
-        .
+        <strong className="text-alba-400">{nombreJugador}</strong>.
       </p>
-      <Button variant="primary" size="lg" fullWidth>
+      <button
+        type="button"
+        onClick={onContinuar}
+        className="w-full min-h-[44px] rounded-xl bg-alba-400 text-noche-950 font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-alba-400"
+      >
         Estoy listo
-      </Button>
-      <div className="sr-only">{children}</div>
+      </button>
     </motion.div>
   );
 }

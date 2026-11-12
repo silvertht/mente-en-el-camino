@@ -1,32 +1,31 @@
 import { useEffect, useRef } from "react";
-import { useDiscipleshipStore } from "../store/useDiscipleshipStore";
+import {
+  useDiscipleshipStore,
+  selectEstadoLeccion,
+  selectEstadoNivel,
+  selectEstadoSenda,
+  selectProgresoSenda,
+} from "../store/useDiscipleshipStore";
+import { getSendaPiloto } from "../data/discipleship";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { SendaHeader } from "../components/discipleship/SendaHeader";
 import { NivelHito } from "../components/discipleship/NivelHito";
 import { LeccionNode } from "../components/discipleship/LeccionNode";
 import { EstadoVacio } from "../components/support/EstadoVacio";
+import { EstadoCarga } from "../components/support/EstadoCarga";
 import { EstadoOffline } from "../components/support/EstadoOffline";
 
-export function ElCamino() {
+export function ElCamino({
+  onSelectLeccion,
+}: {
+  onSelectLeccion: (leccionId: string) => void;
+}) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const online = useOnlineStatus();
-  const estructura = useDiscipleshipStore((s: any) => s.estructura);
-  const selectEstadoSenda = useDiscipleshipStore(
-    (s: any) => s.selectEstadoSenda,
-  );
-  const selectEstadoNivel = useDiscipleshipStore(
-    (s: any) => s.selectEstadoNivel,
-  );
-  const selectEstadoLeccion = useDiscipleshipStore(
-    (s: any) => s.selectEstadoLeccion,
-  );
-  const selectProgresoSenda = useDiscipleshipStore(
-    (s: any) => s.selectProgresoSenda,
-  );
-  const selectProximoPaso = useDiscipleshipStore(
-    (s: any) => s.selectProximoPaso,
-  );
-  const proximo = selectProximoPaso();
+
+  // Suscripción: re-renderiza cuando cambia progreso
+  useDiscipleshipStore((s) => s.progresoLecciones);
+  const contenidoCargado = useDiscipleshipStore((s) => s.contenidoCargado);
 
   useEffect(() => {
     headingRef.current?.focus();
@@ -38,7 +37,14 @@ export function ElCamino() {
         <></>
       </EstadoOffline>
     );
-  if (!estructura || estructura.length === 0) return <EstadoVacio />;
+  if (!contenidoCargado) return <EstadoCarga />;
+
+  const senda = getSendaPiloto();
+  if (!senda) return <EstadoVacio />;
+
+  const state = useDiscipleshipStore.getState();
+  const stSenda = selectEstadoSenda(state, senda.sendaId);
+  const progsSenda = selectProgresoSenda(state, senda.sendaId);
 
   return (
     <main className="relative mx-auto max-w-md px-4 pb-24">
@@ -49,46 +55,48 @@ export function ElCamino() {
       >
         El Camino
       </h1>
-
-      {estructura.map((senda: any) => (
-        <section key={senda.id} className="mt-6">
-          <SendaHeader
-            nombre={senda.nombre}
-            estado={selectEstadoSenda(senda.id)}
-            progreso={selectProgresoSenda(senda.id)}
-          />
-          <div className="relative mt-4 space-y-6">
-            {senda.niveles.map((nivel: any) => (
-              <div key={nivel.id} className="space-y-4">
-                <NivelHito
-                  numero={nivel.numero}
-                  nombre={nivel.nombre}
-                  estado={selectEstadoNivel(nivel.id)}
-                />
-                <ul className="grid grid-cols-1 gap-3">
-                  {nivel.lecciones.map((lec: any, i: number) => (
-                    <li key={lec.id} className="flex justify-center">
+      <SendaHeader
+        nombre={senda.titulo}
+        estado={stSenda}
+        progreso={progsSenda}
+      />
+      <div className="relative mt-4 space-y-6">
+        {senda.niveles.map((nivel) => {
+          const stNivel = selectEstadoNivel(
+            state,
+            `${senda.sendaId}:${nivel.nivelNumber}`,
+          );
+          return (
+            <div key={nivel.nivelNumber} className="space-y-4">
+              <NivelHito
+                numero={nivel.nivelNumber}
+                nombre={nivel.titulo}
+                estado={stNivel}
+              />
+              <ul className="grid grid-cols-1 gap-3">
+                {nivel.lecciones.map((lec, i) => {
+                  const lecId = `${senda.sendaId}:${nivel.nivelNumber}:${lec.leccionNumber}`;
+                  const stLec = selectEstadoLeccion(state, lecId);
+                  return (
+                    <li key={lecId} className="flex justify-center">
                       <LeccionNode
-                        id={lec.id}
-                        numero={lec.numero}
+                        id={lecId}
+                        numero={lec.leccionNumber}
                         titulo={lec.titulo}
-                        estado={selectEstadoLeccion(lec.id)}
-                        onClick={() => {
-                          /* navegación a Leccion — ver §5.3 del reporte */
+                        estado={stLec}
+                        onClick={(id) => {
+                          if (stLec !== "bloqueado") onSelectLeccion(id);
                         }}
                         index={i}
                       />
                     </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </section>
-      ))}
-      <span className="sr-only" aria-live="polite">
-        {proximo ? `Próximo paso: ${proximo.leccionId}` : ""}
-      </span>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
     </main>
   );
 }

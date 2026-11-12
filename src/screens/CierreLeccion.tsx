@@ -2,16 +2,19 @@ import { useEffect, useRef } from "react";
 import { Button } from "../components/Button";
 
 export function CierreLeccion({
+  leccionId,
   onSiguiente,
   onVolver,
 }: {
-  onSiguiente?: () => void;
+  leccionId: string;
+  onSiguiente: () => void;
   onVolver: () => void;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     headingRef.current?.focus();
   }, []);
+  void leccionId;
 
   return (
     <main className="mx-auto max-w-md px-4 pb-32 pt-10 text-center">
@@ -29,11 +32,9 @@ export function CierreLeccion({
         Así es. Has dado un paso más.
       </h1>
       <div className="fixed inset-x-4 bottom-4 space-y-2">
-        {onSiguiente && (
-          <Button variant="primary" fullWidth onClick={onSiguiente}>
-            Siguiente lección
-          </Button>
-        )}
+        <Button variant="primary" fullWidth onClick={onSiguiente}>
+          Siguiente lección
+        </Button>
         <Button variant="ghost" fullWidth onClick={onVolver}>
           Volver al camino
         </Button>

@@ -19,9 +19,16 @@ import type { CategoryId } from "../types";
 interface Props {
   onStartGame: () => void;
   onOpenProfile: () => void;
+  onOpenCamino: () => void;
+  onOpenGrupo: () => void;
 }
 
-export function Home({ onStartGame, onOpenProfile }: Props) {
+export function Home({
+  onStartGame,
+  onOpenProfile,
+  onOpenCamino,
+  onOpenGrupo,
+}: Props) {
   const profile = useGameStore((s) => s.profile);
   const isLoadingQuestions = useGameStore((s) => s.isLoadingQuestions);
   const loadAndStartGame = useGameStore((s) => s.loadAndStartGame);
@@ -334,7 +341,6 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
               <h2 className="text-xl font-black text-white sm:text-2xl">
                 Elige tu senda
               </h2>
-              {/* Texto dinámico: ahora refleja el total real (9) */}
               <p className="mt-1 text-sm text-white/50">
                 {CATEGORY_LIST.length} rutas para crecer hoy
               </p>
@@ -349,7 +355,6 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
             initial="hidden"
             animate="visible"
             className={[
-              // Grid optimizado para 9 ítems en móvil
               "grid grid-cols-2 gap-3 transition-opacity duration-200 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4",
               isLoadingQuestions ? "pointer-events-none opacity-60" : "",
             ].join(" ")}
@@ -366,7 +371,43 @@ export function Home({ onStartGame, onOpenProfile }: Props) {
           </motion.div>
         </motion.div>
 
-        {/* ============ 6. INSTALAR APP (Solo si no está instalada) ============ */}
+        {/* ============ 6. DISCIPULADO Y GRUPO (Fase 5) ============ */}
+        <motion.div variants={fadeInUp} className="mb-6 space-y-3">
+          <button
+            type="button"
+            onClick={onOpenCamino}
+            aria-label="Tu camino, abrir mapa de discipulado"
+            className="w-full min-h-11 rounded-2xl border border-noche-700/60 bg-noche-800/60 p-4 text-left transition-colors hover:bg-noche-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-alba-400 focus-visible:ring-offset-2 focus-visible:ring-offset-noche-950"
+          >
+            <span className="text-2xl" aria-hidden="true">
+              🗺️
+            </span>
+            <span className="mt-1 block text-sm font-bold text-alba-300">
+              Tu camino
+            </span>
+            <span className="text-xs text-white/60">
+              Sigue el sendero del discipulado.
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={onOpenGrupo}
+            aria-label="Jugar en grupo, abrir multijugador local"
+            className="w-full min-h-11 rounded-2xl border border-noche-700/60 bg-noche-800/60 p-4 text-left transition-colors hover:bg-noche-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-alba-400 focus-visible:ring-offset-2 focus-visible:ring-offset-noche-950"
+          >
+            <span className="text-2xl" aria-hidden="true">
+              👥
+            </span>
+            <span className="mt-1 block text-sm font-bold text-alba-300">
+              Jugar en grupo
+            </span>
+            <span className="text-xs text-white/60">
+              Duelo por turnos en el mismo dispositivo.
+            </span>
+          </button>
+        </motion.div>
+
+        {/* ============ 7. INSTALAR APP ============ */}
         {!isStandalone && (
           <motion.div variants={fadeInUp} className="mb-6 flex justify-center">
             <Button

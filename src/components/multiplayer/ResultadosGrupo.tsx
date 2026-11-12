@@ -2,15 +2,16 @@ import { Button } from "../Button";
 import { useMultiplayerStore } from "../../store/useMultiplayerStore";
 import { colorJugadorSeguro } from "../../utils/multiplayerVisual";
 import { DesempatePanel } from "./DesempatePanel";
+import type { Jugador } from "../../types/multiplayer";
 
 export function ResultadosGrupo() {
-  const jugadores = useMultiplayerStore((s: any) => s.jugadores as any[]);
-  const ganadorId = useMultiplayerStore((s: any) => s.ganadorId);
-  const reset = useMultiplayerStore((s: any) => s.resetPartida);
+  const jugadores = useMultiplayerStore((s) => s.jugadores as Jugador[]);
+  const ganadorId = useMultiplayerStore((s) => s.ganadorId as string | null);
+  const resetPartida = useMultiplayerStore((s) => s.resetPartida);
 
   if (ganadorId === null) return <DesempatePanel />;
 
-  const ganador = jugadores.find((j: any) => j.id === ganadorId);
+  const ganador = jugadores.find((j) => j.id === ganadorId);
   const c = ganador ? colorJugadorSeguro(ganador.colorToken) : null;
 
   return (
@@ -26,7 +27,7 @@ export function ResultadosGrupo() {
         Ganador: {ganador?.nombre}
       </h2>
       <ul className="space-y-2">
-        {jugadores.map((j: any) => (
+        {jugadores.map((j) => (
           <li
             key={j.id}
             className="flex justify-between rounded-xl bg-noche-800/60 px-4 py-3 text-sm text-noche-100"
@@ -39,10 +40,10 @@ export function ResultadosGrupo() {
         ))}
       </ul>
       <div className="fixed inset-x-4 bottom-4 space-y-2">
-        <Button variant="primary" fullWidth onClick={reset}>
+        <Button variant="primary" fullWidth onClick={resetPartida}>
           Otra ronda
         </Button>
-        <Button variant="ghost" fullWidth onClick={reset}>
+        <Button variant="ghost" fullWidth onClick={resetPartida}>
           Volver al inicio
         </Button>
       </div>
