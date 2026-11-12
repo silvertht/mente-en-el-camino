@@ -11,6 +11,8 @@ import type {
   ProgresoLeccion,
   RachaDiscipulado,
   EstadoLeccion,
+  EstadoNivel,
+  EstadoSenda,
   PosicionReanudar,
   ResultadoCheck,
 } from "../types/discipleship";
@@ -153,7 +155,6 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
     const { leccionActiva } = get();
     if (!leccionActiva)
       return { correcto: false, feedback: "", referencia: "" };
-
     const leccion = getLeccion(
       leccionActiva.sendaId,
       leccionActiva.nivelNumber,
@@ -163,7 +164,6 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
 
     const p = leccion.preguntas[preguntaIdx];
     const correcto = p.correctIndex === selected;
-
     eventBus.emit("check_respondido", {
       leccionId: leccion.id,
       preguntaIdx,
@@ -270,7 +270,7 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
 }));
 
 // ==========================================
-// SELECTORES (Derivados)
+// SELECTORES DERIVADOS (Implementación real)
 // ==========================================
 export const selectEstadoLeccion = (
   state: DiscipleshipStore,
@@ -304,6 +304,67 @@ export const selectEstadoLeccion = (
   return "bloqueado";
 };
 
+export const selectProgresoNivel = (
+  state: DiscipleshipStore,
+  nivelId: string,
+): { recorridas: number; total: number } => {
+  const [sendaId, nStr] = nivelId.split(":");
+  const n = Number(nStr);
+  let recorridas = 0;
+  for (let l = 1; l <= 3; l++) {
+    const p = state.progresoLecciones[`${sendaId}:${n}:${l}`];
+    if (p?.estado === "recorrida") recorridas++;
+  }
+  return { recorridas, total: 3 };
+};
+
+export const selectProgresoSenda = (
+  state: DiscipleshipStore,
+  sendaId: string,
+): { recorridas: number; total: number } => {
+  let recorridas = 0;
+  for (let n = 1; n <= 3; n++) {
+    const p = selectProgresoNivel(state, `${sendaId}:${n}`);
+    recorridas += p.recorridas;
+  }
+  return { recorridas, total: 9 };
+};
+
+export const selectEstadoNivel = (
+  state: DiscipleshipStore,
+  nivelId: string,
+): EstadoNivel => {
+  const [sendaId, nStr] = nivelId.split(":");
+  const n = Number(nStr);
+  const estados = [1, 2, 3].map((l) =>
+    selectEstadoLeccion(state, `${sendaId}:${n}:${l}`),
+  );
+
+  if (estados.every((e) => e === "bloqueado")) return "bloqueado";
+  if (estados.every((e) => e === "sin_empezar" || e === "bloqueado"))
+    return "sin_empezar";
+  if (estados.every((e) => e === "recorrida" || e === "repaso"))
+    return "recorrido";
+  if (estados.some((e) => e === "repaso")) return "repaso";
+  return "en_curso";
+};
+
+export const selectEstadoSenda = (
+  state: DiscipleshipStore,
+  sendaId: string,
+): EstadoSenda => {
+  const niveles = [1, 2, 3].map((n) =>
+    selectEstadoNivel(state, `${sendaId}:${n}`),
+  );
+
+  if (niveles.every((e) => e === "bloqueado")) return "bloqueado";
+  if (niveles.every((e) => e === "sin_empezar" || e === "bloqueado"))
+    return "sin_empezar";
+  if (niveles.every((e) => e === "recorrido")) return "recorrida";
+  if (niveles.some((e) => e === "repaso")) return "repaso";
+  return "en_curso";
+};
+
 export const selectProximoPaso = (state: DiscipleshipStore) => {
   const sendaId: CategoryId = "evangelios";
   for (let n = 1; n <= 3; n++) {
@@ -326,20 +387,3 @@ export const selectPosicionAReanudar = (
   if (!p) return null;
   return { tarjetaIdx: p.tarjetaIdx, preguntaIdx: p.preguntaIdx };
 };
-
-export const selectEstadoNivel = (
-  _state: DiscipleshipStore,
-  _id: string,
-): EstadoLeccion => "sin_empezar";
-export const selectEstadoSenda = (
-  _state: DiscipleshipStore,
-  _id: string,
-): EstadoLeccion => "sin_empezar";
-export const selectProgresoSenda = (
-  _state: DiscipleshipStore,
-  _id: string,
-) => ({ recorridas: 0, total: 3 });
-export const selectProgresoNivel = (
-  _state: DiscipleshipStore,
-  _id: string,
-) => ({ recorridas: 0, total: 3 });

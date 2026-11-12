@@ -35,7 +35,7 @@ export interface ResultadoCheck {
 }
 
 // ============================================================
-// CONTENIDO EDITORIAL (Content layer)
+// CONTENIDO EDITORIAL
 // ============================================================
 export type NivelNumber = 1 | 2 | 3;
 export type LeccionNumber = 1 | 2 | 3;
@@ -83,7 +83,7 @@ export interface SendaDiscipulado {
 }
 
 // ============================================================
-// PROGRESO PERSISTIDO (Dexie v3)
+// PROGRESO PERSISTIDO
 // ============================================================
 export interface ProgresoLeccion {
   id: string;
@@ -119,6 +119,7 @@ export interface LocalSession {
   roundsPerPlayer: number;
 }
 
+// Mantenemos LocalPlayer para Dexie, pero no lo exportaremos en el index general.
 export interface LocalPlayer {
   id?: number;
   sessionId: number;

@@ -2,8 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useMultiplayerStore } from "./useMultiplayerStore";
 import { db, getUserRating } from "../db/database";
 import { eventBus } from "./eventBus";
-import { pickQuestionsByRating } from "../utils/rating";
-import type { LocalRound } from "../types/discipleship";
 
 vi.mock("../db/database", () => ({
   db: {
@@ -26,91 +24,119 @@ vi.mock("../db/database", () => ({
 }));
 
 vi.mock("../utils/rating", () => ({
-  pickQuestionsByRating: vi.fn().mockResolvedValue([
-    { id: "q1", type: "multiple-choice", correctIndex: 0 },
-    { id: "q2", type: "multiple-choice", correctIndex: 1 },
-    { id: "q3", type: "multiple-choice", correctIndex: 0 },
-    { id: "q4", type: "multiple-choice", correctIndex: 1 },
-  ]),
+  pickQuestionsByRating: vi.fn().mockResolvedValue([]),
 }));
 
-describe("useMultiplayerStore", () => {
+describe("useMultiplayerStore (API Canónica)", () => {
   let emitSpy: any;
   beforeEach(() => {
     vi.clearAllMocks();
-    useMultiplayerStore.setState({
-      sessionId: 123,
-      players: [
-        { id: 1, displayName: "A", order: 0, finalScore: 0, sessionId: 123 },
-        { id: 2, displayName: "B", order: 1, finalScore: 0, sessionId: 123 },
-      ],
-      rounds: [],
-      questions: [],
-      currentRound: 1,
-      currentPlayerIndex: 0,
-    });
+    useMultiplayerStore.getState().resetPartida();
     emitSpy = vi.spyOn(eventBus, "emit");
   });
 
-  it("#25 iniciarPartida: guarda en Dexie y lee el rating sin modificarlo (B7)", async () => {
-    await useMultiplayerStore.getState().iniciarPartida(["A", "B"], 2);
+  it("#25 iniciarPartida: guarda en Dexie y establece el estado 'en_curso'", async () => {
+    const jugadoresIniciales = [
+      { id: "1", nombre: "A", icono: "user1", colorToken: "alba" as const },
+      { id: "2", nombre: "B", icono: "user2", colorToken: "reino" as const },
+    ];
+    await useMultiplayerStore.getState().iniciarPartida(jugadoresIniciales);
+
     expect(getUserRating).toHaveBeenCalled();
     expect(db.localSessions.add).toHaveBeenCalled();
     expect(db.localPlayers.bulkAdd).toHaveBeenCalled();
-    expect(pickQuestionsByRating).toHaveBeenCalled();
 
-    const players = useMultiplayerStore.getState().players;
-    expect(players[0].id).toBe(1);
-    expect(players[1].id).toBe(2);
+    const state = useMultiplayerStore.getState();
+    expect(state.estadoPartida).toBe("en_curso");
+    expect(state.jugadores).toHaveLength(2);
+    expect(state.jugadores[0].nombre).toBe("A");
+    expect(state.turnoActualId).toBe("1");
   });
 
-  it("#26 responderTurno: es efímero, no toca Dexie (B7)", () => {
+  it("#26 responderTurno: actualiza puntaje/fallos y avanza turno", () => {
+    useMultiplayerStore.setState({
+      estadoPartida: "en_curso",
+      jugadores: [
+        {
+          id: "1",
+          nombre: "A",
+          icono: "u1",
+          colorToken: "alba",
+          puntuacion: 0,
+          fallos: 0,
+        },
+        {
+          id: "2",
+          nombre: "B",
+          icono: "u2",
+          colorToken: "reino",
+          puntuacion: 0,
+          fallos: 0,
+        },
+      ],
+      turnoActualId: "1",
+    });
+
     useMultiplayerStore.getState().responderTurno(0);
-    expect(db.localRounds.bulkAdd).not.toHaveBeenCalled();
-    expect(db.localPlayers.put).not.toHaveBeenCalled();
+
+    const state = useMultiplayerStore.getState();
+    expect(state.jugadores[0].puntuacion).toBe(10);
+    expect(state.turnoActualId).toBe("2");
   });
 
-  it("#27 finalizarPartida: aplica desempate por menos fallos (B10)", async () => {
-    const rounds: LocalRound[] = [
-      {
-        id: 1,
-        sessionId: 123,
-        roundNumber: 1,
-        playerId: 1,
-        questionId: "q1",
-        selectedIndex: 0,
-        isCorrect: true,
-        points: 10,
-      },
-      {
-        id: 2,
-        sessionId: 123,
-        roundNumber: 1,
-        playerId: 2,
-        questionId: "q2",
-        selectedIndex: 1,
-        isCorrect: true,
-        points: 10,
-      },
-      {
-        id: 3,
-        sessionId: 123,
-        roundNumber: 2,
-        playerId: 1,
-        questionId: "q3",
-        selectedIndex: 1,
-        isCorrect: false,
-        points: 0,
-      },
-    ];
-    useMultiplayerStore.setState({ rounds });
+  it("#27 finalizarPartida: expone ganadorId por menos fallos", async () => {
+    useMultiplayerStore.setState({
+      sessionId: 123, // 👈 AÑADIDO: Evita el return temprano
+      estadoPartida: "en_curso",
+      jugadores: [
+        {
+          id: "1",
+          nombre: "A",
+          icono: "u1",
+          colorToken: "alba",
+          puntuacion: 10,
+          fallos: 1,
+        },
+        {
+          id: "2",
+          nombre: "B",
+          icono: "u2",
+          colorToken: "reino",
+          puntuacion: 10,
+          fallos: 0,
+        },
+      ],
+    });
 
     await useMultiplayerStore.getState().finalizarPartida();
 
-    expect(emitSpy).toHaveBeenCalledWith("partida_finalizada", {
-      sessionId: 123,
-      winnerId: 2,
+    const state = useMultiplayerStore.getState();
+    expect(state.estadoPartida).toBe("finalizada");
+    expect(state.ganadorId).toBe("2");
+    expect(emitSpy).toHaveBeenCalledWith(
+      "partida_finalizada",
+      expect.any(Object),
+    );
+  });
+
+  it("#28 resetPartida: limpia el estado a 'idle'", () => {
+    useMultiplayerStore.setState({
+      estadoPartida: "finalizada",
+      jugadores: [
+        {
+          id: "1",
+          nombre: "A",
+          icono: "",
+          colorToken: "alba",
+          puntuacion: 0,
+          fallos: 0,
+        },
+      ],
     });
-    expect(db.transaction).toHaveBeenCalled();
+    useMultiplayerStore.getState().resetPartida();
+    const state = useMultiplayerStore.getState();
+    expect(state.estadoPartida).toBe("idle");
+    expect(state.jugadores).toHaveLength(0);
+    expect(state.turnoActualId).toBeNull();
   });
 });

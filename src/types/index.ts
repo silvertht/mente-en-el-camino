@@ -216,6 +216,10 @@ export interface RatingConfig {
 export type {
   ProgresoLeccion,
   EstadoLeccion,
+  EstadoNivel,
+  EstadoSenda,
+  PosicionReanudar,
+  ResultadoCheck,
   RachaDiscipulado,
   SendaDiscipulado,
   LeccionDiscipulado,
@@ -223,7 +227,6 @@ export type {
   PreguntaReflexion,
   FeedbackCorrecto,
   LocalSession,
-  LocalPlayer,
   LocalRound,
   EstadoPartidaLocal,
   NivelNumber,
