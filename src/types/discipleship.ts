@@ -1,5 +1,8 @@
 import type { CategoryId } from "./index";
 
+// ============================================================
+// CONTRATO VISUAL (Fase 5 · H-VIS-06)
+// ============================================================
 export type EstadoLeccion =
   | "sin_empezar"
   | "en_curso"
@@ -31,6 +34,9 @@ export interface ResultadoCheck {
   referencia: string;
 }
 
+// ============================================================
+// CONTENIDO EDITORIAL (Content layer)
+// ============================================================
 export type NivelNumber = 1 | 2 | 3;
 export type LeccionNumber = 1 | 2 | 3;
 
@@ -76,6 +82,9 @@ export interface SendaDiscipulado {
   esPiloto: boolean;
 }
 
+// ============================================================
+// PROGRESO PERSISTIDO (Dexie v3)
+// ============================================================
 export interface ProgresoLeccion {
   id: string;
   sendaId: CategoryId;
@@ -97,6 +106,9 @@ export interface RachaDiscipulado {
   lastDay: string | null;
 }
 
+// ============================================================
+// MULTIJUGADOR LOCAL (Modelo separado P7)
+// ============================================================
 export type EstadoPartidaLocal = "activa" | "finalizada";
 
 export interface LocalSession {

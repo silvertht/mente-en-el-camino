@@ -269,6 +269,9 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
   },
 }));
 
+// ==========================================
+// SELECTORES (Derivados)
+// ==========================================
 export const selectEstadoLeccion = (
   state: DiscipleshipStore,
   id: string,
@@ -323,3 +326,20 @@ export const selectPosicionAReanudar = (
   if (!p) return null;
   return { tarjetaIdx: p.tarjetaIdx, preguntaIdx: p.preguntaIdx };
 };
+
+export const selectEstadoNivel = (
+  _state: DiscipleshipStore,
+  _id: string,
+): EstadoLeccion => "sin_empezar";
+export const selectEstadoSenda = (
+  _state: DiscipleshipStore,
+  _id: string,
+): EstadoLeccion => "sin_empezar";
+export const selectProgresoSenda = (
+  _state: DiscipleshipStore,
+  _id: string,
+) => ({ recorridas: 0, total: 3 });
+export const selectProgresoNivel = (
+  _state: DiscipleshipStore,
+  _id: string,
+) => ({ recorridas: 0, total: 3 });
