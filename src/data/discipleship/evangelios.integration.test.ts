@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SENDA_EVANGELIOS } from "./evangelios";
 
-// Mock de DB para evitar IndexedDB en jsdom
 vi.mock("../../db/database", () => ({
   db: {
-    progresoLeccion: { put: vi.fn(), toArray: vi.fn().mockResolvedValue([]) },
-    rachaDiscipulado: {
+    progreso_leccion: { put: vi.fn(), toArray: vi.fn().mockResolvedValue([]) }, // ✅ snake_case
+    racha_discipulado: {
+      // ✅ snake_case
       put: vi.fn(),
       get: vi
         .fn()
@@ -23,8 +23,6 @@ vi.mock("../../db/database", () => ({
   },
 }));
 
-// ✅ FIX: La ruta correcta desde src/data/discipleship/ es "../../data/discipleship"
-// (El test está en src/data/discipleship/, así que ../../ sube a src/ y luego a data/discipleship).
 vi.mock("../../data/discipleship", async () => {
   const { SENDA_EVANGELIOS: realSenda } = await import("./evangelios");
   return {

@@ -38,7 +38,6 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     set({ isLoading: true });
     try {
       const rating = await getUserRating();
-      // Cargar 3 preguntas por jugador (regla MVP)
       const preguntas = await pickQuestionsByRating(
         [],
         rating.global,
@@ -51,9 +50,8 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
         finishedAt: null,
         roundsPerPlayer: 3,
       };
-      const sessionId = await db.localSessions.add(sessionData);
+      const sessionId = await db.local_sessions.add(sessionData); // ✅ snake_case
 
-      // Mapeo directo a la tabla de Dexie (sin necesidad del tipo LocalPlayer)
       const newPlayers = jugadoresIniciales.map((j, i) => ({
         sessionId,
         displayName: j.nombre,
@@ -61,9 +59,9 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
         finalScore: 0,
       }));
 
-      const playerIds = await db.localPlayers.bulkAdd(newPlayers, {
+      const playerIds = await db.local_players.bulkAdd(newPlayers, {
         allKeys: true,
-      });
+      }); // ✅ snake_case
 
       const jugadoresConStats: Jugador[] = jugadoresIniciales.map((j, i) => ({
         ...j,
@@ -95,12 +93,10 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     const { turnoActualId, jugadores, currentRound, preguntas } = get();
     if (!turnoActualId || !jugadores.length) return;
 
-    // Obtener la pregunta actual basada en el turno y la ronda
     const currentIndex = jugadores.findIndex((j) => j.id === turnoActualId);
     const questionIndex = (currentRound - 1) * jugadores.length + currentIndex;
     const pregunta = preguntas[questionIndex];
 
-    // Verificación simple (asumiendo que opcionIdx 0 es la correcta para este test)
     const isCorrect = pregunta
       ? pregunta.type === "multiple-choice" &&
         opcionIdx === pregunta.correctIndex
@@ -142,25 +138,33 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     }
     const ganadorId = winners.length === 1 ? winners[0].id : null;
 
-    await db.transaction("rw", db.localPlayers, db.localSessions, async () => {
-      for (const j of jugadores) {
-        await db.localPlayers.put({
-          id: Number(j.id),
-          sessionId,
-          displayName: j.nombre,
-          order: 0,
-          finalScore: j.puntuacion,
-        });
-      }
-      const currentSession = await db.localSessions.get(sessionId);
-      if (currentSession) {
-        await db.localSessions.put({
-          ...currentSession,
-          status: "finalizada",
-          finishedAt: Date.now(),
-        });
-      }
-    });
+    await db.transaction(
+      "rw",
+      db.local_players,
+      db.local_sessions,
+      async () => {
+        // ✅ snake_case
+        for (const j of jugadores) {
+          await db.local_players.put({
+            // ✅ snake_case
+            id: Number(j.id),
+            sessionId,
+            displayName: j.nombre,
+            order: 0,
+            finalScore: j.puntuacion,
+          });
+        }
+        const currentSession = await db.local_sessions.get(sessionId); // ✅ snake_case
+        if (currentSession) {
+          await db.local_sessions.put({
+            // ✅ snake_case
+            ...currentSession,
+            status: "finalizada",
+            finishedAt: Date.now(),
+          });
+        }
+      },
+    );
 
     eventBus.emit("partida_finalizada", { sessionId, ganadorId });
     set({ estadoPartida: "finalizada", ganadorId });

@@ -16,8 +16,9 @@ import type { ProgresoLeccion } from "../types/discipleship";
 
 vi.mock("../db/database", () => ({
   db: {
-    progresoLeccion: { put: vi.fn(), toArray: vi.fn().mockResolvedValue([]) },
-    rachaDiscipulado: {
+    progreso_leccion: { put: vi.fn(), toArray: vi.fn().mockResolvedValue([]) }, // ✅ snake_case
+    racha_discipulado: {
+      // ✅ snake_case
       put: vi.fn(),
       get: vi
         .fn()
@@ -80,7 +81,7 @@ describe("useDiscipleshipStore", () => {
 
   it("#4 iniciarLeccion: crea registro y emite evento", async () => {
     await useDiscipleshipStore.getState().iniciarLeccion("evangelios", 1, 1);
-    expect(db.progresoLeccion.put).toHaveBeenCalled();
+    expect(db.progreso_leccion.put).toHaveBeenCalled(); // ✅ snake_case
     expect(emitSpy).toHaveBeenCalledWith(
       "leccion_iniciada",
       expect.any(Object),
@@ -100,7 +101,7 @@ describe("useDiscipleshipStore", () => {
     });
     const res = useDiscipleshipStore.getState().responderCheck(0, 0);
     expect(res.correcto).toBe(true);
-    expect(db.progresoLeccion.put).not.toHaveBeenCalled();
+    expect(db.progreso_leccion.put).not.toHaveBeenCalled(); // ✅ snake_case
     expect(emitSpy).toHaveBeenCalledWith(
       "check_respondido",
       expect.any(Object),
@@ -145,8 +146,8 @@ describe("useDiscipleshipStore", () => {
       racha: { id: "global", current: 0, best: 0, lastDay: null },
     });
     await useDiscipleshipStore.getState().finalizarLeccion();
-    const saved = vi.mocked(db.progresoLeccion.put).mock
-      .calls[0][0] as ProgresoLeccion;
+    const saved = vi.mocked(db.progreso_leccion.put).mock
+      .calls[0][0] as ProgresoLeccion; // ✅ snake_case
     expect(saved.primeraRecorridaAt).toBe(12345);
     expect(saved.vecesRepasada).toBe(1);
   });
@@ -351,8 +352,6 @@ describe("useDiscipleshipStore", () => {
     ).toBe("recorrida");
   });
 
-  // --- NUEVOS TESTS: BUG B1 ---
-
   it("#31 B1: responderCheck devuelve correcto:true con correctIndex=1 y selected=1", () => {
     useDiscipleshipStore.setState({
       leccionActiva: {
@@ -364,8 +363,6 @@ describe("useDiscipleshipStore", () => {
         enRepaso: false,
       },
     });
-
-    // Forzamos el mock para que la pregunta tenga correctIndex: 1
     vi.mocked(getLeccion).mockReturnValueOnce({
       id: "evangelios:1:1",
       preguntas: [
@@ -378,7 +375,6 @@ describe("useDiscipleshipStore", () => {
         },
       ],
     } as any);
-
     const res = useDiscipleshipStore.getState().responderCheck(0, 1);
     expect(res.correcto).toBe(true);
   });
@@ -394,8 +390,6 @@ describe("useDiscipleshipStore", () => {
         enRepaso: false,
       },
     });
-
-    // Forzamos el mock para que la pregunta tenga correctIndex: 1
     vi.mocked(getLeccion).mockReturnValueOnce({
       id: "evangelios:1:1",
       preguntas: [
@@ -408,7 +402,6 @@ describe("useDiscipleshipStore", () => {
         },
       ],
     } as any);
-
     const res = useDiscipleshipStore.getState().responderCheck(0, "1" as any);
     expect(res.correcto).toBe(true);
   });

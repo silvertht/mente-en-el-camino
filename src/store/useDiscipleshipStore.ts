@@ -45,7 +45,7 @@ interface DiscipleshipStore {
   responderCheck: (
     preguntaIdx: number,
     selected: number,
-    contexto?: ContextoLeccion, // ✅ FIX B1: contexto opcional
+    contexto?: ContextoLeccion,
   ) => ResultadoCheck;
   reintentarCheck: (leccionId: string, preguntaIdx: number) => void;
   finalizarLeccion: () => Promise<void>;
@@ -72,15 +72,15 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
   },
 
   initProgreso: async () => {
-    const allProgress = await db.progresoLeccion.toArray();
+    const allProgress = await db.progreso_leccion.toArray(); // ✅ snake_case
     const map: Record<string, ProgresoLeccion> = {};
     allProgress.forEach((p) => {
       map[p.id] = p;
     });
-    let racha = await db.rachaDiscipulado.get("global");
+    let racha = await db.racha_discipulado.get("global"); // ✅ snake_case
     if (!racha) {
       racha = { id: "global", current: 0, best: 0, lastDay: null };
-      await db.rachaDiscipulado.put(racha);
+      await db.racha_discipulado.put(racha); // ✅ snake_case
     }
     set({ progresoLecciones: map, racha });
   },
@@ -116,7 +116,7 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
       ultimaActividadAt: Date.now(),
     };
 
-    await db.progresoLeccion.put(record);
+    await db.progreso_leccion.put(record); // ✅ snake_case
     set((state) => ({
       progresoLecciones: { ...state.progresoLecciones, [id]: record },
       leccionActiva: {
@@ -148,7 +148,7 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
       progresoLecciones: { ...state.progresoLecciones, [id]: updated },
       leccionActiva: { ...leccionActiva, tarjetaIdx, preguntaIdx },
     }));
-    await db.progresoLeccion.put(updated);
+    await db.progreso_leccion.put(updated); // ✅ snake_case
     eventBus.emit("posicion_guardada", {
       leccionId: id,
       tarjetaIdx,
@@ -156,7 +156,6 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
     });
   },
 
-  // ✅ FIX B1: responderCheck acepta contexto explícito (race condition).
   responderCheck: (preguntaIdx, selected, contexto) => {
     const leccionActiva = get().leccionActiva;
 
@@ -243,8 +242,8 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
 
     await db.transaction(
       "rw",
-      db.progresoLeccion,
-      db.rachaDiscipulado,
+      db.progreso_leccion,
+      db.racha_discipulado,
       async () => {
         const updatedProgreso: ProgresoLeccion = {
           ...existing,
@@ -256,7 +255,7 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
             : existing.vecesRepasada,
           ultimaActividadAt: now,
         };
-        await db.progresoLeccion.put(updatedProgreso);
+        await db.progreso_leccion.put(updatedProgreso); // ✅ snake_case
 
         let newRacha = { ...racha! };
         if (newRacha.lastDay !== today) {
@@ -267,12 +266,12 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
             newRacha.lastDay === yesterday ? newRacha.current + 1 : 1;
           newRacha.best = Math.max(newRacha.best, newRacha.current);
           newRacha.lastDay = today;
-          await db.rachaDiscipulado.put(newRacha);
+          await db.racha_discipulado.put(newRacha); // ✅ snake_case
         }
       },
     );
 
-    const updatedRacha = await db.rachaDiscipulado.get("global");
+    const updatedRacha = await db.racha_discipulado.get("global"); // ✅ snake_case
     set((state) => ({
       progresoLecciones: {
         ...state.progresoLecciones,
@@ -315,7 +314,7 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
 }));
 
 // ==========================================
-// SELECTORES DERIVADOS (sin cambios)
+// SELECTORES DERIVADOS
 // ==========================================
 export const selectEstadoLeccion = (
   state: DiscipleshipStore,

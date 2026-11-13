@@ -5,16 +5,18 @@ import { eventBus } from "./eventBus";
 
 vi.mock("../db/database", () => ({
   db: {
-    localSessions: {
+    local_sessions: {
+      // ✅ snake_case
       add: vi.fn().mockResolvedValue(123),
       get: vi.fn().mockResolvedValue({ id: 123, status: "activa" }),
       put: vi.fn(),
     },
-    localPlayers: {
+    local_players: {
+      // ✅ snake_case
       bulkAdd: vi.fn().mockResolvedValue([1, 2]),
       put: vi.fn(),
     },
-    localRounds: { bulkAdd: vi.fn() },
+    local_rounds: { bulkAdd: vi.fn() }, // ✅ snake_case
     transaction: vi.fn((...args: any[]) => {
       const callback = args[args.length - 1];
       if (typeof callback === "function") return callback();
@@ -43,8 +45,8 @@ describe("useMultiplayerStore (API Canónica)", () => {
     await useMultiplayerStore.getState().iniciarPartida(jugadoresIniciales);
 
     expect(getUserRating).toHaveBeenCalled();
-    expect(db.localSessions.add).toHaveBeenCalled();
-    expect(db.localPlayers.bulkAdd).toHaveBeenCalled();
+    expect(db.local_sessions.add).toHaveBeenCalled(); // ✅ snake_case
+    expect(db.local_players.bulkAdd).toHaveBeenCalled(); // ✅ snake_case
 
     const state = useMultiplayerStore.getState();
     expect(state.estadoPartida).toBe("en_curso");
@@ -86,7 +88,7 @@ describe("useMultiplayerStore (API Canónica)", () => {
 
   it("#27 finalizarPartida: expone ganadorId por menos fallos", async () => {
     useMultiplayerStore.setState({
-      sessionId: 123, // 👈 AÑADIDO: Evita el return temprano
+      sessionId: 123,
       estadoPartida: "en_curso",
       jugadores: [
         {

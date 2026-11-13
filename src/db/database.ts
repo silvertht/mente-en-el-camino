@@ -27,12 +27,13 @@ export class MenteEnElCaminoDB extends Dexie {
   campaignProgress!: Table<CampaignProgress & { id?: string }, string>;
   sessions!: Table<GameSession, string>;
   userRating!: Table<UserRating, string>;
-  // --- v3 · Fase 5 ---
-  progresoLeccion!: Table<ProgresoLeccion, string>;
-  rachaDiscipulado!: Table<RachaDiscipulado, string>;
-  localSessions!: Table<LocalSession, number>;
-  localPlayers!: Table<LocalPlayer, number>;
-  localRounds!: Table<LocalRound, number>;
+
+  // ✅ FIX: Propiedades en snake_case para coincidir con el esquema de Dexie
+  progreso_leccion!: Table<ProgresoLeccion, string>;
+  racha_discipulado!: Table<RachaDiscipulado, string>;
+  local_sessions!: Table<LocalSession, number>;
+  local_players!: Table<LocalPlayer, number>;
+  local_rounds!: Table<LocalRound, number>;
 
   constructor() {
     super("MenteEnElCaminoDB");
@@ -46,7 +47,6 @@ export class MenteEnElCaminoDB extends Dexie {
     });
 
     // v2 — Fase 3 · R2: tabla userRating (rating adaptativo).
-    // Migración idempotente: Dexie conserva los datos de v1.
     this.version(2).stores({
       profile: "id, nickname, level, streak, lastPlayedAt",
       answers: "++id, questionId, correct, answeredAt",
@@ -57,23 +57,18 @@ export class MenteEnElCaminoDB extends Dexie {
     });
 
     // v3 — Fase 5 · Discipulado + Multijugador local.
-    // Aditivo puro: re-declara v2 + añade tablas nuevas.
-    // Cero delete, cero rename. Regla de Oro 4 intacta.
     this.version(3).stores({
-      // 1) Re-declaración EXACTA de v2 (requisito Dexie)
       profile: "id, nickname, level, streak, lastPlayedAt",
       answers: "++id, questionId, correct, answeredAt",
       dailyProgress: "date, completed",
       campaignProgress: "id, categoryId, completed",
       sessions: "id, code, status, createdAt",
       userRating: "id",
-
-      // 2) Discipulado (B5 = separada)
+      // Discipulado (B5 = separada)
       progreso_leccion:
         "id, estado, sendaId, primeraRecorridaAt, ultimaActividadAt",
       racha_discipulado: "id, lastDay",
-
-      // 3) Multijugador local (P7: separado de Discipulado)
+      // Multijugador local (P7: separado de Discipulado)
       local_sessions: "++id, status, startedAt",
       local_players: "++id, sessionId, [sessionId+order]",
       local_rounds: "++id, sessionId, [sessionId+roundNumber]",
@@ -128,16 +123,6 @@ export function shouldMigrateOnboarding(
   );
 }
 
-/**
- * Fase 4 · H-04 · Gate de onboarding para App.tsx.
- * B1 (2026-11-04): auto-migra usuarios existentes (pre-Fase 4 con progreso
- * real) para evitar forzarlos al onboarding y recalibrar su rating.
- *
- * @returns Promise<boolean> — true si onboarding recorrido (o migrado).
- *
- * Consumo (UX Fase B): el gate es asíncrono → App.tsx debe manejar
- * estado de carga. Este lector self-healea en la primera llamada.
- */
 export async function hasCompletedOnboarding(): Promise<boolean> {
   const profile = await db.profile.get(DEFAULT_PROFILE_ID);
   if (!profile) return false;
@@ -169,11 +154,12 @@ export async function resetProfile(): Promise<UserProfile> {
   await db.dailyProgress.clear();
   await db.campaignProgress.clear();
   await db.userRating.clear();
-  await db.progresoLeccion.clear();
-  await db.rachaDiscipulado.clear();
-  await db.localSessions.clear();
-  await db.localPlayers.clear();
-  await db.localRounds.clear();
+  // ✅ FIX: nombres snake_case
+  await db.progreso_leccion.clear();
+  await db.racha_discipulado.clear();
+  await db.local_sessions.clear();
+  await db.local_players.clear();
+  await db.local_rounds.clear();
   const profile = createDefaultProfile();
   await db.profile.put(profile);
   return profile;
@@ -254,7 +240,7 @@ export async function resetUserRating(): Promise<UserRating> {
 
 // ============================================================
 // DIFICULTAD ADAPTATIVA — accuracy reciente
-// @deprecated desde Fase 3 · R2. Se retirará en R5.
+// @deprecated desde Fase 3 · R2.
 // ============================================================
 
 export async function getRecentAccuracy(limit = 20): Promise<number> {
@@ -411,11 +397,11 @@ export async function exportBackup(): Promise<BackupData> {
     dailyProgress: await db.dailyProgress.toArray(),
     campaignProgress: await db.campaignProgress.toArray(),
     userRating: await db.userRating.get(DEFAULT_PROFILE_ID),
-    progresoLeccion: await db.progresoLeccion.toArray(),
-    rachaDiscipulado: await db.rachaDiscipulado.get("global"),
-    localSessions: await db.localSessions.toArray(),
-    localPlayers: await db.localPlayers.toArray(),
-    localRounds: await db.localRounds.toArray(),
+    progresoLeccion: await db.progreso_leccion.toArray(),
+    rachaDiscipulado: await db.racha_discipulado.get("global"),
+    localSessions: await db.local_sessions.toArray(),
+    localPlayers: await db.local_players.toArray(),
+    localRounds: await db.local_rounds.toArray(),
   };
 }
 
@@ -428,11 +414,11 @@ export async function importBackup(data: BackupData): Promise<void> {
       db.dailyProgress,
       db.campaignProgress,
       db.userRating,
-      db.progresoLeccion,
-      db.rachaDiscipulado,
-      db.localSessions,
-      db.localPlayers,
-      db.localRounds,
+      db.progreso_leccion,
+      db.racha_discipulado,
+      db.local_sessions,
+      db.local_players,
+      db.local_rounds,
     ],
     async () => {
       await db.profile.clear();
@@ -440,11 +426,11 @@ export async function importBackup(data: BackupData): Promise<void> {
       await db.dailyProgress.clear();
       await db.campaignProgress.clear();
       await db.userRating.clear();
-      await db.progresoLeccion.clear();
-      await db.rachaDiscipulado.clear();
-      await db.localSessions.clear();
-      await db.localPlayers.clear();
-      await db.localRounds.clear();
+      await db.progreso_leccion.clear();
+      await db.racha_discipulado.clear();
+      await db.local_sessions.clear();
+      await db.local_players.clear();
+      await db.local_rounds.clear();
 
       if (data.profile) await db.profile.put(data.profile);
       if (data.answers.length) await db.answers.bulkAdd(data.answers);
@@ -456,15 +442,15 @@ export async function importBackup(data: BackupData): Promise<void> {
 
       // v3 opcional (backups v2 no traen estos campos → no-op)
       if (data.progresoLeccion?.length)
-        await db.progresoLeccion.bulkPut(data.progresoLeccion);
+        await db.progreso_leccion.bulkPut(data.progresoLeccion);
       if (data.rachaDiscipulado)
-        await db.rachaDiscipulado.put(data.rachaDiscipulado);
+        await db.racha_discipulado.put(data.rachaDiscipulado);
       if (data.localSessions?.length)
-        await db.localSessions.bulkPut(data.localSessions);
+        await db.local_sessions.bulkPut(data.localSessions);
       if (data.localPlayers?.length)
-        await db.localPlayers.bulkPut(data.localPlayers);
+        await db.local_players.bulkPut(data.localPlayers);
       if (data.localRounds?.length)
-        await db.localRounds.bulkPut(data.localRounds);
+        await db.local_rounds.bulkPut(data.localRounds);
     },
   );
 }
