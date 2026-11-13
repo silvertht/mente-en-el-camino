@@ -15,6 +15,7 @@ import {
   type FeedbackData,
 } from "../components/discipleship/FeedbackReflexion";
 import { Button } from "../components/Button";
+import { EstadoCarga } from "../components/support/EstadoCarga";
 
 export function Leccion({
   leccionId,
@@ -38,19 +39,38 @@ export function Leccion({
   const abandonarLeccion = useDiscipleshipStore((s) => s.abandonarLeccion);
   const guardarPosicion = useDiscipleshipStore((s) => s.guardarPosicion);
 
-  // Estado de pregunta actual: 0, 1 o 2
+  // Defensa: spinner mientras iniciarLeccion persiste (no bloquea la respuesta)
+  const leccionActivaStore = useDiscipleshipStore((s) => s.leccionActiva);
+
   const [preguntaIdx, setPreguntaIdx] = useState(0);
   const [feedback, setFeedback] = useState<FeedbackData | null>(null);
   const [finalizando, setFinalizando] = useState(false);
   const [avanceGuardado, setAvanceGuardado] = useState(false);
+  const [iniciando, setIniciando] = useState(true);
+  const [errorInicio, setErrorInicio] = useState(false);
 
   useEffect(() => {
     headingRef.current?.focus();
-    iniciarLeccion(sendaId, n, l).catch(() => {});
+    setIniciando(true);
+    setErrorInicio(false);
+    iniciarLeccion(sendaId, n, l)
+      .then(() => setIniciando(false))
+      .catch(() => {
+        setIniciando(false);
+        setErrorInicio(true);
+      });
     return () => {
       abandonarLeccion().catch(() => {});
     };
   }, [sendaId, n, l, iniciarLeccion, abandonarLeccion]);
+
+  const ready =
+    !iniciando &&
+    !errorInicio &&
+    leccionActivaStore !== null &&
+    leccionActivaStore.sendaId === sendaId &&
+    leccionActivaStore.nivelNumber === n &&
+    leccionActivaStore.leccionNumber === l;
 
   const volverAlCamino = async () => {
     try {
@@ -73,21 +93,44 @@ export function Leccion({
     );
   }
 
+  if (errorInicio) {
+    return (
+      <main className="mx-auto max-w-md px-4 pb-32">
+        <p className="p-6 text-noche-300">
+          No pudimos abrir la lección. Reintenta.
+        </p>
+        <Button variant="ghost" fullWidth onClick={volverAlCamino}>
+          Volver al camino
+        </Button>
+      </main>
+    );
+  }
+
+  if (!ready) {
+    return (
+      <main className="mx-auto max-w-md px-4 pb-32">
+        <EstadoCarga />
+      </main>
+    );
+  }
+
   const totalPreguntas = leccion.preguntas.length;
   const esUltima = preguntaIdx >= totalPreguntas - 1;
   const preguntaActual = leccion.preguntas[preguntaIdx];
 
   const onResponder = (opcionIdx: number) => {
-    const r: ResultadoCheck = responderCheck(preguntaIdx, opcionIdx);
+    // ✅ FIX: contexto explícito → store no depende de leccionActiva
+    const r: ResultadoCheck = responderCheck(preguntaIdx, opcionIdx, {
+      sendaId,
+      nivelNumber: n,
+      leccionNumber: l,
+    });
     setFeedback({
       correcto: r.correcto,
       respuesta: r.feedback,
       pista: r.pista,
       referencia: r.referencia,
-      // TV2: ahora SÍ pasamos la reflexión
-      reflexion: r.correcto
-        ? preguntaActual.feedbackCorrecto.reflexion
-        : undefined,
+      reflexion: r.reflexion, // ✅ Ahora viene directo del store
     });
   };
 
@@ -122,7 +165,6 @@ export function Leccion({
 
   return (
     <main className="mx-auto max-w-md px-4 pb-40">
-      {/* TV3: botón volver */}
       <div className="flex items-center gap-2 py-4">
         <button
           type="button"
@@ -146,7 +188,6 @@ export function Leccion({
       </h1>
       <ProgresoLeccion leccionN={l} nivelX={n} total={3} />
 
-      {/* Toast de avance guardado (TV4) */}
       {avanceGuardado && (
         <div
           role="status"
@@ -157,7 +198,6 @@ export function Leccion({
         </div>
       )}
 
-      {/* Introducción (solo cuando está en la primera pregunta) */}
       {preguntaIdx === 0 && (
         <div className="mt-6">
           <TarjetaContenido
@@ -167,13 +207,11 @@ export function Leccion({
         </div>
       )}
 
-      {/* Pregunta actual (TV1: iteración real + TV8: ref antes) */}
       <section className="mt-8 space-y-4">
         <div className="flex flex-wrap items-baseline gap-2">
           <span className="text-[10px] font-black uppercase tracking-[0.25em] text-alba-500">
             Reflexión {preguntaIdx + 1} de {totalPreguntas}
           </span>
-          {/* TV8: contexto bíblico antes de responder */}
           <span className="text-[10px] font-semibold tracking-wide text-reino-300/80">
             [UX] Contexto bíblico: {preguntaActual.referenciaRVR1960}
           </span>

@@ -15,6 +15,7 @@ import type {
   EstadoSenda,
   PosicionReanudar,
   ResultadoCheck,
+  ContextoLeccion,
 } from "../types/discipleship";
 
 const todayKey = () => new Date().toISOString().split("T")[0];
@@ -41,7 +42,11 @@ interface DiscipleshipStore {
     l: 1 | 2 | 3,
   ) => Promise<void>;
   guardarPosicion: (tarjetaIdx: number, preguntaIdx: number) => Promise<void>;
-  responderCheck: (preguntaIdx: number, selected: number) => ResultadoCheck;
+  responderCheck: (
+    preguntaIdx: number,
+    selected: number,
+    contexto?: ContextoLeccion, // ✅ FIX B1: contexto opcional
+  ) => ResultadoCheck;
   reintentarCheck: (leccionId: string, preguntaIdx: number) => void;
   finalizarLeccion: () => Promise<void>;
   abrirRepaso: (leccionId: string) => Promise<void>;
@@ -151,20 +156,57 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
     });
   },
 
-  responderCheck: (preguntaIdx, selected) => {
-    const { leccionActiva } = get();
-    if (!leccionActiva)
+  // ✅ FIX B1: responderCheck acepta contexto explícito (race condition).
+  responderCheck: (preguntaIdx, selected, contexto) => {
+    const leccionActiva = get().leccionActiva;
+
+    const sendaId = contexto?.sendaId ?? leccionActiva?.sendaId;
+    const nivelNumber = contexto?.nivelNumber ?? leccionActiva?.nivelNumber;
+    const leccionNumber =
+      contexto?.leccionNumber ?? leccionActiva?.leccionNumber;
+
+    if (!sendaId || !nivelNumber || !leccionNumber) {
+      if (import.meta.env.DEV) {
+        console.warn(
+          "[responderCheck] Sin contexto de lección: ni `contexto` ni `leccionActiva`.",
+        );
+      }
       return { correcto: false, feedback: "", referencia: "" };
-    const leccion = getLeccion(
-      leccionActiva.sendaId,
-      leccionActiva.nivelNumber,
-      leccionActiva.leccionNumber,
-    );
-    if (!leccion) return { correcto: false, feedback: "", referencia: "" };
+    }
+
+    const leccion = getLeccion(sendaId, nivelNumber, leccionNumber);
+    if (!leccion) {
+      if (import.meta.env.DEV) {
+        console.warn("[responderCheck] getLeccion devolvió undefined.", {
+          sendaId,
+          nivelNumber,
+          leccionNumber,
+        });
+      }
+      return { correcto: false, feedback: "", referencia: "" };
+    }
 
     const p = leccion.preguntas[preguntaIdx];
-    // ✅ FIX: Forzamos a Number para evitar fallos string vs number
+    if (!p) {
+      if (import.meta.env.DEV) {
+        console.warn("[responderCheck] Pregunta no encontrada.", {
+          preguntaIdx,
+        });
+      }
+      return { correcto: false, feedback: "", referencia: "" };
+    }
+
     const correcto = p.correctIndex === Number(selected);
+
+    if (import.meta.env.DEV) {
+      console.log("[responderCheck] Debug", {
+        preguntaId: p.id,
+        preguntaIdx,
+        selected,
+        correctIndex: p.correctIndex,
+        correcto,
+      });
+    }
 
     eventBus.emit("check_respondido", {
       leccionId: leccion.id,
@@ -179,6 +221,7 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
         : "Inténtalo de nuevo.",
       pista: p.pistaReintento,
       referencia: p.referenciaRVR1960,
+      reflexion: correcto ? p.feedbackCorrecto.reflexion : undefined,
     };
   },
 
@@ -272,7 +315,7 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
 }));
 
 // ==========================================
-// SELECTORES DERIVADOS (Implementación real)
+// SELECTORES DERIVADOS (sin cambios)
 // ==========================================
 export const selectEstadoLeccion = (
   state: DiscipleshipStore,

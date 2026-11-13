@@ -27,15 +27,25 @@ export interface PosicionReanudar {
   preguntaIdx: number;
 }
 
+// ============================================================
+// RESULTADO DE CHECK + CONTEXTO (Fix B1 · Race Condition)
+// ============================================================
 export interface ResultadoCheck {
   correcto: boolean;
   feedback: string;
   pista?: string;
   referencia: string;
+  reflexion?: string; // ← NUEVO: se devuelve cuando la respuesta es correcta
+}
+
+export interface ContextoLeccion {
+  sendaId: CategoryId;
+  nivelNumber: 1 | 2 | 3;
+  leccionNumber: 1 | 2 | 3;
 }
 
 // ============================================================
-// CONTENIDO EDITORIAL
+// CONTENIDO EDITORIAL (Content layer)
 // ============================================================
 export type NivelNumber = 1 | 2 | 3;
 export type LeccionNumber = 1 | 2 | 3;
@@ -82,9 +92,6 @@ export interface SendaDiscipulado {
   esPiloto: boolean;
 }
 
-// ============================================================
-// PROGRESO PERSISTIDO
-// ============================================================
 export interface ProgresoLeccion {
   id: string;
   sendaId: CategoryId;
@@ -106,9 +113,6 @@ export interface RachaDiscipulado {
   lastDay: string | null;
 }
 
-// ============================================================
-// MULTIJUGADOR LOCAL (Modelo separado P7)
-// ============================================================
 export type EstadoPartidaLocal = "activa" | "finalizada";
 
 export interface LocalSession {
@@ -119,7 +123,6 @@ export interface LocalSession {
   roundsPerPlayer: number;
 }
 
-// Mantenemos LocalPlayer para Dexie, pero no lo exportaremos en el index general.
 export interface LocalPlayer {
   id?: number;
   sessionId: number;
