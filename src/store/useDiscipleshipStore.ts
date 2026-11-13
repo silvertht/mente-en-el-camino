@@ -163,7 +163,9 @@ export const useDiscipleshipStore = create<DiscipleshipStore>((set, get) => ({
     if (!leccion) return { correcto: false, feedback: "", referencia: "" };
 
     const p = leccion.preguntas[preguntaIdx];
-    const correcto = p.correctIndex === selected;
+    // ✅ FIX: Forzamos a Number para evitar fallos string vs number
+    const correcto = p.correctIndex === Number(selected);
+
     eventBus.emit("check_respondido", {
       leccionId: leccion.id,
       preguntaIdx,

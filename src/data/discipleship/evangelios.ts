@@ -14,12 +14,12 @@ const N1_L1: PreguntaReflexion[] = [
     id: "evangelios:1:1:1",
     enunciado: "¿Por qué nació Jesús en Belén y no en Nazaret?",
     opciones: [
-      "Para cumplir la profecía de Miqueas",
       "Porque José tenía trabajo allí",
+      "Para cumplir la profecía de Miqueas",
       "Porque era la capital",
       "Por casualidad",
     ],
-    correctIndex: 0,
+    correctIndex: 1,
     feedbackCorrecto: {
       afirmacion: "Así es. Dios cumple Su Palabra con precisión.",
       dato: "Belén era la ciudad de David; el Mesías debía salir de allí.",
@@ -51,8 +51,8 @@ const N1_L1: PreguntaReflexion[] = [
   {
     id: "evangelios:1:1:3",
     enunciado: "¿Qué significa el nombre 'Jesús'?",
-    opciones: ["Dios salva", "Rey de reyes", "Príncipe de paz", "Emanuel"],
-    correctIndex: 0,
+    opciones: ["Rey de reyes", "Príncipe de paz", "Dios salva", "Emanuel"],
+    correctIndex: 2,
     feedbackCorrecto: {
       afirmacion: "Así es. Su nombre anuncia Su misión.",
       dato: "Jesús significa 'Jehová es salvación'.",
@@ -69,8 +69,8 @@ const N1_L2: PreguntaReflexion[] = [
   {
     id: "evangelios:1:2:1",
     enunciado: "¿Quién bautizó a Jesús en el Jordán?",
-    opciones: ["Juan el Bautista", "Pedro", "Zacarías", "Andrés"],
-    correctIndex: 0,
+    opciones: ["Pedro", "Zacarías", "Andrés", "Juan el Bautista"],
+    correctIndex: 3,
     feedbackCorrecto: {
       afirmacion: "Así es. Juan preparó el camino del Señor.",
       dato: "Juan bautizaba en el Jordán para arrepentimiento.",
@@ -83,8 +83,8 @@ const N1_L2: PreguntaReflexion[] = [
   {
     id: "evangelios:1:2:2",
     enunciado: "¿Cuántos días ayunó Jesús en el desierto?",
-    opciones: ["7", "21", "40", "50"],
-    correctIndex: 2,
+    opciones: ["7", "40", "21", "50"],
+    correctIndex: 1,
     feedbackCorrecto: {
       afirmacion: "Así es. Cuarenta días de preparación.",
       dato: "El número 40 recuerda a Moisés y Elías.",
@@ -98,12 +98,12 @@ const N1_L2: PreguntaReflexion[] = [
     id: "evangelios:1:2:3",
     enunciado: "¿Cómo venció Jesús la tentación en el desierto?",
     opciones: [
-      "Con la Palabra de Dios",
       "Con ayuno solo",
       "Huyendo del diablo",
+      "Con la Palabra de Dios",
       "Con oración solamente",
     ],
-    correctIndex: 0,
+    correctIndex: 2,
     feedbackCorrecto: {
       afirmacion: "Así es. La Escritura es nuestra defensa.",
       dato: "Jesús respondió tres veces: 'Escrito está'.",
@@ -134,8 +134,8 @@ const N1_L3: PreguntaReflexion[] = [
   {
     id: "evangelios:1:3:2",
     enunciado: "¿Qué oficio tenía Pedro antes de seguir a Jesús?",
-    opciones: ["Pescador", "Carpintero", "Recaudador", "Pastor"],
-    correctIndex: 0,
+    opciones: ["Carpintero", "Recaudador", "Pastor", "Pescador"],
+    correctIndex: 3,
     feedbackCorrecto: {
       afirmacion: "Así es. Jesús llama en lo cotidiano.",
       dato: "Pedro y Andrés echaban la red al mar.",
@@ -149,12 +149,12 @@ const N1_L3: PreguntaReflexion[] = [
     id: "evangelios:1:3:3",
     enunciado: "¿Qué dijo Jesús que haría a sus discípulos?",
     opciones: [
-      "Pescadores de hombres",
       "Reyes de Israel",
+      "Pescadores de hombres",
       "Sacerdotes del templo",
       "Maestros de la ley",
     ],
-    correctIndex: 0,
+    correctIndex: 1,
     feedbackCorrecto: {
       afirmacion: "Así es. La misión es alcanzar a otros.",
       dato: "El llamado incluye ser enviado a otros.",
@@ -172,12 +172,12 @@ const N2_L1: PreguntaReflexion[] = [
     id: "evangelios:2:1:1",
     enunciado: "¿Con qué empiezan las bienaventuranzas?",
     opciones: [
-      "Bienaventurados los pobres en espíritu",
       "Bienaventurados los ricos",
       "Bienaventurados los sabios",
+      "Bienaventurados los pobres en espíritu",
       "Bienaventurados los fuertes",
     ],
-    correctIndex: 0,
+    correctIndex: 2,
     feedbackCorrecto: {
       afirmacion: "Así es. El Reino empieza por el corazón humilde.",
       dato: "La pobreza en espíritu es reconocer necesidad de Dios.",
@@ -190,8 +190,8 @@ const N2_L1: PreguntaReflexion[] = [
   {
     id: "evangelios:2:1:2",
     enunciado: "Según Jesús, ¿quiénes son 'la sal de la tierra'?",
-    opciones: ["Sus discípulos", "La ley", "El templo", "Los profetas"],
-    correctIndex: 0,
+    opciones: ["La ley", "Sus discípulos", "El templo", "Los profetas"],
+    correctIndex: 1,
     feedbackCorrecto: {
       afirmacion: "Así es. Los discípulos dan sabor al mundo.",
       dato: "La sal preserva y da sabor; así el creyente.",
@@ -205,12 +205,12 @@ const N2_L1: PreguntaReflexion[] = [
     id: "evangelios:2:1:3",
     enunciado: "¿Qué actitud manda Jesús ante los enemigos?",
     opciones: [
-      "Amarlos y orar por ellos",
       "Ignorarlos",
       "Vengarse",
       "Denunciarlos",
+      "Amarlos y orar por ellos",
     ],
-    correctIndex: 0,
+    correctIndex: 3,
     feedbackCorrecto: {
       afirmacion: "Así es. El amor vence al odio.",
       dato: "Amar al enemigo refleja el carácter del Padre.",
@@ -246,8 +246,8 @@ const N2_L2: PreguntaReflexion[] = [
   {
     id: "evangelios:2:2:2",
     enunciado: "¿Quién siembra la buena semilla en la parábola?",
-    opciones: ["El Hijo del Hombre", "El enemigo", "Un ángel", "El labrador"],
-    correctIndex: 0,
+    opciones: ["El enemigo", "Un ángel", "El Hijo del Hombre", "El labrador"],
+    correctIndex: 2,
     feedbackCorrecto: {
       afirmacion: "Así es. Jesús siembra Su Palabra.",
       dato: "El campo es el mundo; la semilla es el Evangelio.",
@@ -261,12 +261,12 @@ const N2_L2: PreguntaReflexion[] = [
     id: "evangelios:2:2:3",
     enunciado: "¿Qué hace el padre en la parábola del hijo pródigo?",
     opciones: [
-      "Corre a recibirlo y hace fiesta",
       "Lo rechaza",
       "Lo castiga",
       "Lo pone a trabajar",
+      "Corre a recibirlo y hace fiesta",
     ],
-    correctIndex: 0,
+    correctIndex: 3,
     feedbackCorrecto: {
       afirmacion: "Así es. El Padre recibe al que vuelve.",
       dato: "El padre corrió, lo abrazó y celebró su regreso.",
@@ -284,12 +284,12 @@ const N2_L3: PreguntaReflexion[] = [
     id: "evangelios:2:3:1",
     enunciado: "¿Cuál es el mandamiento más grande según Jesús?",
     opciones: [
-      "Amar a Dios sobre todas las cosas",
       "No matarás",
+      "Amar a Dios sobre todas las cosas",
       "Guardar el sábado",
       "Honrar a los padres",
     ],
-    correctIndex: 0,
+    correctIndex: 1,
     feedbackCorrecto: {
       afirmacion: "Así es. El amor a Dios es primero.",
       dato: "Todo lo demás fluye del amor a Dios.",
@@ -303,12 +303,12 @@ const N2_L3: PreguntaReflexion[] = [
     id: "evangelios:2:3:2",
     enunciado: "¿Cuál es el segundo mandamiento según Jesús?",
     opciones: [
-      "Amar al prójimo como a ti mismo",
       "No robar",
       "No mentir",
+      "Amar al prójimo como a ti mismo",
       "No codiciar",
     ],
-    correctIndex: 0,
+    correctIndex: 2,
     feedbackCorrecto: {
       afirmacion: "Así es. El segundo es igual al primero.",
       dato: "El amor al prójimo es la prueba del amor a Dios.",
@@ -322,12 +322,12 @@ const N2_L3: PreguntaReflexion[] = [
     id: "evangelios:2:3:3",
     enunciado: "¿Qué señal distingue a los discípulos de Jesús?",
     opciones: [
-      "Amarse unos a otros",
       "Guardar el sábado",
       "Orar en público",
       "Citar la ley",
+      "Amarse unos a otros",
     ],
-    correctIndex: 0,
+    correctIndex: 3,
     feedbackCorrecto: {
       afirmacion: "Así es. El amor mutuo testifica al mundo.",
       dato: "Jesús llamó a este un mandamiento nuevo.",
@@ -364,12 +364,12 @@ const N3_L1: PreguntaReflexion[] = [
     id: "evangelios:3:1:2",
     enunciado: "¿Qué dijo Jesús al partir el pan?",
     opciones: [
-      "Esto es mi cuerpo",
       "Esto es mi sangre",
+      "Esto es mi cuerpo",
       "Esto es la ley",
       "Esto es la promesa",
     ],
-    correctIndex: 0,
+    correctIndex: 1,
     feedbackCorrecto: {
       afirmacion: "Así es. El pan señala Su entrega.",
       dato: "La cena anticipa Su muerte en la cruz.",
@@ -382,8 +382,8 @@ const N3_L1: PreguntaReflexion[] = [
   {
     id: "evangelios:3:1:3",
     enunciado: "¿Quién traicionó a Jesús?",
-    opciones: ["Judas Iscariote", "Pedro", "Tomás", "Mateo"],
-    correctIndex: 0,
+    opciones: ["Pedro", "Tomás", "Judas Iscariote", "Mateo"],
+    correctIndex: 2,
     feedbackCorrecto: {
       afirmacion: "Así es. La traición vino de un cercano.",
       dato: "Judas pactó entregarlo por 30 piezas de plata.",
@@ -400,8 +400,8 @@ const N3_L2: PreguntaReflexion[] = [
   {
     id: "evangelios:3:2:1",
     enunciado: "¿En qué lugar fue crucificado Jesús?",
-    opciones: ["En el Gólgota", "En el templo", "En el Jordán", "En Betania"],
-    correctIndex: 0,
+    opciones: ["En el templo", "En el Jordán", "En Betania", "En el Gólgota"],
+    correctIndex: 3,
     feedbackCorrecto: {
       afirmacion: "Así es. Murió fuera de la ciudad.",
       dato: "Gólgota significa 'lugar de la calavera'.",
@@ -415,12 +415,12 @@ const N3_L2: PreguntaReflexion[] = [
     id: "evangelios:3:2:2",
     enunciado: "¿Qué palabras dijo Jesús en la cruz al Padre?",
     opciones: [
-      "Padre, perdónalos",
       "Padre, sálvalos",
+      "Padre, perdónalos",
       "Padre, bendícelos",
       "Padre, juzga al mundo",
     ],
-    correctIndex: 0,
+    correctIndex: 1,
     feedbackCorrecto: {
       afirmacion: "Así es. Oró por quienes lo mataban.",
       dato: "El perdón de Jesús es radical y sin condiciones.",
@@ -452,12 +452,12 @@ const N3_L3: PreguntaReflexion[] = [
     id: "evangelios:3:3:1",
     enunciado: "¿En qué día resucitó Jesús?",
     opciones: [
-      "Al tercer día",
       "Al séptimo día",
       "A los 40 días",
+      "Al tercer día",
       "A los 50 días",
     ],
-    correctIndex: 0,
+    correctIndex: 2,
     feedbackCorrecto: {
       afirmacion: "Así es. Resucitó al tercer día.",
       dato: "Lo había anunciado varias veces antes de morir.",
@@ -470,8 +470,8 @@ const N3_L3: PreguntaReflexion[] = [
   {
     id: "evangelios:3:3:2",
     enunciado: "¿Quién vio primero a Jesús resucitado según Juan?",
-    opciones: ["María Magdalena", "Pedro", "Juan", "Tomás"],
-    correctIndex: 0,
+    opciones: ["Pedro", "María Magdalena", "Juan", "Tomás"],
+    correctIndex: 1,
     feedbackCorrecto: {
       afirmacion: "Así es. María fue testigo del Resucitado.",
       dato: "Jesús la llamó por nombre junto al sepulcro.",
@@ -485,12 +485,12 @@ const N3_L3: PreguntaReflexion[] = [
     id: "evangelios:3:3:3",
     enunciado: "¿Qué pidió Jesús a Tomás para que creyera?",
     opciones: [
-      "Ver las heridas y meter la mano",
       "Solo orar",
       "Ayunar tres días",
       "Ir al templo",
+      "Ver las heridas y meter la mano",
     ],
-    correctIndex: 0,
+    correctIndex: 3,
     feedbackCorrecto: {
       afirmacion: "Así es. Tomás pasó de duda a adoración.",
       dato: "Vio y tocó; luego exclamó: '¡Señor mío, y Dios mío!'.",
@@ -505,7 +505,6 @@ const N3_L3: PreguntaReflexion[] = [
 // ============================================================
 // COMPOSICIÓN FINAL DE LA SENDA
 // ============================================================
-
 export const SENDA_EVANGELIOS: SendaDiscipulado = {
   sendaId: "evangelios",
   titulo: "Evangelios",
