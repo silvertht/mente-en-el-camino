@@ -13,7 +13,6 @@ import { Results } from "./screens/Results";
 import { Profile } from "./screens/Profile";
 import { Onboarding } from "./screens/Onboarding";
 
-// Lazy: las 4 pantallas de Fase 5 salen del bundle principal.
 const ElCamino = lazy(() =>
   import("./screens/ElCamino").then((m) => ({ default: m.ElCamino })),
 );
@@ -167,6 +166,7 @@ function App() {
       {screen === "elcamino" && (
         <Suspense fallback={<EstadoCarga />}>
           <ElCamino
+            onVolver={goHome}
             onSelectLeccion={(id) => {
               setLeccionActiva(id);
               setScreen("leccion");

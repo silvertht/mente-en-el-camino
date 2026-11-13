@@ -17,13 +17,14 @@ import { EstadoOffline } from "../components/support/EstadoOffline";
 
 export function ElCamino({
   onSelectLeccion,
+  onVolver,
 }: {
   onSelectLeccion: (leccionId: string) => void;
+  onVolver: () => void;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const online = useOnlineStatus();
 
-  // Suscripción: re-renderiza cuando cambia progreso
   useDiscipleshipStore((s) => s.progresoLecciones);
   const contenidoCargado = useDiscipleshipStore((s) => s.contenidoCargado);
 
@@ -47,33 +48,48 @@ export function ElCamino({
   const progsSenda = selectProgresoSenda(state, senda.sendaId);
 
   return (
-    <main className="relative mx-auto max-w-md px-4 pb-24">
-      <h1
-        ref={headingRef}
-        tabIndex={-1}
-        className="py-4 text-2xl font-semibold text-alba-400 outline-none"
-      >
-        El Camino
-      </h1>
-      <SendaHeader
-        nombre={senda.titulo}
-        estado={stSenda}
-        progreso={progsSenda}
-      />
-      <div className="relative mt-4 space-y-6">
+    <main className="relative mx-auto max-w-md px-4 pb-32">
+      {/* TV3: botón volver */}
+      <div className="flex items-center gap-2 pt-4">
+        <button
+          type="button"
+          onClick={onVolver}
+          aria-label="Volver al inicio"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-noche-800/60 border border-noche-700 text-noche-200 hover:text-alba-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-alba-400 focus-visible:ring-offset-2 focus-visible:ring-offset-noche-950"
+        >
+          ←
+        </button>
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="text-2xl font-semibold text-alba-400 outline-none"
+        >
+          El Camino
+        </h1>
+      </div>
+
+      <div className="mt-6">
+        <SendaHeader
+          nombre={senda.titulo}
+          estado={stSenda}
+          progreso={progsSenda}
+        />
+      </div>
+
+      <div className="relative mt-8 space-y-10">
         {senda.niveles.map((nivel) => {
           const stNivel = selectEstadoNivel(
             state,
             `${senda.sendaId}:${nivel.nivelNumber}`,
           );
           return (
-            <div key={nivel.nivelNumber} className="space-y-4">
+            <div key={nivel.nivelNumber} className="space-y-6">
               <NivelHito
                 numero={nivel.nivelNumber}
                 nombre={nivel.titulo}
                 estado={stNivel}
               />
-              <ul className="grid grid-cols-1 gap-3">
+              <ul className="grid grid-cols-1 gap-4">
                 {nivel.lecciones.map((lec, i) => {
                   const lecId = `${senda.sendaId}:${nivel.nivelNumber}:${lec.leccionNumber}`;
                   const stLec = selectEstadoLeccion(state, lecId);

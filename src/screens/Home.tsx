@@ -41,6 +41,26 @@ export function Home({
 
   const principle = getTodayPrinciple();
 
+  // TV7: badge "Nuevo" la primera vez que se ve el Camino
+  const [caminoNuevo, setCaminoNuevo] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return !localStorage.getItem("selah:camino-visto");
+    } catch {
+      return false;
+    }
+  });
+
+  const handleOpenCamino = () => {
+    try {
+      localStorage.setItem("selah:camino-visto", "1");
+    } catch {
+      // no rompe si localStorage falla
+    }
+    setCaminoNuevo(false);
+    onOpenCamino();
+  };
+
   useEffect(() => {
     getTodayProgress().then((p) => setDailyCompleted(!!p?.completed));
   }, []);
@@ -375,10 +395,19 @@ export function Home({
         <motion.div variants={fadeInUp} className="mb-6 space-y-3">
           <button
             type="button"
-            onClick={onOpenCamino}
+            onClick={handleOpenCamino}
             aria-label="Tu camino, abrir mapa de discipulado"
-            className="w-full min-h-11 rounded-2xl border border-noche-700/60 bg-noche-800/60 p-4 text-left transition-colors hover:bg-noche-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-alba-400 focus-visible:ring-offset-2 focus-visible:ring-offset-noche-950"
+            className="relative w-full min-h-11 rounded-2xl border border-noche-700/60 bg-noche-800/60 p-4 text-left transition-colors hover:bg-noche-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-alba-400 focus-visible:ring-offset-2 focus-visible:ring-offset-noche-950"
           >
+            {/* TV7: badge "Nuevo" la primera vez */}
+            {caminoNuevo && (
+              <span
+                className="absolute -top-2 right-3 rounded-full bg-alba-400 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-noche-950 shadow-md shadow-alba-500/40"
+                aria-label="Novedad"
+              >
+                Nuevo
+              </span>
+            )}
             <span className="text-2xl" aria-hidden="true">
               🗺️
             </span>
@@ -389,6 +418,7 @@ export function Home({
               Sigue el sendero del discipulado.
             </span>
           </button>
+
           <button
             type="button"
             onClick={onOpenGrupo}

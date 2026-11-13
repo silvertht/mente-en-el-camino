@@ -36,8 +36,13 @@ export function Leccion({
   const responderCheck = useDiscipleshipStore((s) => s.responderCheck);
   const finalizarLeccion = useDiscipleshipStore((s) => s.finalizarLeccion);
   const abandonarLeccion = useDiscipleshipStore((s) => s.abandonarLeccion);
+  const guardarPosicion = useDiscipleshipStore((s) => s.guardarPosicion);
 
+  // Estado de pregunta actual: 0, 1 o 2
+  const [preguntaIdx, setPreguntaIdx] = useState(0);
   const [feedback, setFeedback] = useState<FeedbackData | null>(null);
+  const [finalizando, setFinalizando] = useState(false);
+  const [avanceGuardado, setAvanceGuardado] = useState(false);
 
   useEffect(() => {
     headingRef.current?.focus();
@@ -46,6 +51,14 @@ export function Leccion({
       abandonarLeccion().catch(() => {});
     };
   }, [sendaId, n, l, iniciarLeccion, abandonarLeccion]);
+
+  const volverAlCamino = async () => {
+    try {
+      await abandonarLeccion();
+    } finally {
+      onVolver();
+    }
+  };
 
   if (!leccion) {
     return (
@@ -60,56 +73,142 @@ export function Leccion({
     );
   }
 
-  const onResponder = (idx: number) => {
-    const r: ResultadoCheck = responderCheck(0, idx);
+  const totalPreguntas = leccion.preguntas.length;
+  const esUltima = preguntaIdx >= totalPreguntas - 1;
+  const preguntaActual = leccion.preguntas[preguntaIdx];
+
+  const onResponder = (opcionIdx: number) => {
+    const r: ResultadoCheck = responderCheck(preguntaIdx, opcionIdx);
     setFeedback({
       correcto: r.correcto,
       respuesta: r.feedback,
       pista: r.pista,
       referencia: r.referencia,
+      // TV2: ahora SÍ pasamos la reflexión
+      reflexion: r.correcto
+        ? preguntaActual.feedbackCorrecto.reflexion
+        : undefined,
     });
   };
 
   const onTerminar = async () => {
-    await finalizarLeccion();
-    onContinuar();
+    if (finalizando) return;
+    setFinalizando(true);
+    try {
+      await finalizarLeccion();
+      onContinuar();
+    } finally {
+      setFinalizando(false);
+    }
+  };
+
+  const onSiguientePregunta = async () => {
+    if (finalizando) return;
+    if (esUltima) {
+      await onTerminar();
+      return;
+    }
+    const next = preguntaIdx + 1;
+    try {
+      await guardarPosicion(0, next);
+    } catch {
+      // no bloquea el avance si falla persistencia
+    }
+    setPreguntaIdx(next);
+    setFeedback(null);
+    setAvanceGuardado(true);
+    setTimeout(() => setAvanceGuardado(false), 1800);
   };
 
   return (
-    <main className="mx-auto max-w-md px-4 pb-32">
+    <main className="mx-auto max-w-md px-4 pb-40">
+      {/* TV3: botón volver */}
+      <div className="flex items-center gap-2 py-4">
+        <button
+          type="button"
+          onClick={volverAlCamino}
+          aria-label="Volver al camino"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-noche-800/60 border border-noche-700 text-noche-200 hover:text-alba-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-alba-400 focus-visible:ring-offset-2 focus-visible:ring-offset-noche-950"
+        >
+          ←
+        </button>
+        <p className="text-xs uppercase tracking-[0.2em] text-noche-400">
+          Lección {l} · Nivel {n}
+        </p>
+      </div>
+
       <h1
         ref={headingRef}
         tabIndex={-1}
-        className="py-4 text-2xl font-semibold text-alba-400 outline-none"
+        className="py-2 text-2xl font-semibold text-alba-400 outline-none"
       >
-        Lección {l}
+        {leccion.titulo}
       </h1>
       <ProgresoLeccion leccionN={l} nivelX={n} total={3} />
-      <div className="mt-6 space-y-4">
-        <TarjetaContenido
-          titulo={leccion.titulo}
-          cuerpo={leccion.introduccion}
-        />
-      </div>
-      <div className="mt-8">
+
+      {/* Toast de avance guardado (TV4) */}
+      {avanceGuardado && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed top-4 inset-x-4 mx-auto max-w-md rounded-xl border border-vida-500/40 bg-vida-500/15 px-4 py-2 text-sm text-vida-300 shadow-lg shadow-vida-500/10"
+        >
+          <span aria-hidden="true">✓</span> Avance guardado
+        </div>
+      )}
+
+      {/* Introducción (solo cuando está en la primera pregunta) */}
+      {preguntaIdx === 0 && (
+        <div className="mt-6">
+          <TarjetaContenido
+            titulo={leccion.titulo}
+            cuerpo={leccion.introduccion}
+          />
+        </div>
+      )}
+
+      {/* Pregunta actual (TV1: iteración real + TV8: ref antes) */}
+      <section className="mt-8 space-y-4">
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-alba-500">
+            Reflexión {preguntaIdx + 1} de {totalPreguntas}
+          </span>
+          {/* TV8: contexto bíblico antes de responder */}
+          <span className="text-[10px] font-semibold tracking-wide text-reino-300/80">
+            [UX] Contexto bíblico: {preguntaActual.referenciaRVR1960}
+          </span>
+        </div>
+
         <CheckReflexion
-          pregunta={leccion.preguntas[0].enunciado}
-          opciones={leccion.preguntas[0].opciones.map((texto, i) => ({
+          key={preguntaIdx}
+          pregunta={preguntaActual.enunciado}
+          opciones={preguntaActual.opciones.map((texto, i) => ({
             id: i,
             texto,
           }))}
           onResponder={onResponder}
         />
-      </div>
+      </section>
+
       {feedback && (
         <div className="mt-4">
           <FeedbackReflexion data={feedback} />
         </div>
       )}
+
       {feedback?.correcto && (
-        <div className="fixed inset-x-4 bottom-4">
-          <Button variant="primary" fullWidth onClick={onTerminar}>
-            Continuar
+        <div className="fixed inset-x-4 bottom-4 mx-auto max-w-md">
+          <Button
+            variant="primary"
+            fullWidth
+            onClick={onSiguientePregunta}
+            disabled={finalizando}
+          >
+            {finalizando
+              ? "Guardando…"
+              : esUltima
+                ? "Continuar"
+                : "Siguiente reflexión"}
           </Button>
         </div>
       )}
