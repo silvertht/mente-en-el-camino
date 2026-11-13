@@ -39,7 +39,6 @@ export function Leccion({
   const abandonarLeccion = useDiscipleshipStore((s) => s.abandonarLeccion);
   const guardarPosicion = useDiscipleshipStore((s) => s.guardarPosicion);
 
-  // Defensa: spinner mientras iniciarLeccion persiste (no bloquea la respuesta)
   const leccionActivaStore = useDiscipleshipStore((s) => s.leccionActiva);
 
   const [preguntaIdx, setPreguntaIdx] = useState(0);
@@ -50,19 +49,27 @@ export function Leccion({
   const [errorInicio, setErrorInicio] = useState(false);
 
   useEffect(() => {
+    console.log("🟢 useEffect iniciarLeccion disparado para:", leccionId);
     headingRef.current?.focus();
     setIniciando(true);
     setErrorInicio(false);
+
     iniciarLeccion(sendaId, n, l)
-      .then(() => setIniciando(false))
-      .catch(() => {
+      .then(() => {
+        console.log("✅ iniciarLeccion terminó con éxito");
+        setIniciando(false);
+      })
+      .catch((error) => {
+        console.error("🚨 ERROR REAL EN INICIAR LECCION:", error);
         setIniciando(false);
         setErrorInicio(true);
       });
+
     return () => {
-      abandonarLeccion().catch(() => {});
+      console.log("🔴 Cleanup: abandonarLeccion disparado");
+      abandonarLeccion().catch(console.error);
     };
-  }, [sendaId, n, l, iniciarLeccion, abandonarLeccion]);
+  }, [sendaId, n, l, iniciarLeccion, abandonarLeccion, leccionId]);
 
   const ready =
     !iniciando &&
@@ -119,7 +126,6 @@ export function Leccion({
   const preguntaActual = leccion.preguntas[preguntaIdx];
 
   const onResponder = (opcionIdx: number) => {
-    // ✅ FIX: contexto explícito → store no depende de leccionActiva
     const r: ResultadoCheck = responderCheck(preguntaIdx, opcionIdx, {
       sendaId,
       nivelNumber: n,
@@ -130,7 +136,7 @@ export function Leccion({
       respuesta: r.feedback,
       pista: r.pista,
       referencia: r.referencia,
-      reflexion: r.reflexion, // ✅ Ahora viene directo del store
+      reflexion: r.reflexion,
     });
   };
 
