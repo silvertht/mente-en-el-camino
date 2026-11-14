@@ -1,6 +1,6 @@
 ---
 
-## 📄 6. `docs/CHANGELOG-ADMIN.md` — reemplazo completo
+## 📄 3. `docs/CHANGELOG-ADMIN.md` — reemplazo completo
 
 ```markdown
 # CHANGELOG ADMIN — Mente en el Camino (Selah)
@@ -8,24 +8,43 @@
 > Documento exclusivo del área Admin. Registra solo cambios, decisiones, handoffs emitidos y pendientes internos.
 
 **Última actualización**: 2026-11-12
-**Estado**: Fase 5 — H-ADM-01 cerrado condicional (pendiente build verificado).
+**Estado**: Fase 5 CERRADA. H-ADM-01 en producción (`df05116`).
 
 ---
 
-## FASE 5 (En curso)
+## DEUDA TÉCNICA DIFERIDA
+
+Registro vivo. Se revisa al inicio de cada fase.
+
+| Ítem                                                | Prioridad | Nota                                                                                                                                                                             | Candidato  |
+| :-------------------------------------------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------- |
+| `sourcemap: true` en producción                     | Baja      | Expone código fuente vía `.map` públicos. Considerar `"hidden"` o `false`. No afecta bundle gzip ni CWV.                                                                         | Fase 6     |
+| Precache 876.05 KiB / 32 entries                    | Media     | Alto para datos móviles en primera instalación de SW. **H-ADM-01d** mueve 8 chunks de contenido a runtime SWR para reducirlo. No afecta LCP (precache es background post-paint). | Fase 6     |
+| `npm audit`: 24 vulns (3 low, 17 moderate, 4 high)  | Baja      | Pre-existentes; `npm install` reporta "up to date". Revisar `npm audit --json` y aplicar `npm audit fix` solo si no rompe build/tests.                                           | Fase 6     |
+| `SOURCEMAP_BROKEN` (tailwind en build)              | Baja      | WARN pre-existente. No causado por H-ADM-01. No bloquea.                                                                                                                         | Sin acción |
+| `inlineDynamicImports` deprecated (vite-plugin-pwa) | Baja      | WARN cosmético. Esperar update upstream.                                                                                                                                         | Sin acción |
+| Mensaje commit `df05116` malformado                 | Cosmético | Empieza con `"` y sin cuerpo (cmd Windows `-m` multilínea). Sin impacto funcional. No se corrige (historia pusheada).                                                            | Sin acción |
+
+---
+
+## FASE 5 (Cerrada)
 
 ### 2026-11-12 — H-ADM-01: Estrategia de caché PWA para Discipulado
 
-- **Migración `generateSW` → `injectManifest`**: creado `src/sw.ts` custom con `precacheAndRoute`, `cleanupOutdatedCaches`, `NavigationRoute` (SPA fallback) y runtime `StaleWhileRevalidate` para `evangelios-*`.
-- **Fix crítico de seguridad de datos**: `registerType` cambiado de `"autoUpdate"` a `"prompt"`. Eliminados `skipWaiting: true` y `clientsClaim: true` de HEAD af7ad91. Motivo: `autoUpdate` podía recargar mid-lección → violación directa del requisito "nunca borrar progreso local sin aviso".
-- **Precache**: 5 chunks lazy Discipulado + shell + vendors + iconos. **Runtime**: `evangelios-*` (4.32 kB gzip) con `cacheName: "evangelios-v1"`, expiración 30 días.
-- **`manualChunks`**: sin cambios (regla vendors react/motion/dexie/zustand intacta). Nombres semánticos de chunks descartados: Workbox matchea por hash, no por nombre.
-- **`vendor-motion` 44 kB**: diferido. No bloquea LCP (precache corre post-paint). Reevaluar solo si Speed Insights post-deploy > 2.5 s.
-- **`useOnlineStatus` de Visual**: validado. Solo `navigator.onLine` + eventos, sin probe. Sin cambios.
+- **Migración `generateSW` → `injectManifest`**: creado `src/sw.ts` custom con `precacheAndRoute`, `cleanupOutdatedCaches`, `NavigationRoute` (SPA fallback) y `StaleWhileRevalidate` para `evangelios-*`.
+- **Fix crítico de seguridad de datos**: `registerType` cambiado de `"autoUpdate"` a `"prompt"`. Eliminados `skipWaiting: true` y `clientsClaim: true` de HEAD `af7ad91`. Motivo: `autoUpdate` podía recargar mid-lección → violación directa de "nunca borrar progreso local sin aviso".
+- **Precache**: 32 entries, 876.05 KiB. Incluye shell (`index.html`, `index-*.js`), vendors (`react` 67.48, `motion` 44.37, `dexie` 31.34, `zustand`), 5 chunks lazy Discipulado (`ElCamino` 2.09, `Leccion` 1.69, `CierreLeccion` 0.62, `JugarEnGrupo` 3.12, `EstadoOffline` 0.54), 8 chunks de contenido, CSS, fonts, iconos.
+- **Runtime SWR**: 2 chunks `evangelios-*` (5.08 + 4.32 kB gzip), `cacheName: "evangelios-v1"`, expiración 30 días, `maxEntries: 5`. Excluidos del precache vía `globIgnores`.
+- **`manualChunks`**: sin cambios desde Fase 4 (regla vendors react/motion/dexie/zustand intacta). Nombres semánticos de chunks descartados: Workbox matchea por hash, no por nombre.
+- **`vendor-motion` 44 kB**: diferido. No bloquea LCP (precache corre post-paint). Reevaluar solo si Speed Insights post-deploy muestra LCP > 2.5 s.
+- **`useOnlineStatus`** (Visual): validado. Solo `navigator.onLine` + eventos, sin probe. Sin cambios.
 - **devDeps añadidos**: `workbox-core`, `workbox-expiration`, `workbox-precaching`, `workbox-routing`, `workbox-strategies` (`^7.3.0`).
-- **Documentación**: creado `docs/OFFLINE-STRATEGY.md`; sección de bump `evangelios-v*` en `docs/CONTENT-WORKFLOW.md`.
-- **Handoffs emitidos**: H-ADM-01a (→ Funcional: verificar no import de `src/sw.ts` desde eager), H-ADM-01b (→ Contenido: bump `cacheName`), H-ADM-01c (→ Visual: UI "Nueva versión disponible" — no bloqueante).
-- **Pendiente de verificación**: output literal `npm run build` post-cambios. Criterios de aceptación: `index-*.js` gzip ≤ 35 kB, `dist/sw.js` presente, precache excluye `evangelios-*`.
+- **Documentación**: creado `docs/OFFLINE-STRATEGY.md`; sección bump `evangelios-v*` en `docs/CONTENT-WORKFLOW.md`.
+- **Optimización bundle inicial**: reducido a **33.49 kB gzip** (objetivo ≤ 35 kB ✅). Baseline Fase 4 era 29.49 kB; +4 kB por features H-FUN-05/H-VIS-06, dentro de presupuesto.
+- **Tests**: **203/203 verdes**.
+- **Build**: verde. `dist/sw.js` (23.58 kB raw / 7.80 kB gzip) + `sw.js.map`. 511 módulos cliente + 78 módulos SW.
+- **Deploy**: commit `df05116` pusheado a `main` por el PO. Vercel auto-deploy.
+- **Handoffs aprobados**: H-ADM-01a (→ Funcional), H-ADM-01b (→ Contenido), H-ADM-01c (→ Visual, futuro), H-ADM-01d (→ Funcional, futuro). Ninguno bloqueante.
 
 ---
 
