@@ -1,116 +1,27 @@
-# FEEDBACK DE TESTERS — Mente en el Camino
+# FEEDBACK — Selah
 
-## Test #1 — Septiembre 2026
+## Feedback de Usuarios — Fase 5 (N=10)
 
-**Participantes**: 5 jóvenes
-**Método**: Uso libre + formulario post-sesión
-**Dispositivos**: Varios (algunos de gama baja/media)
+### Bugs P0 (Bloqueantes) - RESUELTOS
 
----
+- **B1**: Discipulado marcaba todas las respuestas como incorrectas. (Resuelto: correctIndex + tests).
+- **B2**: No se podía salir de la Lección sin recargar. (Resuelto: botones de retorno + handler en App).
 
-## 🎯 Resultados brutos
+### Bugs P1 (Calidad) - EN PROCESO (Fase 6)
 
-### 1. Rendimiento
+- **B3**: Falta basamento bíblico visible (Contexto bíblico). (Parcialmente resuelto: referencia visible, pendiente UX para formato exacto).
+- **B4**: La Lección "se siente como un formulario de registro". (Pendiente Fase 6: UX diseñará flujo devocional).
+- **B5**: Lógicas "vacías" al interactuar. (Parcialmente resuelto: spinners y toasts añadidos).
 
-- **Algunos teléfonos sintieron la interfaz pesada y lenta.**
+### Bugs P2 (Polish) - DIFERIDOS
 
-### 2. Sistema de preguntas
+- **B6**: Integración visual "desordenada" y novedades no promocionadas. (Resuelto en TV7 con badge "Nuevo").
 
-- **Las preguntas trampa molestan** cuando aparecen mezcladas con fáciles.
-- Sugerencia textual: "que dichas preguntas solo tengan un porcentaje de visualización si el usuario se ve sobrecalificado para las preguntas fáciles".
+### Observación del PO
 
-### 3. Percepción general
+_"Enfocarse en mejorar la calidad de la app en vez de ir agregando cosas y solo sea contenido más que calidad."_
 
-- **La plataforma se siente vacía.**
-- **Carece de principios** (ambiguo — ver análisis abajo).
-- **No es tan amigable con el usuario.**
+### Lección de Proceso (Fase 5)
 
----
-
-## 🔍 Análisis técnico
-
-### Problema 1: Rendimiento
-
-**Causa probable**: el `AnimatedBackground` tiene demasiadas animaciones simultáneas
-(60 estrellas + 3 blobs + rayos + grano + viñeta). Además hay varios `backdrop-blur`
-que son costosos en GPU móvil.
-
-**Chat responsable**: Visual (optimización) + Funcional (medir con Web Vitals).
-**Prioridad**: 🔥 Alta.
-
-### Problema 2: Dificultad adaptativa
-
-**Causa**: el algoritmo de `pickRandomQuestions` mezcla dificultades sin considerar
-el desempeño del jugador.
-
-**Solución propuesta**: implementar sistema de dificultad adaptativa que:
-
-- Si accuracy > 70% en últimas 20 respuestas → subir dificultad promedio.
-- Si accuracy < 40% → bajar dificultad.
-- Las preguntas "trampa" (hint-deduction, dificultad difícil) solo aparecen si:
-  - Nivel del jugador ≥ 3, Y
-  - Accuracy reciente > 65%.
-
-**Chat responsable**: Funcional.
-**Prioridad**: 🔥 Alta.
-
-### Problema 3: "Vacía" y "sin principios"
-
-**Ambiguo**. Necesita clarificación con los testers. Hipótesis posibles:
-
-**A)** Falta onboarding que explique el propósito.
-**B)** Falta identidad cristiana más visible (versículos, mensajes, reflexiones).
-**C)** Falta contenido/recompensas (logros, misiones, progresión clara).
-**D)** Falta calidez humana (microcopy frío, sin personalidad).
-
-**Chat responsable**: UX (flujo) + Visual (cambios visuales).
-**Prioridad**: 🔥 Media-Alta, pero PRIMERO clarificar con testers.
-
----
-
-## 📋 Acciones inmediatas
-
-### Antes de que los chats especializados empiecen
-
-- [ ] Preguntar a los 5 testers qué significa "vacío" y "sin principios" con
-      preguntas específicas (ver sección "Preguntas de clarificación" abajo).
-- [ ] Confirmar en qué teléfonos exactos se sintió lento (marca y modelo si posible).
-- [ ] Preguntar qué preguntas específicas sintieron como "trampa".
-
-### Sprints por área
-
-| Área      | Primera tarea                               | Prioridad |
-| --------- | ------------------------------------------- | --------- |
-| Funcional | Dificultad adaptativa                       | 🔥 Alta   |
-| Visual    | Optimizar AnimatedBackground                | 🔥 Alta   |
-| UX        | Clarificar "vacío" y diseñar onboarding     | 🔥 Alta   |
-| Admin     | Medir rendimiento real con Vercel Analytics | 🟡 Media  |
-
----
-
-## 🗣️ Preguntas de clarificación para los testers
-
-**Sobre "vacío" y "sin principios":**
-
-1. Cuando dices que se siente "vacío", ¿es porque no hay suficiente contenido,
-   porque no entiendes qué hacer, o porque se siente sin alma?
-2. ¿Qué esperarías ver en una app cristiana que la haga sentir "con principios"?
-3. ¿Qué te haría sentir la app "más amigable"?
-
-**Sobre rendimiento:** 4. ¿En qué momento sentiste que iba lento? (al abrir, al responder, al cambiar de pantalla) 5. ¿Qué teléfono usas? (marca y modelo)
-
-**Sobre preguntas trampa:** 6. ¿Puedes recordar una pregunta específica que sentiste "trampa"? 7. ¿Qué te hubiera gustado que pasara en su lugar?
-
----
-
-## 📊 Tabla de priorización (impacto vs esfuerzo)
-
-| Mejora                           | Impacto | Esfuerzo | Prioridad   |
-| -------------------------------- | ------- | -------- | ----------- |
-| Optimizar AnimatedBackground     | Alto    | Medio    | 🥇 1º       |
-| Dificultad adaptativa            | Alto    | Medio    | 🥈 2º       |
-| Onboarding claro                 | Alto    | Bajo     | 🥉 3º       |
-| Más versículos/mensajes visibles | Medio   | Bajo     | 4º          |
-| Más insignias/logros             | Medio   | Medio    | 5º          |
-| Microcopy más cálido             | Medio   | Bajo     | 6º          |
-| Medir analytics                  | Alto    | Bajo     | Transversal |
+El cierre prematuro de la Fase 5 sin QA real conllevó a 3 bugs P0 en producción.
+**Acción:** Se institucionalizó el "Gate de QA Real con 5-10 usuarios" como requisito obligatorio antes de cualquier cierre de fase.
