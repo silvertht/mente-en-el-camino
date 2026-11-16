@@ -1,5 +1,0 @@
-C:\Users\Usuario\Desktop\mente-en-el-camino\src\hooks\useCountUp.ts
-C:\Users\Usuario\Desktop\mente-en-el-camino\src\hooks\useInstallPrompt.ts
-C:\Users\Usuario\Desktop\mente-en-el-camino\src\hooks\useOnlineStatus.ts
-C:\Users\Usuario\Desktop\mente-en-el-camino\src\hooks\__tests__
-C:\Users\Usuario\Desktop\mente-en-el-camino\src\hooks\__tests__\useInstallPrompt.test.ts
