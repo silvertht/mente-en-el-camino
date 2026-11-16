@@ -14,6 +14,9 @@ import { LeccionNode } from "../components/discipleship/LeccionNode";
 import { EstadoVacio } from "../components/support/EstadoVacio";
 import { EstadoCarga } from "../components/support/EstadoCarga";
 import { EstadoOffline } from "../components/support/EstadoOffline";
+import { FeedbackInline } from "../components/support/FeedbackInline";
+import { EncabezadoMovimiento } from "../components/support/EncabezadoMovimiento";
+import { ProgresoSecundario } from "../components/support/ProgresoSecundario";
 
 export function ElCamino({
   onSelectLeccion,
@@ -32,16 +35,17 @@ export function ElCamino({
     headingRef.current?.focus();
   }, []);
 
-  if (!online)
+  if (!online) {
     return (
-      <EstadoOffline>
+      <EstadoOffline contexto="global">
         <></>
       </EstadoOffline>
     );
-  if (!contenidoCargado) return <EstadoCarga />;
+  }
+  if (!contenidoCargado) return <EstadoCarga contexto="s0" />;
 
   const senda = getSendaPiloto();
-  if (!senda) return <EstadoVacio />;
+  if (!senda) return <EstadoVacio contexto="s1" />;
 
   const state = useDiscipleshipStore.getState();
   const stSenda = selectEstadoSenda(state, senda.sendaId);
@@ -49,7 +53,11 @@ export function ElCamino({
 
   return (
     <main className="relative mx-auto max-w-md px-4 pb-32">
-      {/* TV3: botón volver */}
+      {/* D3: MC-012 en mount. FeedbackInline se auto-oculta a los 300ms. */}
+      <div className="pt-4">
+        <FeedbackInline texto={`Entrando a ${senda.titulo}.`} />
+      </div>
+
       <div className="flex items-center gap-2 pt-4">
         <button
           type="button"
@@ -68,7 +76,11 @@ export function ElCamino({
         </h1>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-2">
+        <EncabezadoMovimiento movimiento="Llegar" />
+      </div>
+
+      <div className="mt-4">
         <SendaHeader
           nombre={senda.titulo}
           estado={stSenda}
@@ -82,12 +94,29 @@ export function ElCamino({
             state,
             `${senda.sendaId}:${nivel.nivelNumber}`,
           );
+
+          // D2: ProgresoSecundario MC-016 por nivel (S2).
+          // Cast String() para evitar error de literal no asignable en selectEstadoLeccion.
+          const leccionesNivel = nivel.lecciones;
+          const totalNivel = leccionesNivel.length;
+          const recorridasNivel = leccionesNivel.filter((lec) => {
+            const lecId = `${senda.sendaId}:${nivel.nivelNumber}:${lec.leccionNumber}`;
+            const st = selectEstadoLeccion(state, lecId);
+            const s = String(st);
+            return s === "recorrida" || s === "recorrido";
+          }).length;
+
           return (
-            <div key={nivel.nivelNumber} className="space-y-6">
+            <div key={nivel.nivelNumber} className="space-y-4">
               <NivelHito
                 numero={nivel.nivelNumber}
                 nombre={nivel.titulo}
                 estado={stNivel}
+              />
+              <ProgresoSecundario
+                actual={recorridasNivel}
+                total={totalNivel}
+                contexto="lecciones"
               />
               <ul className="grid grid-cols-1 gap-4">
                 {nivel.lecciones.map((lec, i) => {

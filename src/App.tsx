@@ -138,13 +138,11 @@ function App() {
     <>
       <AnimatedBackground />
 
+      {/* H-VIS-07b / D7: MC-007 "Preparando tu camino…" via EstadoCarga s0 */}
       {isLoadingQuestions && (
-        <div className="fixed inset-0 z-50 bg-noche-900/80 backdrop-blur-sm flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-alba-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-alba-400 font-bold animate-pulse text-lg">
-              Preparando tu camino...
-            </p>
+        <div className="fixed inset-0 z-50 bg-noche-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <EstadoCarga contexto="s0" />
           </div>
         </div>
       )}
@@ -164,7 +162,7 @@ function App() {
       )}
 
       {screen === "elcamino" && (
-        <Suspense fallback={<EstadoCarga />}>
+        <Suspense fallback={<EstadoCarga contexto="s0" />}>
           <ElCamino
             onVolver={goHome}
             onSelectLeccion={(id) => {
@@ -175,7 +173,7 @@ function App() {
         </Suspense>
       )}
       {screen === "leccion" && leccionActiva && (
-        <Suspense fallback={<EstadoCarga />}>
+        <Suspense fallback={<EstadoCarga contexto="s4" />}>
           <Leccion
             leccionId={leccionActiva}
             onContinuar={() => setScreen("cierre")}
@@ -184,7 +182,7 @@ function App() {
         </Suspense>
       )}
       {screen === "cierre" && leccionActiva && (
-        <Suspense fallback={<EstadoCarga />}>
+        <Suspense fallback={<EstadoCarga contexto="s4" />}>
           <CierreLeccion
             leccionId={leccionActiva}
             onSiguiente={onSiguienteLeccion}
@@ -196,7 +194,7 @@ function App() {
         </Suspense>
       )}
       {screen === "grupo" && (
-        <Suspense fallback={<EstadoCarga />}>
+        <Suspense fallback={<EstadoCarga contexto="s0" />}>
           <JugarEnGrupo onBack={goHome} />
         </Suspense>
       )}

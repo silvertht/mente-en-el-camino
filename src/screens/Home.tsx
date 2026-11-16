@@ -10,6 +10,7 @@ import { ProgressBar } from "../components/ProgressBar";
 import { StatPill } from "../components/StatPill";
 import { GradientText } from "../components/GradientText";
 import { Modal } from "../components/Modal";
+import { FeedbackInline } from "../components/support/FeedbackInline"; // H-VIS-07b / D7
 import { useInstallPrompt } from "../hooks/useInstallPrompt";
 import { getTodayProgress } from "../db/database";
 import { xpProgressInLevel } from "../utils/scoring";
@@ -37,6 +38,11 @@ export function Home({
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
 
   const [dailyCompleted, setDailyCompleted] = useState(false);
+
+  // H-VIS-07b / D7: FeedbackInline MC-006 "Abriendo tu camino."
+  const [feedback006Key, setFeedback006Key] = useState(0);
+  const mostrarFeedback006 = feedback006Key > 0;
+
   const counts = countQuestionsByCategory();
 
   const principle = getTodayPrinciple();
@@ -72,6 +78,7 @@ export function Home({
 
   const handleDaily = async () => {
     if (isLoadingQuestions || dailyCompleted) return;
+    setFeedback006Key((k) => k + 1); // H-VIS-07b / D7: FeedbackInline MC-006
     await loadAndStartGame("daily", 10);
     onStartGame();
   };
@@ -303,6 +310,16 @@ export function Home({
                   </span>
                 </span>
               </Button>
+
+              {/* H-VIS-07b / D7: FeedbackInline MC-006 */}
+              {mostrarFeedback006 && (
+                <div className="mt-2 text-center">
+                  <FeedbackInline
+                    key={feedback006Key}
+                    texto="Abriendo tu camino."
+                  />
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

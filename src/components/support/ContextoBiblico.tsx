@@ -2,12 +2,11 @@ import { useId, useState } from "react";
 import { Button } from "../Button";
 
 /**
- * ContextoBiblico — D7 / E7 #1
- * S3 (siempre-visible) · S5/S6 (colapsable)
- * - heading: MC-024 "Contexto bíblico"
- * - cita:    MC-025 "[Libro] [C]:[V] (RVR1960)"
- * - body:    opcional (R6 pendiente). Si vacío → solo cita.
- * A11y: aria-labelledby, aria-expanded, aria-controls, foco visible.
+ * ContextoBiblico — D7 / E7 #1 / H-VIS-07b
+ * S3/S4 (siempre-visible) · S5 (colapsable) · S6 (colapsable)
+ * C1: si el caller pasa id, se usa LITERAL (responsabilidad del caller garantizar unicidad).
+ * D5: onFirstExpand se dispara 1 sola vez, la primera vez que se expande (colapsable).
+ * R6: si body vacío → solo cita MC-025.
  */
 export interface ContextoBiblicoProps {
   variant: "siempre-visible" | "colapsable";
@@ -16,6 +15,7 @@ export interface ContextoBiblicoProps {
   cita: string;
   defaultExpanded?: boolean;
   id?: string;
+  onFirstExpand?: () => void;
 }
 
 export function ContextoBiblico({
@@ -24,16 +24,28 @@ export function ContextoBiblico({
   body,
   cita,
   defaultExpanded = false,
-  id = "ctx-biblico",
+  id,
+  onFirstExpand,
 }: ContextoBiblicoProps) {
-  const uid = useId();
-  const baseId = `${id}-${uid}`;
+  const fallbackId = useId();
+  const baseId = id ?? `ctx-biblico-${fallbackId}`;
   const [expanded, setExpanded] = useState(defaultExpanded);
+  const [hasExpanded, setHasExpanded] = useState(defaultExpanded);
+
+  const handleToggle = () => {
+    const next = !expanded;
+    setExpanded(next);
+    if (next && !hasExpanded) {
+      setHasExpanded(true);
+      onFirstExpand?.();
+    }
+  };
 
   if (variant === "siempre-visible") {
     const headingId = `${baseId}-heading`;
     return (
       <section
+        id={baseId}
         aria-labelledby={headingId}
         className="rounded-2xl bg-noche-900/60 border border-noche-700 p-5 space-y-3"
       >
@@ -51,7 +63,6 @@ export function ContextoBiblico({
     );
   }
 
-  // variant === "colapsable" (S5/S6)
   const btnId = `${baseId}-btn`;
   return (
     <section
@@ -62,7 +73,7 @@ export function ContextoBiblico({
         id={btnId}
         variant="ghost"
         fullWidth
-        onClick={() => setExpanded((v) => !v)}
+        onClick={handleToggle}
         aria-expanded={expanded}
         aria-controls={baseId}
         className="justify-between text-left text-alba-400 text-xs font-semibold uppercase tracking-widest"

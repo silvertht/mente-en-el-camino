@@ -16,6 +16,10 @@ import {
 } from "../components/discipleship/FeedbackReflexion";
 import { Button } from "../components/Button";
 import { EstadoCarga } from "../components/support/EstadoCarga";
+import { ContextoBiblico } from "../components/support/ContextoBiblico";
+import { ToastHito } from "../components/support/ToastHito";
+import { FeedbackInline } from "../components/support/FeedbackInline";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
 
 export function Leccion({
   leccionId,
@@ -32,41 +36,43 @@ export function Leccion({
   const n = Number(nStr) as NivelNumber;
   const l = Number(lStr) as LeccionNumber;
   const leccion = getLeccion(sendaId, n, l);
+  const online = useOnlineStatus();
 
   const iniciarLeccion = useDiscipleshipStore((s) => s.iniciarLeccion);
   const responderCheck = useDiscipleshipStore((s) => s.responderCheck);
   const finalizarLeccion = useDiscipleshipStore((s) => s.finalizarLeccion);
   const abandonarLeccion = useDiscipleshipStore((s) => s.abandonarLeccion);
   const guardarPosicion = useDiscipleshipStore((s) => s.guardarPosicion);
-
   const leccionActivaStore = useDiscipleshipStore((s) => s.leccionActiva);
 
   const [preguntaIdx, setPreguntaIdx] = useState(0);
   const [feedback, setFeedback] = useState<FeedbackData | null>(null);
   const [finalizando, setFinalizando] = useState(false);
-  const [avanceGuardado, setAvanceGuardado] = useState(false);
   const [iniciando, setIniciando] = useState(true);
   const [errorInicio, setErrorInicio] = useState(false);
 
+  // D5/D6: un solo estado para H1/H2 (anti-apilamiento, 1 toast por evento)
+  const [toastActivo, setToastActivo] = useState<"H1" | "H2" | null>(null);
+  const [h1Mostrado, setH1Mostrado] = useState(false);
+  const [h2Mostrado, setH2Mostrado] = useState(false);
+
+  // D3: FeedbackInline MC-034 (Bien. Sigamos.) al cambiar pregunta
+  const [mostrarFeedback034, setMostrarFeedback034] = useState(false);
+  const [feedback034Key, setFeedback034Key] = useState(0);
+
   useEffect(() => {
-    console.log("🟢 useEffect iniciarLeccion disparado para:", leccionId);
     headingRef.current?.focus();
     setIniciando(true);
     setErrorInicio(false);
 
     iniciarLeccion(sendaId, n, l)
-      .then(() => {
-        console.log("✅ iniciarLeccion terminó con éxito");
-        setIniciando(false);
-      })
-      .catch((error) => {
-        console.error("🚨 ERROR REAL EN INICIAR LECCION:", error);
+      .then(() => setIniciando(false))
+      .catch(() => {
         setIniciando(false);
         setErrorInicio(true);
       });
 
     return () => {
-      console.log("🔴 Cleanup: abandonarLeccion disparado");
       abandonarLeccion().catch(console.error);
     };
   }, [sendaId, n, l, iniciarLeccion, abandonarLeccion, leccionId]);
@@ -116,7 +122,7 @@ export function Leccion({
   if (!ready) {
     return (
       <main className="mx-auto max-w-md px-4 pb-32">
-        <EstadoCarga />
+        <EstadoCarga contexto="s4" />
       </main>
     );
   }
@@ -124,6 +130,14 @@ export function Leccion({
   const totalPreguntas = leccion.preguntas.length;
   const esUltima = preguntaIdx >= totalPreguntas - 1;
   const preguntaActual = leccion.preguntas[preguntaIdx];
+
+  // D1: S3 (preguntaIdx=0) → siempre-visible. S5 (preguntaIdx>0) → colapsable.
+  const varianteContexto = preguntaIdx === 0 ? "siempre-visible" : "colapsable";
+
+  // MC-025: cita RVR1960 (defensivo: no duplicar si ya tiene (RVR1960))
+  const citaRVR = preguntaActual.referenciaRVR1960.includes("RVR1960")
+    ? preguntaActual.referenciaRVR1960
+    : `${preguntaActual.referenciaRVR1960} (RVR1960)`;
 
   const onResponder = (opcionIdx: number) => {
     const r: ResultadoCheck = responderCheck(preguntaIdx, opcionIdx, {
@@ -161,16 +175,49 @@ export function Leccion({
     try {
       await guardarPosicion(0, next);
     } catch {
-      // no bloquea el avance si falla persistencia
+      // no bloquea si falla persistencia
     }
+
+    // C6: H1 trigger = mismo evento que toast manual anterior (guardado de avance).
+    // Frecuencia: 1 vez por lección.
+    if (!h1Mostrado) {
+      setToastActivo("H1");
+      setH1Mostrado(true);
+    }
+
+    // D3: FeedbackInline MC-034
+    setMostrarFeedback034(true);
+    setFeedback034Key((k) => k + 1);
+
     setPreguntaIdx(next);
     setFeedback(null);
-    setAvanceGuardado(true);
-    setTimeout(() => setAvanceGuardado(false), 1800);
   };
+
+  // D5: H2 trigger = primera expansión del ContextoBiblico colapsable
+  const onContextoFirstExpand = () => {
+    if (!h2Mostrado) {
+      setToastActivo("H2");
+      setH2Mostrado(true);
+    }
+  };
+
+  const toastTexto =
+    toastActivo === "H1" || toastActivo === "H2"
+      ? online
+        ? "Avance guardado. Contexto bíblico visible."
+        : "Guardado aquí. Se sincroniza luego."
+      : "";
 
   return (
     <main className="mx-auto max-w-md px-4 pb-40">
+      <ToastHito
+        hito={toastActivo ?? "H1"}
+        open={toastActivo !== null}
+        texto={toastTexto}
+        online={online}
+        onClose={() => setToastActivo(null)}
+      />
+
       <div className="flex items-center gap-2 py-4">
         <button
           type="button"
@@ -192,15 +239,23 @@ export function Leccion({
       >
         {leccion.titulo}
       </h1>
-      <ProgresoLeccion leccionN={l} nivelX={n} total={3} />
 
-      {avanceGuardado && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed top-4 inset-x-4 mx-auto max-w-md rounded-xl border border-vida-500/40 bg-vida-500/15 px-4 py-2 text-sm text-vida-300 shadow-lg shadow-vida-500/10"
-        >
-          <span aria-hidden="true">✓</span> Avance guardado
+      {/* D1/C1: ContextoBiblico único, id literal "ctx-biblico" */}
+      <ContextoBiblico
+        variant={varianteContexto}
+        id="ctx-biblico"
+        heading="Contexto bíblico"
+        cita={citaRVR}
+        onFirstExpand={onContextoFirstExpand}
+      />
+
+      <div className="mt-3">
+        <ProgresoLeccion leccionN={l} nivelX={n} total={3} />
+      </div>
+
+      {mostrarFeedback034 && (
+        <div className="mt-2">
+          <FeedbackInline key={feedback034Key} texto="Bien. Sigamos." />
         </div>
       )}
 
@@ -217,9 +272,6 @@ export function Leccion({
         <div className="flex flex-wrap items-baseline gap-2">
           <span className="text-[10px] font-black uppercase tracking-[0.25em] text-alba-500">
             Reflexión {preguntaIdx + 1} de {totalPreguntas}
-          </span>
-          <span className="text-[10px] font-semibold tracking-wide text-reino-300/80">
-            [UX] Contexto bíblico: {preguntaActual.referenciaRVR1960}
           </span>
         </div>
 
