@@ -5,6 +5,8 @@ interface ProgressBarProps {
   height?: "sm" | "md" | "lg";
   showLabel?: boolean;
   label?: string;
+  /** NUEVO (H-VIS-07): E7 #5 — aria-label del progressbar. */
+  "aria-label"?: string;
 }
 
 const HEIGHTS = {
@@ -20,6 +22,7 @@ export function ProgressBar({
   height = "md",
   showLabel = false,
   label,
+  "aria-label": ariaLabel,
 }: ProgressBarProps) {
   const percent = Math.max(0, Math.min(100, (value / max) * 100));
 
@@ -27,6 +30,7 @@ export function ProgressBar({
     <div className="w-full">
       {showLabel && (
         <div className="flex justify-between items-center mb-1.5 text-xs text-slate-400 font-medium">
+          {/* Deuda heredada Fase 4 (text-slate-400). Backlog Fase 6. No se toca en H-VIS-07. */}
           <span>{label}</span>
           <span className="text-alba-400">{Math.round(percent)}%</span>
         </div>
@@ -49,6 +53,7 @@ export function ProgressBar({
           aria-valuenow={value}
           aria-valuemin={0}
           aria-valuemax={max}
+          aria-label={ariaLabel}
         >
           {/* Brillo interno */}
           <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent rounded-full" />

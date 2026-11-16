@@ -1,0 +1,8 @@
+C:\Users\Usuario\Desktop\mente-en-el-camino\src\store\eventBus.ts
+C:\Users\Usuario\Desktop\mente-en-el-camino\src\store\useDiscipleshipStore.test.ts
+C:\Users\Usuario\Desktop\mente-en-el-camino\src\store\useDiscipleshipStore.ts
+C:\Users\Usuario\Desktop\mente-en-el-camino\src\store\useGameStore.antiExploit.test.ts
+C:\Users\Usuario\Desktop\mente-en-el-camino\src\store\useGameStore.onboarding.test.ts
+C:\Users\Usuario\Desktop\mente-en-el-camino\src\store\useGameStore.ts
+C:\Users\Usuario\Desktop\mente-en-el-camino\src\store\useMultiplayerStore.test.ts
+C:\Users\Usuario\Desktop\mente-en-el-camino\src\store\useMultiplayerStore.ts
