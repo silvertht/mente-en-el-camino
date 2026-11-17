@@ -1,3 +1,5 @@
+import { motion } from "motion/react";
+
 export type FeedbackData = {
   correcto: boolean;
   respuesta?: string;
@@ -24,10 +26,13 @@ export function FeedbackReflexion({ data }: { data: FeedbackData }) {
       };
 
   return (
-    <article
+    <motion.article
       role="status"
       aria-live="polite"
       aria-atomic="true"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
       className={`rounded-3xl border-l-4 ${variante.borde} ${variante.fondo} p-5 sm:p-6 space-y-3`}
     >
       <header className="flex items-center gap-3">
@@ -70,6 +75,6 @@ export function FeedbackReflexion({ data }: { data: FeedbackData }) {
       {!data.correcto && (
         <p className="text-sm text-noche-300">Inténtalo otra vez.</p>
       )}
-    </article>
+    </motion.article>
   );
 }

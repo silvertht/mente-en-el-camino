@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useDiscipleshipStore } from "../store/useDiscipleshipStore";
 import type { CategoryId } from "../types";
 import type {
@@ -18,7 +19,6 @@ import { Button } from "../components/Button";
 import { EstadoCarga } from "../components/support/EstadoCarga";
 import { ContextoBiblico } from "../components/support/ContextoBiblico";
 import { ToastHito } from "../components/support/ToastHito";
-import { FeedbackInline } from "../components/support/FeedbackInline";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 
 export function Leccion({
@@ -37,6 +37,7 @@ export function Leccion({
   const l = Number(lStr) as LeccionNumber;
   const leccion = getLeccion(sendaId, n, l);
   const online = useOnlineStatus();
+  const reduced = useReducedMotion();
 
   const iniciarLeccion = useDiscipleshipStore((s) => s.iniciarLeccion);
   const responderCheck = useDiscipleshipStore((s) => s.responderCheck);
@@ -51,14 +52,17 @@ export function Leccion({
   const [iniciando, setIniciando] = useState(true);
   const [errorInicio, setErrorInicio] = useState(false);
 
-  // D5/D6: un solo estado para H1/H2 (anti-apilamiento, 1 toast por evento)
+  // D5/D6: un solo estado para H1/H2 (anti-apilamiento)
   const [toastActivo, setToastActivo] = useState<"H1" | "H2" | null>(null);
   const [h1Mostrado, setH1Mostrado] = useState(false);
   const [h2Mostrado, setH2Mostrado] = useState(false);
 
-  // D3: FeedbackInline MC-034 (Bien. Sigamos.) al cambiar pregunta
-  const [mostrarFeedback034, setMostrarFeedback034] = useState(false);
-  const [feedback034Key, setFeedback034Key] = useState(0);
+  // Visual v2 (CA-4): microcopy de transición
+  const [mostrarSeguimos, setMostrarSeguimos] = useState(false); // MC-061
+  const [mostrar062, setMostrar062] = useState(false); // MC-062
+  const [mostrar063, setMostrar063] = useState(false); // MC-063
+  const [h62Mostrado, setH62Mostrado] = useState(false);
+  const [h63Mostrado, setH63Mostrado] = useState(false);
 
   useEffect(() => {
     headingRef.current?.focus();
@@ -76,6 +80,11 @@ export function Leccion({
       abandonarLeccion().catch(console.error);
     };
   }, [sendaId, n, l, iniciarLeccion, abandonarLeccion, leccionId]);
+
+  // Reset flag MC-063 cuando cambia la pregunta (nuevo retry posible)
+  useEffect(() => {
+    setH63Mostrado(false);
+  }, [preguntaIdx]);
 
   const ready =
     !iniciando &&
@@ -131,10 +140,8 @@ export function Leccion({
   const esUltima = preguntaIdx >= totalPreguntas - 1;
   const preguntaActual = leccion.preguntas[preguntaIdx];
 
-  // D1: S3 (preguntaIdx=0) → siempre-visible. S5 (preguntaIdx>0) → colapsable.
   const varianteContexto = preguntaIdx === 0 ? "siempre-visible" : "colapsable";
 
-  // MC-025: cita RVR1960 (defensivo: no duplicar si ya tiene (RVR1960))
   const citaRVR = preguntaActual.referenciaRVR1960.includes("RVR1960")
     ? preguntaActual.referenciaRVR1960
     : `${preguntaActual.referenciaRVR1960} (RVR1960)`;
@@ -145,6 +152,9 @@ export function Leccion({
       nivelNumber: n,
       leccionNumber: l,
     });
+
+    const prevFeedback = feedback;
+
     setFeedback({
       correcto: r.correcto,
       respuesta: r.feedback,
@@ -152,6 +162,20 @@ export function Leccion({
       referencia: r.referencia,
       reflexion: r.reflexion,
     });
+
+    // Visual v2: MC-063 en retry tras respuesta incorrecta (S5 → S4 retorno)
+    if (!r.correcto && prevFeedback && !prevFeedback.correcto && !h63Mostrado) {
+      setH63Mostrado(true);
+      setMostrar063(true);
+      setTimeout(() => setMostrar063(false), 1500);
+    }
+
+    // Visual v2: MC-062 en última pregunta correcta (S4 última → S5)
+    if (r.correcto && esUltima && !h62Mostrado) {
+      setH62Mostrado(true);
+      setMostrar062(true);
+      setTimeout(() => setMostrar062(false), 2500);
+    }
   };
 
   const onTerminar = async () => {
@@ -178,22 +202,22 @@ export function Leccion({
       // no bloquea si falla persistencia
     }
 
-    // C6: H1 trigger = mismo evento que toast manual anterior (guardado de avance).
-    // Frecuencia: 1 vez por lección.
+    // C6: H1 trigger intacto (1 vez por lección)
     if (!h1Mostrado) {
       setToastActivo("H1");
       setH1Mostrado(true);
     }
 
-    // D3: FeedbackInline MC-034
-    setMostrarFeedback034(true);
-    setFeedback034Key((k) => k + 1);
+    // Visual v2: MC-061 "Seguimos." solo en la primera transición (pregunta 1→2)
+    if (preguntaIdx === 0 && next === 1) {
+      setMostrarSeguimos(true);
+      setTimeout(() => setMostrarSeguimos(false), 300);
+    }
 
     setPreguntaIdx(next);
     setFeedback(null);
   };
 
-  // D5: H2 trigger = primera expansión del ContextoBiblico colapsable
   const onContextoFirstExpand = () => {
     if (!h2Mostrado) {
       setToastActivo("H2");
@@ -201,12 +225,18 @@ export function Leccion({
     }
   };
 
+  // Visual v2: MC-028 acortado (converge con MC-050)
   const toastTexto =
     toastActivo === "H1" || toastActivo === "H2"
       ? online
-        ? "Avance guardado. Contexto bíblico visible."
+        ? "Avance guardado."
         : "Guardado aquí. Se sincroniza luego."
       : "";
+
+  // Duraciones respetan prefers-reduced-motion
+  const crossfadeDur = reduced ? 0.001 : 0.15;
+  const slideDur = reduced ? 0.15 : 0.25;
+  const fadeInDur = reduced ? 0.001 : 0.2;
 
   return (
     <main className="mx-auto max-w-md px-4 pb-40">
@@ -240,7 +270,6 @@ export function Leccion({
         {leccion.titulo}
       </h1>
 
-      {/* D1/C1: ContextoBiblico único, id literal "ctx-biblico" */}
       <ContextoBiblico
         variant={varianteContexto}
         id="ctx-biblico"
@@ -253,12 +282,6 @@ export function Leccion({
         <ProgresoLeccion leccionN={l} nivelX={n} total={3} />
       </div>
 
-      {mostrarFeedback034 && (
-        <div className="mt-2">
-          <FeedbackInline key={feedback034Key} texto="Bien. Sigamos." />
-        </div>
-      )}
-
       {preguntaIdx === 0 && (
         <div className="mt-6">
           <TarjetaContenido
@@ -268,23 +291,90 @@ export function Leccion({
         </div>
       )}
 
-      <section className="mt-8 space-y-4">
+      {/* Visual v2: MC-061 "Seguimos." (solo primera transición) */}
+      <AnimatePresence>
+        {mostrarSeguimos && (
+          <motion.p
+            key="mc061"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: crossfadeDur }}
+            className="mt-4 text-alba-300 text-sm italic"
+          >
+            Seguimos.
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      {/* Visual v2: MC-064 "Responde con calma." (persistente) */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: fadeInDur }}
+        className="mt-6 text-alba-400/80 text-xs uppercase tracking-widest font-semibold"
+      >
+        Responde con calma.
+      </motion.p>
+
+      <section className="mt-2 space-y-4">
         <div className="flex flex-wrap items-baseline gap-2">
           <span className="text-[10px] font-black uppercase tracking-[0.25em] text-alba-500">
             Reflexión {preguntaIdx + 1} de {totalPreguntas}
           </span>
         </div>
 
-        <CheckReflexion
-          key={preguntaIdx}
-          pregunta={preguntaActual.enunciado}
-          opciones={preguntaActual.opciones.map((texto, i) => ({
-            id: i,
-            texto,
-          }))}
-          onResponder={onResponder}
-        />
+        {/* Visual v2: crossfade 300ms en cambio de pregunta */}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={preguntaIdx}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: crossfadeDur }}
+          >
+            <CheckReflexion
+              pregunta={preguntaActual.enunciado}
+              opciones={preguntaActual.opciones.map((texto, i) => ({
+                id: i,
+                texto,
+              }))}
+              onResponder={onResponder}
+            />
+          </motion.div>
+        </AnimatePresence>
       </section>
+
+      {/* Visual v2: MC-062 "Una pregunta para ti." (S4 última → S5) */}
+      <AnimatePresence>
+        {mostrar062 && (
+          <motion.p
+            key="mc062"
+            initial={{ opacity: 0, y: reduced ? 0 : 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: slideDur }}
+            className="mt-4 text-alba-300 text-sm italic"
+          >
+            Una pregunta para ti.
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      {/* Visual v2: MC-063 "Tómate tu tiempo." (retorno tras respuesta incorrecta) */}
+      <AnimatePresence>
+        {mostrar063 && (
+          <motion.p
+            key="mc063"
+            initial={{ opacity: 0, y: reduced ? 0 : -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: slideDur }}
+            className="mt-4 text-reino-300 text-sm italic"
+          >
+            Tómate tu tiempo.
+          </motion.p>
+        )}
+      </AnimatePresence>
 
       {feedback && (
         <div className="mt-4">
