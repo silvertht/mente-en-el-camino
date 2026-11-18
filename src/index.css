@@ -191,7 +191,7 @@ body::-webkit-scrollbar,
     background: linear-gradient(
       90deg,
       rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.04) 50%,
+      rgba(255, 255, 255, 0.08) 50%,
       rgba(255, 255, 255, 0) 100%
     );
     background-size: 200% 100%;
@@ -201,7 +201,7 @@ body::-webkit-scrollbar,
   @media (prefers-reduced-motion: reduce) {
     .skeleton-shimmer {
       animation: none;
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(255, 255, 255, 0.03);
     }
   }
 }

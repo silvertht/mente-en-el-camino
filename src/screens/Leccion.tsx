@@ -52,15 +52,13 @@ export function Leccion({
   const [iniciando, setIniciando] = useState(true);
   const [errorInicio, setErrorInicio] = useState(false);
 
-  // D5/D6: un solo estado para H1/H2 (anti-apilamiento)
   const [toastActivo, setToastActivo] = useState<"H1" | "H2" | null>(null);
   const [h1Mostrado, setH1Mostrado] = useState(false);
   const [h2Mostrado, setH2Mostrado] = useState(false);
 
-  // Visual v2 (CA-4): microcopy de transición
-  const [mostrarSeguimos, setMostrarSeguimos] = useState(false); // MC-061
-  const [mostrar062, setMostrar062] = useState(false); // MC-062
-  const [mostrar063, setMostrar063] = useState(false); // MC-063
+  const [mostrarSeguimos, setMostrarSeguimos] = useState(false);
+  const [mostrar062, setMostrar062] = useState(false);
+  const [mostrar063, setMostrar063] = useState(false);
   const [h62Mostrado, setH62Mostrado] = useState(false);
   const [h63Mostrado, setH63Mostrado] = useState(false);
 
@@ -101,43 +99,38 @@ export function Leccion({
     }
   };
 
-  // Visual v3: Overlay de carga con backdrop-blur (tapa el starfield y evita "flash roto")
-  if (!leccion || errorInicio || !ready) {
+  // Early returns para errores (no usan animación de fade-out porque son pantallas de error estáticas)
+  if (!leccion) {
     return (
       <div className="fixed inset-0 z-50 bg-noche-950/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
-        {errorInicio ? (
-          <>
-            <p className="text-noche-300 text-sm mb-4">
-              No pudimos abrir la lección. Reintenta.
-            </p>
-            <Button variant="ghost" fullWidth onClick={volverAlCamino}>
-              Volver al camino
-            </Button>
-          </>
-        ) : !leccion ? (
-          <>
-            <p className="text-noche-300 text-sm mb-4">
-              No pudimos abrir la lección. Vuelve al camino.
-            </p>
-            <Button variant="ghost" fullWidth onClick={onVolver}>
-              Volver
-            </Button>
-          </>
-        ) : (
-          <div className="w-full max-w-md">
-            <EstadoCarga contexto="s4" />
-          </div>
-        )}
+        <p className="text-noche-300 text-sm mb-4">
+          No pudimos abrir la lección. Vuelve al camino.
+        </p>
+        <Button variant="ghost" fullWidth onClick={onVolver}>
+          Volver
+        </Button>
       </div>
     );
   }
 
+  if (errorInicio) {
+    return (
+      <div className="fixed inset-0 z-50 bg-noche-950/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+        <p className="text-noche-300 text-sm mb-4">
+          No pudimos abrir la lección. Reintenta.
+        </p>
+        <Button variant="ghost" fullWidth onClick={volverAlCamino}>
+          Volver al camino
+        </Button>
+      </div>
+    );
+  }
+
+  // Cálculos para la vista principal
   const totalPreguntas = leccion.preguntas.length;
   const esUltima = preguntaIdx >= totalPreguntas - 1;
   const preguntaActual = leccion.preguntas[preguntaIdx];
-
   const varianteContexto = preguntaIdx === 0 ? "siempre-visible" : "colapsable";
-
   const citaRVR = preguntaActual.referenciaRVR1960.includes("RVR1960")
     ? preguntaActual.referenciaRVR1960
     : `${preguntaActual.referenciaRVR1960} (RVR1960)`;
@@ -228,170 +221,194 @@ export function Leccion({
   const slideDur = reduced ? 0.15 : 0.25;
   const fadeInDur = reduced ? 0.001 : 0.2;
 
+  // Render principal con AnimatePresence para transición suave de carga
   return (
-    <main className="relative z-10 mx-auto max-w-md px-4 pb-32">
-      {/* Visual v3: Overlay para atenuar el starfield en S4/S5 */}
-      <div
-        aria-hidden="true"
-        className="fixed inset-0 -z-10 bg-noche-950/60 pointer-events-none"
-      />
-
-      <ToastHito
-        hito={toastActivo ?? "H1"}
-        open={toastActivo !== null}
-        texto={toastTexto}
-        online={online}
-        onClose={() => setToastActivo(null)}
-      />
-
-      <div className="flex items-center gap-2 py-4">
-        <button
-          type="button"
-          onClick={volverAlCamino}
-          aria-label="Volver al camino"
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-noche-800/60 border border-noche-700 text-noche-200 hover:text-alba-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-alba-400 focus-visible:ring-offset-2 focus-visible:ring-offset-noche-950"
-        >
-          ←
-        </button>
-        <p className="text-xs uppercase tracking-[0.2em] text-noche-400">
-          Lección {l} · Nivel {n}
-        </p>
-      </div>
-
-      <h1
-        ref={headingRef}
-        tabIndex={-1}
-        className="py-2 text-2xl font-semibold text-alba-400 outline-none"
-      >
-        {leccion.titulo}
-      </h1>
-
-      <ContextoBiblico
-        variant={varianteContexto}
-        id="ctx-biblico"
-        heading="Contexto bíblico"
-        cita={citaRVR}
-        onFirstExpand={onContextoFirstExpand}
-      />
-
-      <div className="mt-3">
-        <ProgresoLeccion leccionN={l} nivelX={n} total={3} />
-      </div>
-
-      {preguntaIdx === 0 && (
-        <div className="mt-6">
-          <TarjetaContenido
-            titulo={leccion.titulo}
-            cuerpo={leccion.introduccion}
-          />
-        </div>
-      )}
-
+    <>
       <AnimatePresence>
-        {mostrarSeguimos && (
-          <motion.p
-            key="mc061"
-            initial={{ opacity: 1 }}
+        {!ready && (
+          <motion.div
+            key="loader"
             exit={{ opacity: 0 }}
-            transition={{ duration: crossfadeDur }}
-            className="mt-4 text-alba-300 text-sm italic"
+            transition={{ duration: fadeInDur }}
+            className="fixed inset-0 z-50 bg-noche-950/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center"
           >
-            Seguimos.
-          </motion.p>
+            <div className="w-full max-w-md">
+              <EstadoCarga contexto="s4" />
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: fadeInDur }}
-        className="mt-6 text-alba-400/80 text-xs uppercase tracking-widest font-semibold"
-      >
-        Responde con calma.
-      </motion.p>
+      {ready && (
+        <motion.main
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: fadeInDur }}
+          className="relative z-10 mx-auto max-w-md px-4 pb-32"
+        >
+          {/* Visual v3: Overlay para atenuar el starfield en S4/S5 */}
+          <div
+            aria-hidden="true"
+            className="fixed inset-0 -z-10 bg-noche-950/60 pointer-events-none"
+          />
 
-      <section className="mt-2 space-y-4">
-        <div className="flex flex-wrap items-baseline gap-2">
-          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-alba-500">
-            Reflexión {preguntaIdx + 1} de {totalPreguntas}
-          </span>
-        </div>
+          <ToastHito
+            hito={toastActivo ?? "H1"}
+            open={toastActivo !== null}
+            texto={toastTexto}
+            online={online}
+            onClose={() => setToastActivo(null)}
+          />
 
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={preguntaIdx}
+          <div className="flex items-center gap-2 py-4">
+            <button
+              type="button"
+              onClick={volverAlCamino}
+              aria-label="Volver al camino"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-noche-800/60 border border-noche-700 text-noche-200 hover:text-alba-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-alba-400 focus-visible:ring-offset-2 focus-visible:ring-offset-noche-950"
+            >
+              ←
+            </button>
+            <p className="text-xs uppercase tracking-[0.2em] text-noche-400">
+              Lección {l} · Nivel {n}
+            </p>
+          </div>
+
+          <h1
+            ref={headingRef}
+            tabIndex={-1}
+            className="py-2 text-2xl font-semibold text-alba-400 outline-none"
+          >
+            {leccion.titulo}
+          </h1>
+
+          <ContextoBiblico
+            variant={varianteContexto}
+            id="ctx-biblico"
+            heading="Contexto bíblico"
+            cita={citaRVR}
+            onFirstExpand={onContextoFirstExpand}
+          />
+
+          <div className="mt-3">
+            <ProgresoLeccion leccionN={l} nivelX={n} total={3} />
+          </div>
+
+          {preguntaIdx === 0 && (
+            <div className="mt-6">
+              <TarjetaContenido
+                titulo={leccion.titulo}
+                cuerpo={leccion.introduccion}
+              />
+            </div>
+          )}
+
+          <AnimatePresence>
+            {mostrarSeguimos && (
+              <motion.p
+                key="mc061"
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: crossfadeDur }}
+                className="mt-4 text-alba-300 text-sm italic"
+              >
+                Seguimos.
+              </motion.p>
+            )}
+          </AnimatePresence>
+
+          <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: crossfadeDur }}
+            transition={{ duration: fadeInDur }}
+            className="mt-6 text-alba-400/80 text-xs uppercase tracking-widest font-semibold"
           >
-            <CheckReflexion
-              pregunta={preguntaActual.enunciado}
-              opciones={preguntaActual.opciones.map((texto, i) => ({
-                id: i,
-                texto,
-              }))}
-              onResponder={onResponder}
-            />
-          </motion.div>
-        </AnimatePresence>
-      </section>
-
-      <AnimatePresence>
-        {mostrar062 && (
-          <motion.p
-            key="mc062"
-            initial={{ opacity: 0, y: reduced ? 0 : 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: slideDur }}
-            className="mt-4 text-alba-300 text-sm italic"
-          >
-            Una pregunta para ti.
+            Responde con calma.
           </motion.p>
-        )}
-      </AnimatePresence>
 
-      <AnimatePresence>
-        {mostrar063 && (
-          <motion.p
-            key="mc063"
-            initial={{ opacity: 0, y: reduced ? 0 : -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: slideDur }}
-            className="mt-4 text-reino-300 text-sm italic"
-          >
-            Tómate tu tiempo.
-          </motion.p>
-        )}
-      </AnimatePresence>
+          <section className="mt-2 space-y-4">
+            <div className="flex flex-wrap items-baseline gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-alba-500">
+                Reflexión {preguntaIdx + 1} de {totalPreguntas}
+              </span>
+            </div>
 
-      {feedback && (
-        <div className="mt-4 scroll-mb-24">
-          <FeedbackReflexion data={feedback} />
-        </div>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={preguntaIdx}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: crossfadeDur }}
+              >
+                <CheckReflexion
+                  pregunta={preguntaActual.enunciado}
+                  opciones={preguntaActual.opciones.map((texto, i) => ({
+                    id: i,
+                    texto,
+                  }))}
+                  onResponder={onResponder}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </section>
+
+          <AnimatePresence>
+            {mostrar062 && (
+              <motion.p
+                key="mc062"
+                initial={{ opacity: 0, y: reduced ? 0 : 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: slideDur }}
+                className="mt-4 text-alba-300 text-sm italic"
+              >
+                Una pregunta para ti.
+              </motion.p>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {mostrar063 && (
+              <motion.p
+                key="mc063"
+                initial={{ opacity: 0, y: reduced ? 0 : -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: slideDur }}
+                className="mt-4 text-reino-300 text-sm italic"
+              >
+                Tómate tu tiempo.
+              </motion.p>
+            )}
+          </AnimatePresence>
+
+          {feedback && (
+            <div className="mt-4 scroll-mb-24">
+              <FeedbackReflexion data={feedback} />
+            </div>
+          )}
+
+          {feedback?.correcto && (
+            <div className="fixed bottom-0 inset-x-0 z-30 bg-noche-950/80 backdrop-blur-md border-t border-noche-800/50 safe-bottom transition-transform duration-300">
+              <div className="mx-auto max-w-md px-4 py-3">
+                <Button
+                  variant="primary"
+                  fullWidth
+                  onClick={onSiguientePregunta}
+                  disabled={finalizando}
+                >
+                  {finalizando
+                    ? "Guardando…"
+                    : esUltima
+                      ? "Continuar"
+                      : "Siguiente reflexión"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </motion.main>
       )}
-
-      {/* Visual v3 / FALLO 1: Sticky CTA Bar con safe-area */}
-      {feedback?.correcto && (
-        <div className="fixed bottom-0 inset-x-0 z-30 bg-noche-950/80 backdrop-blur-md border-t border-noche-800/50 safe-bottom transition-transform duration-300">
-          <div className="mx-auto max-w-md px-4 py-3">
-            <Button
-              variant="primary"
-              fullWidth
-              onClick={onSiguientePregunta}
-              disabled={finalizando}
-            >
-              {finalizando
-                ? "Guardando…"
-                : esUltima
-                  ? "Continuar"
-                  : "Siguiente reflexión"}
-            </Button>
-          </div>
-        </div>
-      )}
-    </main>
+    </>
   );
 }
