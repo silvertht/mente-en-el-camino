@@ -38,7 +38,7 @@ export function EstadoError({
   return (
     <div
       role="alert"
-      className="flex flex-col items-center gap-4 p-6 text-center"
+      className="flex flex-col items-center gap-4 p-6 text-center rounded-2xl bg-noche-900/60 border border-noche-700/50 w-full max-w-md mx-auto"
     >
       <span aria-hidden="true" className="text-3xl text-alerta-400">
         ⚠

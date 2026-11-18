@@ -25,7 +25,7 @@ export function EstadoVacio({
   return (
     <div
       role="status"
-      className="flex flex-col items-center gap-3 py-12 text-center"
+      className="flex flex-col items-center gap-3 py-12 text-center rounded-2xl bg-noche-900/40 border border-noche-800/50 w-full max-w-md mx-auto"
     >
       <span aria-hidden="true" className="text-4xl text-noche-500">
         ○

@@ -34,8 +34,7 @@ const VARIANTS: Record<SkeletonVariant, string> = {
 };
 
 /**
- * Bloque base. Anima con `pulse` (fade suave).
- * `motion-reduce:animate-none` respeta prefers-reduced-motion.
+ * Bloque base. Anima con `skeleton-shimmer` (gradiente suave) definido en index.css.
  */
 export function Skeleton({
   variant = "text",
@@ -48,8 +47,8 @@ export function Skeleton({
     <div
       aria-hidden="true"
       className={`
-        relative overflow-hidden bg-noche-700/60
-        animate-pulse motion-reduce:animate-none
+        relative overflow-hidden bg-noche-800/30 border border-noche-700/20
+        skeleton-shimmer
         ${VARIANTS[variant]}
         ${className}
       `}

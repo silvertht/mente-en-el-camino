@@ -81,7 +81,6 @@ export function Leccion({
     };
   }, [sendaId, n, l, iniciarLeccion, abandonarLeccion, leccionId]);
 
-  // Reset flag MC-063 cuando cambia la pregunta (nuevo retry posible)
   useEffect(() => {
     setH63Mostrado(false);
   }, [preguntaIdx]);
@@ -102,37 +101,34 @@ export function Leccion({
     }
   };
 
-  if (!leccion) {
+  // Visual v3: Overlay de carga con backdrop-blur (tapa el starfield y evita "flash roto")
+  if (!leccion || errorInicio || !ready) {
     return (
-      <main className="mx-auto max-w-md px-4 pb-32">
-        <p className="p-6 text-noche-300">
-          No pudimos abrir la lección. Vuelve al camino.
-        </p>
-        <Button variant="ghost" fullWidth onClick={onVolver}>
-          Volver
-        </Button>
-      </main>
-    );
-  }
-
-  if (errorInicio) {
-    return (
-      <main className="mx-auto max-w-md px-4 pb-32">
-        <p className="p-6 text-noche-300">
-          No pudimos abrir la lección. Reintenta.
-        </p>
-        <Button variant="ghost" fullWidth onClick={volverAlCamino}>
-          Volver al camino
-        </Button>
-      </main>
-    );
-  }
-
-  if (!ready) {
-    return (
-      <main className="mx-auto max-w-md px-4 pb-32">
-        <EstadoCarga contexto="s4" />
-      </main>
+      <div className="fixed inset-0 z-50 bg-noche-950/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+        {errorInicio ? (
+          <>
+            <p className="text-noche-300 text-sm mb-4">
+              No pudimos abrir la lección. Reintenta.
+            </p>
+            <Button variant="ghost" fullWidth onClick={volverAlCamino}>
+              Volver al camino
+            </Button>
+          </>
+        ) : !leccion ? (
+          <>
+            <p className="text-noche-300 text-sm mb-4">
+              No pudimos abrir la lección. Vuelve al camino.
+            </p>
+            <Button variant="ghost" fullWidth onClick={onVolver}>
+              Volver
+            </Button>
+          </>
+        ) : (
+          <div className="w-full max-w-md">
+            <EstadoCarga contexto="s4" />
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -163,14 +159,12 @@ export function Leccion({
       reflexion: r.reflexion,
     });
 
-    // Visual v2: MC-063 en retry tras respuesta incorrecta (S5 → S4 retorno)
     if (!r.correcto && prevFeedback && !prevFeedback.correcto && !h63Mostrado) {
       setH63Mostrado(true);
       setMostrar063(true);
       setTimeout(() => setMostrar063(false), 1500);
     }
 
-    // Visual v2: MC-062 en última pregunta correcta (S4 última → S5)
     if (r.correcto && esUltima && !h62Mostrado) {
       setH62Mostrado(true);
       setMostrar062(true);
@@ -202,13 +196,11 @@ export function Leccion({
       // no bloquea si falla persistencia
     }
 
-    // C6: H1 trigger intacto (1 vez por lección)
     if (!h1Mostrado) {
       setToastActivo("H1");
       setH1Mostrado(true);
     }
 
-    // Visual v2: MC-061 "Seguimos." solo en la primera transición (pregunta 1→2)
     if (preguntaIdx === 0 && next === 1) {
       setMostrarSeguimos(true);
       setTimeout(() => setMostrarSeguimos(false), 300);
@@ -225,7 +217,6 @@ export function Leccion({
     }
   };
 
-  // Visual v2: MC-028 acortado (converge con MC-050)
   const toastTexto =
     toastActivo === "H1" || toastActivo === "H2"
       ? online
@@ -233,13 +224,18 @@ export function Leccion({
         : "Guardado aquí. Se sincroniza luego."
       : "";
 
-  // Duraciones respetan prefers-reduced-motion
   const crossfadeDur = reduced ? 0.001 : 0.15;
   const slideDur = reduced ? 0.15 : 0.25;
   const fadeInDur = reduced ? 0.001 : 0.2;
 
   return (
-    <main className="mx-auto max-w-md px-4 pb-40">
+    <main className="relative z-10 mx-auto max-w-md px-4 pb-32">
+      {/* Visual v3: Overlay para atenuar el starfield en S4/S5 */}
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 -z-10 bg-noche-950/60 pointer-events-none"
+      />
+
       <ToastHito
         hito={toastActivo ?? "H1"}
         open={toastActivo !== null}
@@ -291,7 +287,6 @@ export function Leccion({
         </div>
       )}
 
-      {/* Visual v2: MC-061 "Seguimos." (solo primera transición) */}
       <AnimatePresence>
         {mostrarSeguimos && (
           <motion.p
@@ -306,7 +301,6 @@ export function Leccion({
         )}
       </AnimatePresence>
 
-      {/* Visual v2: MC-064 "Responde con calma." (persistente) */}
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -323,7 +317,6 @@ export function Leccion({
           </span>
         </div>
 
-        {/* Visual v2: crossfade 300ms en cambio de pregunta */}
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={preguntaIdx}
@@ -344,7 +337,6 @@ export function Leccion({
         </AnimatePresence>
       </section>
 
-      {/* Visual v2: MC-062 "Una pregunta para ti." (S4 última → S5) */}
       <AnimatePresence>
         {mostrar062 && (
           <motion.p
@@ -360,7 +352,6 @@ export function Leccion({
         )}
       </AnimatePresence>
 
-      {/* Visual v2: MC-063 "Tómate tu tiempo." (retorno tras respuesta incorrecta) */}
       <AnimatePresence>
         {mostrar063 && (
           <motion.p
@@ -377,25 +368,28 @@ export function Leccion({
       </AnimatePresence>
 
       {feedback && (
-        <div className="mt-4">
+        <div className="mt-4 scroll-mb-24">
           <FeedbackReflexion data={feedback} />
         </div>
       )}
 
+      {/* Visual v3 / FALLO 1: Sticky CTA Bar con safe-area */}
       {feedback?.correcto && (
-        <div className="fixed inset-x-4 bottom-4 mx-auto max-w-md">
-          <Button
-            variant="primary"
-            fullWidth
-            onClick={onSiguientePregunta}
-            disabled={finalizando}
-          >
-            {finalizando
-              ? "Guardando…"
-              : esUltima
-                ? "Continuar"
-                : "Siguiente reflexión"}
-          </Button>
+        <div className="fixed bottom-0 inset-x-0 z-30 bg-noche-950/80 backdrop-blur-md border-t border-noche-800/50 safe-bottom transition-transform duration-300">
+          <div className="mx-auto max-w-md px-4 py-3">
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={onSiguientePregunta}
+              disabled={finalizando}
+            >
+              {finalizando
+                ? "Guardando…"
+                : esUltima
+                  ? "Continuar"
+                  : "Siguiente reflexión"}
+            </Button>
+          </div>
         </div>
       )}
     </main>
